@@ -1,0 +1,11 @@
+{
+  "name": "iron-defense",
+  "private": true,
+  "description": "Iron Defense: a top-down lane-defense mech game (PWA). No build step, no dependencies.",
+  "type": "module",
+  "scripts": {
+    "serve": "python3 tools/serve.py",
+    "test": "node tools/test.mjs",
+    "balance": "node tools/balance.mjs"
+  }
+}

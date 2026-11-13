@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Iron Defense art sample</title>
+<style>html,body{margin:0;background:#111}canvas{display:block;width:540px;height:1170px}</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+const style = Number(new URLSearchParams(location.search).get('style') || 1);
+const cv = document.getElementById('c');
+try {
+  if (style === 1) (await import('./voxel.js')).renderVoxel(cv, 62, '1 · VOXEL PIXEL ART · ANGLED 62°');
+  if (style === 2) (await import('./voxel.js')).renderVoxel(cv, 90, '2 · VOXEL PIXEL ART · TOP-DOWN 90°');
+  if (style === 3) (await import('./vector.js')).renderVector(cv, 'paint', '3 · DETAILED PAINTED TOP-DOWN');
+  if (style === 4) (await import('./vector.js')).renderVector(cv, 'flat', '4 · CLEAN FLAT VECTOR');
+  if (style === 5) (await import('./fine.js')).renderFine(cv, { p: 2, angled: true, label: '5 · FINE VOXEL · ANGLED · 2px VOXELS' });
+  if (style === 6) (await import('./fine.js')).renderFine(cv, { p: 2, angled: false, label: '6 · FINE VOXEL · TOP-DOWN · 2px VOXELS' });
+  if (style === 7) (await import('./fine.js')).renderFine(cv, { p: 3, angled: true, label: '7 · MEDIUM VOXEL · ANGLED · 3px VOXELS' });
+  document.title = 'done';
+} catch (e) { document.title = 'error'; console.error(e); window.__err = String(e.stack || e); }
+</script></body></html>

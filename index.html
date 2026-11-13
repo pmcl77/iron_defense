@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14170f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="Iron Defense: a top-down lane-defense mech battle game.">
+  <title>Iron Defense</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+
+    <div id="hud" hidden>
+      <div class="top">
+        <button id="btn-pause" class="ibtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+        <div class="hpbox">
+          <div class="hprow"><span class="lbl you">BASE</span><span id="hp0t" class="num"></span></div>
+          <div class="bar seg"><i id="hp0"></i></div>
+        </div>
+        <div class="stage"><small id="stage-no"></small><b id="stage-name"></b></div>
+        <div class="hpbox foe">
+          <div class="hprow"><span id="hp1t" class="num"></span><span class="lbl foe">HOSTILE</span></div>
+          <div class="bar seg"><i id="hp1"></i></div>
+        </div>
+        <button id="btn-speed" class="ibtn txt" aria-label="Game speed">1×</button>
+      </div>
+      <div id="ai-mode"></div>
+      <canvas id="minimap"></canvas>
+
+      <div class="bottom">
+        <div class="row1">
+          <div class="energy"><span class="bolt">⚡</span><div class="bar seg"><i id="energy-fill"></i><span id="energy-text"></span></div><span id="regen" class="num"></span></div>
+          <div id="mode" class="mode"><button data-mode="hold">HOLD</button><button data-mode="advance">ADVANCE</button></div>
+          <button id="btn-upg" class="ibtn" aria-label="Upgrades"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg></button>
+        </div>
+        <div id="lanes" class="lanes"></div>
+        <div class="row3">
+          <div class="tabs"><button data-tab="mechs" class="active"><span>MECHS</span></button><button data-tab="turrets"><span>TURRETS</span></button></div>
+          <div id="cards"></div>
+          <div id="specials"></div>
+        </div>
+      </div>
+      <button id="sell-pop" hidden></button>
+      <div id="toast"></div>
+    </div>
+
+    <div id="screen"></div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
