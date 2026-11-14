@@ -223,3 +223,9 @@ canvas#game { position: absolute; inset: 0; display: block; }
   .row3 { height: 88px; }
   .card canvas { height: 46px; }
 }
+
+/* marks development builds */
+#dev-tag {
+  position: absolute; z-index: 50; left: 6px; top: calc(50px + var(--safe-t)); pointer-events: none;
+  padding: 1px 6px; font: 800 9px/1.4 var(--mono); letter-spacing: 0.15em; color: #08121e; background: var(--amber); opacity: 0.85;
+}

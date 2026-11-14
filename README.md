@@ -11,13 +11,16 @@ There's no build step and no dependencies: plain JavaScript ES modules and Canva
 python3 tools/serve.py        # http://localhost:8767
 ```
 
-To try it on a phone on the same Wi-Fi, open `http://<computer-ip>:8767`. Installing it as an app needs HTTPS; GitHub Pages works.
+For phone testing, use the dev preview above. The local server only works on this computer: it runs inside the dev container, and the Mac blocks incoming connections from other devices.
 
 ## Play online
 
-https://pmcl77.github.io/iron_defense/. On Android, open it in Chrome and choose ⋮ → Add to Home screen to install it.
+| | Address | Built from |
+|---|---|---|
+| Release | https://iron-defense.pages.dev | `main` |
+| Dev preview | https://dev.iron-defense.pages.dev (marked "DEV", separate save) | `dev` |
 
-GitHub Pages serves the `main` branch, which holds released builds. Development happens on `dev`, which is merged into `main` for each release.
+Both are hosted on Cloudflare Pages, which deploys automatically on every push. On Android, open the address in Chrome and choose ⋮ → Add to Home screen to install it. You can install the release and the dev preview side by side.
 
 ## Gameplay
 

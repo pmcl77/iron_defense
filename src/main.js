@@ -12,6 +12,16 @@ const app = $('#app'), canvas = $('#game'), hud = $('#hud'), screen = $('#screen
 const renderer = new Renderer(canvas);
 const mctx = minimap.getContext('2d');
 
+// Development builds (dev.iron-defense.pages.dev, localhost, LAN) are marked so they're never mistaken for the release.
+const IS_DEV = /^dev\.|^localhost$|^127\.|^192\.168\.|^10\./.test(location.hostname);
+if (IS_DEV) {
+  document.title = 'Iron Defense (dev)';
+  document.querySelector('link[rel=manifest]')?.setAttribute('href', 'manifest-dev.webmanifest');
+  const tag = document.createElement('div');
+  tag.id = 'dev-tag'; tag.textContent = 'DEV';
+  app.appendChild(tag);
+}
+
 let save = loadSave();
 setSound(save.settings.sound);
 

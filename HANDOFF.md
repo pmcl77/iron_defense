@@ -34,8 +34,11 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
    - **During development:** flat vector (sample 4), which is what `src/render.js` draws now.
    - The user disliked the low-res angled pixel art (samples 1 and 2) and liked the painted style (sample 3), but picked sample 7.
 9. **Sound:** the user disliked Ironline's toy-like sounds and wants it "a tad more realistic". `src/audio.js` is new layered, positional synthesis. If that's still not enough, the fallback is CC0 samples (not decided).
-10. **Repo:** https://github.com/pmcl77/iron_defense (public). GitHub Pages deploys from `main` (folder `/ (root)`). Game URL: https://pmcl77.github.io/iron_defense/ (live and verified 2026-11-14).
-11. **Branches:** `main` = the released, stable version (what Pages serves). `dev` = everyday work. See "Git workflow" below.
+10. **Repo:** https://github.com/pmcl77/iron_defense (public).
+11. **Hosting (Cloudflare Pages, project `iron-defense`):** the release is at https://iron-defense.pages.dev, built from `main`. The dev preview is at https://dev.iron-defense.pages.dev, built from `dev`. Both deploy automatically on every push. There's no build step: the output directory is the repo root.
+    - Dev builds (a `dev.` host, localhost or a LAN address) show a "DEV" tag, use `manifest-dev.webmanifest` ("Iron Defense (dev)"), and have their own save, because the save is tied to the web address.
+    - The old GitHub Pages site (pmcl77.github.io/iron_defense) should be **unpublished** by the user (repo Settings → Pages). Check whether that's done.
+12. **Branches:** `main` is the released, stable version. `dev` is for everyday work. See "Git workflow" below.
 
 ## Round 2 changes (after the user's first play-test, 2026-11-14)
 - **The user's feedback:**
@@ -83,10 +86,14 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 
 ## Git workflow
 - **Work on `dev`.** Commit there and never commit straight to `main`.
-- **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. Pages redeploys about 1 minute after `main` is pushed.
+- **Play-testing:** the user pushes `dev` and plays it at https://dev.iron-defense.pages.dev (about 1 minute after the push).
+- **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. https://iron-defense.pages.dev updates about 1 minute after `main` is pushed.
 - **Pushing:** pushing from the container's terminal fails ("Invalid username or token"), and reading the token from VS Code's credential helper is blocked. So **the user pushes from VS Code** (Source Control → Sync/Push, or Command Palette → "Git: Push"). Ask them to push, then check with `git fetch origin && git status -sb`.
-- **Checking a deploy:** the public API needs no login. `curl -s "https://api.github.com/repos/pmcl77/iron_defense/actions/runs?per_page=1"` shows the "pages build and deployment" status. Then load the site.
-- **Testing a `dev` build on the phone before release:** run `python3 tools/serve.py` and open `http://<computer-ip>:8767` on the same Wi-Fi. It's playable in the browser but can't be installed (that needs HTTPS). There's only one Pages site per repo, so there's no preview URL.
+- **Checking a deploy:** `curl -s -o /dev/null -w "%{http_code}" https://dev.iron-defense.pages.dev/` (or the release address), then load it headless, as in `tools/shots.cjs`.
+- **Local server:** `python3 tools/serve.py` only works on the computer itself.
+  - The container's port isn't reachable from the network.
+  - Even when started from the Mac's own terminal, the phone couldn't connect. Ping worked and the macOS firewall is off, so something on the Mac drops incoming TCP. It was left unsolved; the dev preview replaces it.
+- **Screenshots from the user:** they drop them into `tmp_files/` or `screens/` (both gitignored), and I read them from there.
 - **Commits:** end messages with the `Co-Authored-By` line. Commit and push only when the user asks or it's part of an agreed task.
 
 ## Commands
