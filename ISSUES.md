@@ -44,6 +44,15 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Decide together with the melee sidestep bug above, since both change the same movement code.
 
 ### Under discussion
+- **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
+  - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
+  - **Why that may be a problem:** one Seeker covers the whole field width, so it ignores the lane tactics that lane reach was introduced for. It's also hard to read: missiles cross the entire screen.
+  - **Options:**
+    - **A, keep it:** the Seeker is the one "any lane" mech; that's its identity. Balance it through cost and damage if needed.
+    - **B, normal reach (±1 lane) like everyone else:** simplest and consistent. The Seeker keeps its homing missiles and mech preference but loses its special role.
+    - **C, extended reach (±2 lanes):** a middle ground. From lane 3 it covers every lane, from the edge lanes only three, so placement still matters.
+    - **D, normal reach, but missiles keep tracking:** it picks targets only within ±1 lane, but a missile that's already flying follows a target that changes lanes (as today). Mostly the same as B, just stated explicitly.
+  - **Recommendation: C (±2 lanes).** It keeps the Seeker special (the only mech that can cover the whole field, but only from the middle lane), and the edge lanes no longer reach across the map. If it's still too strong, fall back to B.
 - **[balance] Kill bounty helps the winning side snowball** (user, 2026-11-14)
   - **Current rule:** the player gets 25% of the destroyed unit's cost for every kill, mechs and turrets alike. The enemy AI gets no bounty (it has its own income, which grows when your mechs push close to its base).
   - **Problem:** whoever is ahead gets richer and pulls further ahead. But energy for killing *attackers* near your own base is good: it helps a defender recover.
