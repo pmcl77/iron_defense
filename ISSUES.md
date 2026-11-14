@@ -7,17 +7,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 ## Open
 
 ### UI / readability
-- **[ui] The minimap is hard to read; mech dots are too small** (play-test v0.2.0-dev, 2026-11-14)
-  - Turret squares are easy to see. Mech dots are almost invisible ("with my old eyes").
-  - Make mech dots bigger.
-  - Check the contrast too: team colors against the brown background, and maybe a dark outline around each dot.
-  - Follow-up from the user: probably mostly **color contrast**. Red dots on brown are hard to see; blue dots are easy.
-  - **Plan:** render 3–4 minimap variants side by side at real phone size and let the user pick. Options:
-    - a darker (near-black olive) background
-    - a lighter, more orange enemy red
-    - a dark outline around each dot
-    - bigger mech dots
-    - shapes as well as colors (mechs as direction triangles, turrets as squares)
+- *(The minimap readability issue was fixed in 0.2.0-dev: variant D, see CHANGELOG.)*
 
 ### Gameplay / movement
 - **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)

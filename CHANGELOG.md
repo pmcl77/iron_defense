@@ -17,6 +17,12 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - **Advance:** they overtake through a free neighboring lane and then return to their own lane.
 - **Capacitors** (Workshop) now also raises max energy permanently: +40 per level, on top of +50 starting energy.
 
+### UI
+- **New minimap, easier to read:**
+  - wider, with the battlefield's true proportions (40 × 160)
+  - dark background, brighter team colors (a lighter orange-red for enemies), a black outline around every symbol
+  - mechs are triangles pointing the way they walk, turrets are squares, the Constructor is a yellow diamond
+
 ### Balance
 - Stages 7–12: enemy income about 8% higher.
 - Endless no longer jumps in difficulty. Wave 1 is about as hard as stage 12; enemy level, base HP, income and base upgrades then rise gradually.

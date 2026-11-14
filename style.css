@@ -63,7 +63,7 @@ canvas#game { position: absolute; inset: 0; display: block; }
   letter-spacing: 0.08em; background: rgba(0,0,0,0.55); border: 1px solid rgba(227,83,63,0.5); color: var(--foe); pointer-events: none;
 }
 #ai-mode:empty { display: none; }
-#minimap { position: absolute; top: calc(50px + var(--safe-t)); right: 4px; width: 22px; height: min(180px, 26vh); border: 1px solid var(--edge); touch-action: none; }
+#minimap { position: absolute; top: calc(50px + var(--safe-t)); right: 4px; width: 40px; height: 160px; border: 1px solid var(--edge); touch-action: none; }
 
 .bottom {
   position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 6px calc(6px + var(--safe-b));
