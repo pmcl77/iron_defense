@@ -89,7 +89,9 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **[feature] Loadout of all 8 (or 9) mechs instead of 5:** maybe, decide after play-testing.
 
 ### Sound / polish
-- **[feature] Sound round 1 done in 0.2.0-dev** (synthesized, more weight; see CHANGELOG). Waiting for the user's verdict on the phone. If it's still not convincing, round 2 options: further tuning, or CC0 recorded samples for guns and explosions.
+- **[feature] Sound: synthesized round 1 + 1b done in 0.2.0-dev** (see CHANGELOG). The user liked the reworked impacts, explosions and metal sounds (2026-11-14) and is judging the rest in longer play sessions.
+  - Possible later: CC0 recorded samples for guns and explosions (user: "maybe later").
+  - Smaller follow-ups if wanted: a distinct character per weapon (Scout lighter rattle, Gunner deeper thump); the destroyed-mech explosion still uses the old sine metal layer.
 - **[feature] Mech footstep and servo sounds** (part of the sound plan in gameplay.md §13b; not built yet).
 - **[feature] Stage 1 tutorial overlay.**
 
