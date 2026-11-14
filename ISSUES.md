@@ -118,7 +118,11 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - tap an icon to cancel it
   - **Keys:** the number keys queue too, and Backspace removes the last order.
   - The queue clears when the battle ends. The enemy AI is unchanged.
-  - **Status:** a mockup image was requested before building.
+  - **Placement (user, 2026-11-14):** a strip at the top of the controls, above the energy bar, left-aligned. Mockups are in `tmp_files/mockups/`.
+  - **Still open:**
+    - the limit: 5 → 8? 8 chips fit in the top strip
+    - top strip vs. the vertical variant (a column at the left edge of the battlefield, mirroring the minimap)
+    - extras: ghost mechs waiting at the gate, and a "next order" marker on the energy bar
 - **[feature] Base weaponry: a base mortar and Workshop base upgrades** (user idea, 2026-11-14). Proposals:
   - **Why:** enemy Mortars (520) and Lancers (460) outrange the base guns (340) and can shell your base or turrets without being fired on.
   - **Bastion Mortar:** a mortar battery in the base, same slow-shell rules as the Mortar mech.
