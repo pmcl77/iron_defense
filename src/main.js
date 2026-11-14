@@ -6,6 +6,7 @@ import { World } from './world.js';
 import { Renderer, renderIcon } from './render.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
 import { loadSave, writeSave, resetSave, defaultSave } from './save.js';
+import { VERSION } from './version.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app'), canvas = $('#game'), hud = $('#hud'), screen = $('#screen'), minimap = $('#minimap');
@@ -178,6 +179,7 @@ function showMenu() {
         <button class="btn" data-a="how">How to play</button>
         <button class="btn" data-a="settings">Settings</button>
       </div>
+      <p class="version">v${VERSION}</p>
     </div>`;
   bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), workshop: showWorkshop, how: showHelp, settings: showSettings });
 }
@@ -284,7 +286,7 @@ function showSettings() {
       <div class="toggle"><span>Sound</span><button class="btn small" data-a="sound">${save.settings.sound ? 'On' : 'Off'}</button></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
-      <p class="sub" style="margin-top:12px">Iron Defense · first playable build · development art.</p>
+      <p class="sub" style="margin-top:12px">Iron Defense v${VERSION} · development art.</p>
     </div>`;
   bind({
     back: showMenu,

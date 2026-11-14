@@ -22,6 +22,10 @@ For phone testing, use the dev preview above. The local server only works on thi
 
 Both are hosted on Cloudflare Pages, which deploys automatically on every push. On Android, open the address in Chrome and choose ⋮ → Add to Home screen to install it. You can install the release and the dev preview side by side.
 
+## Changes
+
+[CHANGELOG.md](CHANGELOG.md) lists every version and what changed. Its "Unreleased" section is what's on the dev preview.
+
 ## Gameplay
 
 [gameplay.md](gameplay.md) is the full specification and the source of truth: rules, stats, stages, progression, art and sound direction.

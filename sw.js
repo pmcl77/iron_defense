@@ -3,7 +3,7 @@
 const CACHE = 'iron-defense-v2';
 const SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'manifest-dev.webmanifest',
-  'src/main.js', 'src/world.js', 'src/render.js', 'src/data.js', 'src/audio.js', 'src/save.js',
+  'src/main.js', 'src/world.js', 'src/render.js', 'src/data.js', 'src/audio.js', 'src/save.js', 'src/version.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', (e) => {

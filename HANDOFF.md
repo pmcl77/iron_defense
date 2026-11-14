@@ -87,6 +87,13 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 ## Git workflow
 - **Work on `dev`.** Commit there and never commit straight to `main`.
 - **Play-testing:** the user pushes `dev` and plays it at https://dev.iron-defense.pages.dev (about 1 minute after the push).
+- **Changelog:** every user-visible change goes into `CHANGELOG.md` under "Unreleased" when it's committed on `dev`.
+- **Version:** `src/version.js` holds the version shown in the game. On `dev` it carries a `-dev` suffix (e.g. `0.2.0-dev`).
+- **Release steps:**
+  1. On `dev`, rename "Unreleased" in CHANGELOG.md to `[X.Y.Z]: <date>`, set `src/version.js` to `X.Y.Z` and commit.
+  2. Merge into `main` and tag `vX.Y.Z`.
+  3. Back on `dev`, add a new "Unreleased" section and set the version to the next `-dev` (e.g. `0.3.0-dev`).
+  4. The user pushes `main`, `dev` and the tags (`git push origin main dev --tags`).
 - **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. https://iron-defense.pages.dev updates about 1 minute after `main` is pushed.
 - **Pushing:** pushing from the container's terminal fails ("Invalid username or token"), and reading the token from VS Code's credential helper is blocked. So **the user pushes from VS Code** (Source Control → Sync/Push, or Command Palette → "Git: Push"). Ask them to push, then check with `git fetch origin && git status -sb`.
 - **Checking a deploy:** `curl -s -o /dev/null -w "%{http_code}" https://dev.iron-defense.pages.dev/` (or the release address), then load it headless, as in `tools/shots.cjs`.
