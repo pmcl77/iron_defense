@@ -32,6 +32,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **B, the user's rule:** simplest and easiest to predict; nobody ever idles. Downside: no cover while marching, since fast units always pass slow ones even when nothing is happening.
     - **C, B plus roles:** like B, but ranged mechs don't overtake a melee mech (Brawler, Breacher) that's still marching, so tanks lead the column. Melee mechs overtake anything, so Brawlers push to the front of a fight.
   - **Recommendation:** B as the base rule. If cover is missed in play-testing, add C's role rule on top.
+  - **Thought from the user: deploy order as tactics.**
+    - Deploying Brawler → Mortar → Seeker → Gunner in Hold causes exactly this queue: the Mortar stops early to shoot (range 520) while the units behind it are still out of range.
+    - Brawler (shield) → Gunner → Seeker → Mortar stacks neatly by range: each unit stops behind the one in front, at its own range.
+    - So with the current rules, deploy order is a real skill. The rule we choose decides how much that skill matters.
+  - **Option D, range-sorted convoy (follows from the user's thought):** in Hold, a mech may overtake a friendly ahead if that friendly is standing still, **or** has a longer range than itself (and will stop earlier anyway). The column then sorts itself by range automatically: short range in front, artillery at the back.
+    - **Pro:** no idle queues even with a "wrong" deploy order; formations look sensible.
+    - **Con:** it takes away the deploy-order skill the user just described.
+  - **Trade-off to decide:** keep deploy order as a skill (rule A, or today's rule) vs. automatic sorting for convenience (rules B, C or D).
   - Decide together with the melee sidestep bug above, since both change the same movement code.
 
 ### Under discussion
