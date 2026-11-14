@@ -11,11 +11,11 @@ function makeSave(variant) {
   const s = defaultSave();
   if (variant === 'mid') {
     for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 2;
-    s.perks = { energy: 1, armor: 1, charge: 1 };
+    s.perks = { energy: 1, armor: 1, charge: 1, regen: 1 };
   }
   if (variant === 'max') {
     for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 3;
-    s.perks = { energy: 3, armor: 3, charge: 3 };
+    s.perks = { energy: 3, armor: 3, charge: 3, regen: 3 };
   }
   return s;
 }

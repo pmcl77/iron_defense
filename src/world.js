@@ -59,7 +59,7 @@ export class World {
     // player economy
     this.maxEnergy = ENERGY.cap + ENERGY.perkCap * perks.energy;
     this.energy = Math.min(this.maxEnergy, ENERGY.start + ENERGY.perkStart * perks.energy);
-    this.regen = ENERGY.regen;
+    this.regen = ENERGY.regen + ENERGY.perkRegen * (perks.regen || 0);
     this.deployCd = {};
     this.specialMult = 1 - 0.1 * perks.charge;
     this.specialCd = {};

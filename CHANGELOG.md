@@ -16,6 +16,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - **Hold:** faster mechs queue behind slower ones (convoy).
   - **Advance:** they overtake through a free neighboring lane and then return to their own lane.
 - **Capacitors** (Workshop) now also raises max energy permanently: +40 per level, on top of +50 starting energy.
+- **New Workshop perk: Power Grid,** +1 energy per second per level (3 levels: 200 / 400 / 650 credits), permanent in every battle.
 
 ### UI
 - **New minimap, easier to read:**

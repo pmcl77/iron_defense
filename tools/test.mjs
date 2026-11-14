@@ -177,12 +177,13 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
 // 15. Workshop upgrades carry over into battle
 {
   const save = defaultSave();
-  save.perks = { energy: 3, armor: 3, charge: 3 };
+  save.perks = { energy: 3, armor: 3, charge: 3, regen: 3 };
   for (const t of [...MECH_TYPES, ...TURRET_TYPES, 'builder']) save.tech[t] = 3;
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets: [], base: {} };
   const w = new World(st, save, ALL, { seed: 1 });
   check('Capacitors: starting energy', w.energy === 250, `energy ${w.energy}`);
   check('Capacitors: max energy', w.maxEnergy === 420, `max ${w.maxEnergy}`);
+  check('Power Grid: energy regen', w.regen === 11, `regen ${w.regen}`);
   w.energy = 1000; w.upgradeBase('reactor');
   check('Reactor stacks on top of Capacitors', w.maxEnergy === 480, `max ${w.maxEnergy}`);
   check('Reinforced Walls: base HP', w.bases[0].maxHp === 4350, `hp ${w.bases[0].maxHp}`);
