@@ -31,6 +31,18 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - limited to 5 orders, shown as icons with lane numbers above the cards; tap an icon to cancel
   - the open question was "unlimited or limited"; I recommend limited (5) so the game doesn't become "fill the queue and watch"
 
+- **[feature] Base weaponry: a base mortar and Workshop base upgrades** (user idea, 2026-11-14). Proposals:
+  - **Why:** enemy Mortars (520) and Lancers (460) outrange the base guns (340) and can shell your base or turrets without being fired on.
+  - **Bastion Mortar:** a mortar battery in the base, same slow-shell rules as the Mortar mech.
+    - Range 600 from the base front, about 6 s reload, splash 80, around 70 damage *(tune)*.
+    - Defensive only: covers roughly the first quarter of the field (up to y ≈ 700), punishing enemies that park in front of your walls or base.
+  - **New Workshop perk, Fortifications** (permanent): L1 unlocks the Bastion Mortar, L2 makes it reload 25% faster, L3 fires 2 shells per volley.
+  - **New Workshop perk, Heavy Guns** (permanent): +20% base gun-tower damage per level.
+  - **Workshop vs. in battle:** the Workshop unlocks and extends; in-battle upgrades strengthen. The existing in-battle Bastion Gun upgrade would then improve the gun towers and the mortar.
+  - **Enemy bases:** from about stage 8, some enemy bases get a mortar too (range 560 > Mortar 520), as part of their fixed base upgrades. This is another counter to mass Mortars.
+  - **Risk:** stronger base defense encourages turtling, so keep the mortar's damage modest and its reach limited to your own quarter.
+  - **Open question:** buy the Bastion Mortar with Workshop credits (proposed), or unlock it by stage progress?
+
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
 - **[feature] Enemy AI that counters your army,** e.g. flanking massed artillery with fast units. Agreed for later.
