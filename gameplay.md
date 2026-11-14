@@ -297,6 +297,28 @@ Ironline's sound effects were too toy-like. Iron Defense aims for **more realist
 
 If synthesis isn't realistic enough, the fallback is free CC0 (public domain) sound samples. That would add audio files to the project, so it's a later decision.
 
+## 13c. Implementation details
+
+These are the exact values the first build uses that aren't stated in the sections above. All of them live in `src/data.js` or `src/world.js`.
+
+| Topic | Value |
+|---|---|
+| Deploy point | Player mechs appear at y = 124 (base face + 24) in the active lane, ±20 sideways jitter. Enemy mechs appear at y = 2276; groups are spaced 34 apart |
+| Turn rates | Mech torsos 2π rad/s. Sentry 5, Howitzer 2.5, Arc Coil instant. A unit fires only when aimed within 10° |
+| Target keeping | A unit keeps its target while it's alive and in range, unless a better category appears (ahead beats behind, preferred type beats others) |
+| Sidestep | 0.5 s smoothed sideways move at half forward speed; the mech stays in its new lane |
+| Pause to fire | Mortar and Lancer stop for 0.4 s after each shot in Advance |
+| Bullets / slugs | Homing, speed 1100 / 2600 |
+| Shells | Scatter ±12, flight time 0.7 s + distance/900 |
+| Missiles | 2 per salvo, launched ±0.6 rad off aim, speed 520, turn 5 rad/s, 3 s life, retarget within 220 |
+| Zap chain | Jumps up to 140 units, 75% damage per jump, never jumps to a base |
+| Base guns | Fire from the gun tower nearest the target (x = 120 or 480). Range is measured from the base face line |
+| Constructor | Starts at the middle of the base front; parks 36 units in front of (south of) the target cell. Build speed × (1 + 0.2 × Workshop level). Its Workshop key is `builder` |
+| Bombing | Bombs land at random points within radius 110, the first after 0.6 s, then every 0.16 s |
+| AI lane choice | 20% random lane; otherwise, if your mechs are within 900 of its base, 20% the lane with the most of them; otherwise the lane with the least player turret HP able to reach it |
+| Workshop | Veteran Training up to level 3 for every unlocked mech, turret and the Constructor: 120 / 260 / 450 credits |
+| Visual scale | Mechs are drawn at 1.3×, turrets at 1.1× and the Constructor at 1.2× their combat radius |
+
 ## 14. Decisions and open questions
 
 ### Resolved

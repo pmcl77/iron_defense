@@ -2,39 +2,85 @@
 
 To pick this project up in a new session: "Read HANDOFF.md, README.md and gameplay.md, then continue."
 
-## Background
-- A sister game to Ironline (`../mech_defense/`), but a **completely separate project** with its own code and save. Code was written fresh, following Ironline's structure (simulation separate from rendering).
-- Original game. The reference screenshots in `samples/` (an old iOS mech-defense game and Ebbtide) are mood references only. Never copy names, art or layouts.
+Last updated: 2026-11-14, after the first playable build (see `git log`).
+
+## What this is
+- An original top-down, portrait, 5-lane mech defense game. It runs in the browser and installs as a PWA.
 - Target devices: Samsung Galaxy S25+ (portrait) and desktop (centered portrait column).
+- A sister game to Ironline (`../mech_defense/`), but a **completely separate project**: its own code, save key and repo. The code was written fresh, following Ironline's structure (simulation separate from rendering).
+- Originality: the screenshots in `samples/` (an old iOS mech-defense game and Ebbtide) are **mood references only**. Never copy names, art, unit designs or layouts.
+  - `samples/` is deliberately excluded from git, because the repo may go public.
 
-## Decisions so far (details in gameplay.md §14)
-- 5 lanes on a 600 × 2400 field; 5 × 7 build cells per side; turrets block their cell.
-- Constructor builds queued turrets; trip fee 20, refunded on safe return.
-- Global Hold / Advance switch per side. In Advance, mechs sidestep around turrets; shells and slugs still pause to fire. The AI uses the switch too. (Future, not soon: a switch per mech type.)
-- Mechs turn their upper body to aim at any angle and prefer targets ahead.
-- 8 mechs (Scout, Gunner, Brawler, Mortar, Aegis, Seeker, Breacher, Lancer) and 3 turrets. Loadout of 5 per battle; might grow to all 8 later.
-- Unlocks: one new mech type per stage; full arsenal after 6 stages.
-- Art: **final style = sample 7** (medium voxel, angled oblique, ray-traced and then pre-rendered into sprite sheets). **Development style = flat vector (sample 4)**, which is what `src/render.js` draws now.
-- Sound: the user disliked Ironline's toy-like sounds. `src/audio.js` is a new layered, positional synthesis. If it's still not realistic enough, the fallback is CC0 samples.
+## How the user likes to work
+- They review the spec and design before anything is built. They asked for art samples before coding.
+- They prefer design questions explained in plain text with a recommendation, then asked directly in the reply. They rejected multiple-choice question dialogs.
+- They often answer with their own ideas, for example the global Hold/Advance switch and the three new mechs. Record those ideas in `gameplay.md`.
+- `gameplay.md` is the source of truth. Keep it in sync whenever rules or numbers in `src/data.js` / `src/world.js` change.
 
-## Status (first playable build)
-- Everything from the spec is implemented, with 32/32 rule tests passing and no console errors in the headless browser run.
-- Balance is a bot-tuned first draft (see gameplay.md §11, "Balance status").
-- Not yet done:
-  - mech footstep sounds
-  - the voxel renderer
-  - a tutorial
-  - GitHub repo and Pages hosting
-  - testing on the real phone
+## Decisions (details in gameplay.md §14 "Resolved")
+1. **Field:** 5 lanes, 600 × 2400. 5 × 7 build cells per side; turrets block their cell.
+2. **Deploying:** pick the active lane with the HUD lane buttons (L1–L5), then tap a mech card.
+3. **Constructor:** builds queued turrets. Orders are paid when placed and refunded in full if cancelled. The trip fee is 20, refunded on a safe return.
+4. **Engagement:** a global Hold/Advance switch per side (default Hold).
+   - In Advance, mechs sidestep around turrets; Mortar and Lancer still pause 0.4 s to fire.
+   - The AI uses the switch too.
+   - *Future idea, not for the first versions:* a separate switch per mech type.
+5. **Aiming:** mechs turn their upper body to aim at any angle and prefer targets ahead. Turrets fire in all directions.
+6. **Roster:** Ironline's 5 mechs plus Seeker (homing missiles), Breacher (wallbreaker) and Lancer (wall attacker), and 3 turrets.
+   - Players bring a loadout of 5 mechs per battle. *The user may want to raise this to all 8 later.*
+7. **Unlocks:** one new mech type per stage; the full arsenal after 6 stages.
+8. **Art:**
+   - **Final style:** sample 7, medium voxel (3 px voxels) with an angled oblique view.
+   - **During development:** flat vector (sample 4), which is what `src/render.js` draws now.
+   - The user disliked the low-res angled pixel art (samples 1 and 2) and liked the painted style (sample 3), but picked sample 7.
+9. **Sound:** the user disliked Ironline's toy-like sounds and wants it "a tad more realistic". `src/audio.js` is new layered, positional synthesis. If that's still not enough, the fallback is CC0 samples (not decided).
+10. **Repo:** git initialized on `main`. A GitHub repo and Pages hosting come **later**, when the user asks.
 
-## Testing
-- `node tools/test.mjs` and `node tools/balance.mjs`.
-- `node tools/shots.cjs <dir>` runs a headless browser (phone and desktop) and saves screenshots.
-- Seed a save: `localStorage.setItem('iron-defense-save-v1', JSON.stringify({cleared: 6, credits: 1200}))`, then reload.
-- Watch out for the name `constructor`: it is a built-in property of every JavaScript object, so the Constructor's tech/level key is `builder`.
+## Status
+- **First playable build:** everything in the spec is implemented.
+  - `node tools/test.mjs`: 32/32 pass.
+  - Headless browser run (`tools/shots.cjs`): no console errors.
+  - **Not yet played by hand or on the real phone.**
+- **Balance:** a bot-tuned first draft. Stage table and bot results are in gameplay.md §11.
+  - Without Workshop upgrades the bot wins stages 1–3. With mid-level upgrades it wins stages 1–8, and stages 9–11 about a third of the time. Stage 12 is very hard.
+  - Many bot losses are stalemates against turret walls (the 600 s cap in the bot). Watch whether battles drag for a human player.
+- **Not done yet:** mech footstep and servo sounds, a stage 1 tutorial, the voxel renderer, GitHub/Pages, real-device testing.
+
+## Files
+| Path | What's in it |
+|---|---|
+| `gameplay.md` | Full spec (§1–14). §13c lists the exact implementation values |
+| `src/data.js` | All numbers: field, units, specials, unlocks, STAGES, perks |
+| `src/world.js` | Simulation. Key parts: `move`/`trySidestep`, `pickTarget`, `fire`/`updateProjectiles`, `updateConstructor`, `updateAI`/`aiLane`. Emits `fx` events |
+| `src/render.js` | Flat vector renderer: unit shapes (`LEGS`/`TOPS`), turrets, base, particles, minimap, `renderIcon` |
+| `src/main.js` | Loop, HUD, screens (menu, stages, loadout, workshop, help, settings, pause, upgrades, result), input, debug hooks |
+| `src/audio.js` | Synthesized sound bus (pan, distance, reverb, compressor) |
+| `src/save.js` | localStorage key `iron-defense-save-v1` |
+| `art_samples/` | Art studies. `sample.html?style=1…7`, renders saved as `style-N.png`, comparisons `comparison.png` and `comparison-2.png`. `fine.js` (ray-traced voxels, primitive-based models) is the start of the final renderer |
+| `tools/` | `serve.py`, `test.mjs`, `balance.mjs`, `shots.cjs`, `make_icons.cjs` |
+
+## Commands
+```bash
+python3 tools/serve.py                      # http://localhost:8767 (preview config "iron-defense" in .claude/launch.json)
+node tools/test.mjs                         # rule tests
+node tools/balance.mjs [runs] [stage…]      # bot balance report
+node tools/shots.cjs <outdir>               # headless phone + desktop smoke test with screenshots
+node art_samples/shoot.cjs [styles…]        # re-render art samples
+```
+- Playwright is installed globally. Scripts load it from `/usr/local/share/npm-global/lib/node_modules/playwright`, and its browsers live in `/ms-playwright`.
+- Node 22 is available. There's no npm project; `package.json` only sets `"type": "module"`.
+- Seed a save in the browser: `localStorage.setItem('iron-defense-save-v1', JSON.stringify({cleared: 6, credits: 1200}))`, then reload.
+- Browser console: `__game`, `__step(seconds)`, `__save()`.
+
+## Gotchas
+- `constructor` is a built-in property of every JavaScript object, so the Constructor's tech/level key is `builder`. The entity kind is still `'constructor'`.
+- `World.canDeploy` only allows mechs in `world.unlocked.mechs`, which in a battle is the 5-mech loadout.
+- Service worker: when adding files, update `SHELL` in `sw.js` and bump `CACHE`. It registers only on HTTPS.
+- Shadows and the ground image in `render.js` are cached per resize and stage. Call `renderer.resize(...)` after layout changes (`main.js` `resize()` does this).
 
 ## Next steps (suggested)
-1. Create a GitHub repo and enable Pages, then play-test on the S25+: touch sizes, readability, difficulty, sound.
-2. Tune stages, and the new mech stats, from that play-testing.
-3. Add footstep and servo sounds, and a stage 1 tutorial.
-4. Start the voxel renderer: bake sprite sheets from `art_samples/fine.js` models.
+1. Ask the user how the first build plays. If they want it on the phone: create a GitHub repo, enable Pages from `main` / root, and install it on the S25+ through Chrome → "Add to Home screen".
+2. Play-test findings: touch target sizes, readability, difficulty curve, whether battles stall at turret walls, sound realism.
+3. Tune `STAGES` and the new mech stats. Keep gameplay.md §11 and §13c in sync.
+4. Add footstep and servo sounds and a stage 1 tutorial overlay.
+5. Later: the voxel renderer. Bake sprite sheets (16 facings, a few walk frames, a separate shadow layer) from `art_samples/fine.js` at 3 px voxels, and pre-render the ground once.
