@@ -517,14 +517,15 @@ export class Renderer {
     if (w.result) { c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(0, 0, this.w, this.h); }
   }
 
-  // Minimap (variant D chosen by the user): dark background, true 1:4 proportions, outlined symbols,
+  // Minimap (B + D mix chosen by the user): narrow strip, dark background, big outlined symbols,
   // mechs as triangles pointing the way they walk, turrets as squares, the Constructor as a diamond.
   drawMinimap(m, w, mw, mh) {
     const k = this.dpr || 1; // canvas is in device pixels; sizes below are css px
     const YOU = '#5ab0ff', FOE = '#ff7a4a';
     m.setTransform(1, 0, 0, 1, 0, 0);
     m.fillStyle = '#1c2016'; m.fillRect(0, 0, mw, mh);
-    const sx = (x) => (x / FIELD.w) * mw, sy = (y) => mh - (y / FIELD.h) * mh;
+    const pad = 5 * k; // keep the big symbols inside the narrow strip
+    const sx = (x) => pad + (x / FIELD.w) * (mw - 2 * pad), sy = (y) => mh - (y / FIELD.h) * mh;
     m.fillStyle = 'rgba(255,255,255,0.10)'; for (let l = 1; l < LANES; l++) m.fillRect(Math.round(sx(l * LANE_W)), 0, Math.max(1, k * 0.6), mh);
     m.fillStyle = YOU; m.fillRect(0, sy(BASE_FACE[0]), mw, mh - sy(BASE_FACE[0]));
     m.fillStyle = FOE; m.fillRect(0, 0, mw, sy(BASE_FACE[1]));
@@ -533,9 +534,9 @@ export class Renderer {
       if (e.dead || e.kind === 'base') continue;
       const x = sx(e.x), y = sy(e.y);
       m.beginPath();
-      if (e.kind === 'turret') { const r = 3.6 * k; m.rect(x - r, y - r, r * 2, r * 2); }
-      else if (e.kind === 'constructor') { const r = 4.5 * k; m.moveTo(x, y - r); m.lineTo(x + r, y); m.lineTo(x, y + r); m.lineTo(x - r, y); m.closePath(); }
-      else { const r = 4 * k, d = e.team ? 1 : -1; m.moveTo(x, y + d * r * 1.1); m.lineTo(x + r, y - d * r * 0.8); m.lineTo(x - r, y - d * r * 0.8); m.closePath(); }
+      if (e.kind === 'turret') { const r = 4.2 * k; m.rect(x - r, y - r, r * 2, r * 2); }
+      else if (e.kind === 'constructor') { const r = 5 * k; m.moveTo(x, y - r); m.lineTo(x + r, y); m.lineTo(x, y + r); m.lineTo(x - r, y); m.closePath(); }
+      else { const r = 4.8 * k, d = e.team ? 1 : -1; m.moveTo(x, y + d * r * 1.1); m.lineTo(x + r, y - d * r * 0.8); m.lineTo(x - r, y - d * r * 0.8); m.closePath(); }
       m.fillStyle = e.kind === 'constructor' ? '#ffd166' : e.team ? FOE : YOU;
       m.fill(); m.stroke();
     }

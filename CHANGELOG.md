@@ -19,9 +19,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ### UI
 - **New minimap, easier to read:**
-  - wider, with the battlefield's true proportions (40 × 160)
+  - keeps the narrow strip
   - dark background, brighter team colors (a lighter orange-red for enemies), a black outline around every symbol
-  - mechs are triangles pointing the way they walk, turrets are squares, the Constructor is a yellow diamond
+  - big symbols: mechs are triangles pointing the way they walk, turrets are squares, the Constructor is a yellow diamond
 
 ### Balance
 - Stages 7–12: enemy income about 8% higher.

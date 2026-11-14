@@ -7,7 +7,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 ## Open
 
 ### UI / readability
-- *(The minimap readability issue was fixed in 0.2.0-dev: variant D, see CHANGELOG.)*
+- *(The minimap readability issue was fixed in 0.2.0-dev: a mix of variants B and D (narrow strip, dark background, big outlined triangles and squares). Variant D's wider 40 × 160 strip was tried first. The user is judging it on the phone; in the narrow strip, units in neighboring lanes can overlap.)*
 
 ### Gameplay / movement
 - **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
