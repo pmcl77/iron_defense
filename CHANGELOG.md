@@ -29,8 +29,10 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - explosions have a crack, a blast, a deep body, a rolling rumble and falling debris; destroyed mechs add torn metal
   - the Mortar launch gets a hollow tube "tunk"
 - **Outdoor echo:** a slapback echo off the terrain, on top of the reverb.
-- **New: bullet impacts** make a quiet tick on armor, and rail slugs a heavy clang.
-- Brawler punches, deploy steps and turret builds use the new heavy thump. Missiles are unchanged.
+- **New: bullet impacts** make a dull thud on armor (sometimes with a little ring), and rail slugs a heavy clang.
+- **Shots** have a longer, darker muzzle blast and a mid "bark"; the crack is quieter, so they no longer sound like a tick.
+- **Metal sounds** (Brawler punch, slug hits, building, selling) are struck metal made from noise instead of pure tones, which rang like a bell or toy. A turret build now sounds like an impact wrench, a hiss and a final clank.
+- Deploy steps use the new heavy thump. Missiles are unchanged.
 - The master compressor lets attacks through, so shots sound sharper.
 
 ### UI

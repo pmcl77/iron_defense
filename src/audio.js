@@ -147,14 +147,20 @@ function thud(dest, t, f = 110, lvl = 1, d = 0.15, drive = 3) {
   layer(dest, t, { src: 'brown', type: 'bandpass', f: [f * 1.4, f * 0.8], q: 0.9, a: 0.002, h: 0.012, d, drive, lvl });
   layer(dest, t, { src: 'pink', type: 'lowpass', f: [900, 250], a: 0.001, h: 0.003, d: d * 0.4, drive: 2, lvl: lvl * 0.35 });
 }
+// struck heavy metal: noise through narrow inharmonic resonators (no clean pitch, unlike sines)
+function clank(dest, t, base, lvl = 1, d = 0.2) {
+  for (const [k, p, q] of [[1, 1, 9], [1.37, 0.7, 12], [1.93, 0.55, 14], [2.61, 0.4, 16], [3.7, 0.25, 18]])
+    layer(dest, t, { src: 'pink', type: 'bandpass', f: [base * k * (1 + (Math.random() - 0.5) * 0.06)], q, a: 0.0008, h: 0.003, d: d * (1.15 - k * 0.12), drive: 2, lvl: lvl * p * 2.2 });
+  layer(dest, t, { src: 'pink', type: 'bandpass', f: [base * 2.2, base], q: 1, a: 0.0005, h: 0.002, d: 0.03, drive: 3, lvl: lvl * 0.5 }); // the strike itself
+}
 const vary = (x, v = 0.08) => x * (1 + (Math.random() * 2 - 1) * v);
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // ---------- sounds ----------
 // guns: blast lowpass start/end Hz, blast length s, low body level, overall level
 const GUN = {
-  scout: [5200, 1600, 0.045, 0.25, 0.24], gunner: [3800, 900, 0.075, 0.55, 0.34], sentry: [4200, 1200, 0.06, 0.4, 0.28],
-  aegis: [4600, 1400, 0.05, 0.3, 0.22], base: [2600, 500, 0.13, 0.95, 0.5], default: [3800, 1000, 0.065, 0.4, 0.3],
+  scout: [3600, 700, 0.08, 0.35, 0.26], gunner: [2600, 420, 0.13, 0.7, 0.38], sentry: [3000, 550, 0.11, 0.55, 0.32],
+  aegis: [3400, 650, 0.09, 0.4, 0.24], base: [2000, 300, 0.2, 1.0, 0.5], default: [2800, 500, 0.11, 0.5, 0.32],
 };
 export function sfx(name, o = {}) {
   if (!ac || !enabled || (!offline && ac.state !== 'running')) return;
@@ -170,9 +176,10 @@ export function sfx(name, o = {}) {
   switch (name) {
     case 'shot': {
       const [f0, f1, len, body, lv] = GUN[o.type] || GUN.default, b = bus(t, pan, dist, 0.22, lv, 0.35);
-      layer(b, t, { src: 'white', type: 'highpass', f: [vary(2200)], a: 0.0005, h: 0.0015, d: 0.012, lvl: 0.85 }); // supersonic crack
-      layer(b, t, { src: 'pink', f: [vary(f0), f1], q: 0.6, a: 0.001, h: 0.006, d: vary(len), drive: 4, lvl: 0.75 }); // muzzle blast
-      layer(b, t, { src: 'brown', f: [vary(240, 0.1), 120], q: 0.9, a: 0.002, h: 0.012, d: len * 1.7, drive: 3, lvl: body }); // pressure
+      layer(b, t, { src: 'white', type: 'highpass', f: [vary(1800)], a: 0.0005, h: 0.001, d: 0.008, lvl: 0.3 }); // crack (kept small: it's what sounds like a "tick")
+      layer(b, t, { src: 'pink', f: [vary(f0), f1], fd: len * 0.6, q: 0.6, a: 0.001, h: 0.012, d: vary(len), drive: 5, lvl: 0.8 }); // muzzle blast
+      layer(b, t, { src: 'pink', type: 'bandpass', f: [vary(520, 0.12), 300], q: 1.1, a: 0.001, h: 0.01, d: len * 0.8, drive: 5, lvl: 0.55 }); // bark
+      layer(b, t, { src: 'brown', f: [vary(260, 0.1), 110], q: 0.9, a: 0.002, h: 0.018, d: len * 1.8, drive: 3, lvl: body }); // pressure
       if (o.type === 'base') layer(b, t, { src: 'sine', f: [50, 42], a: 0.003, h: 0.03, d: 0.18, drive: 1.5, lvl: 0.25 });
       break;
     }
@@ -194,17 +201,17 @@ export function sfx(name, o = {}) {
       break;
     }
     case 'hit': { // bullet striking armor: tick + short ping
-      const b = bus(t, pan, dist, 0.15, 0.13, 0.1);
-      layer(b, t, { src: 'white', type: 'bandpass', f: [vary(3200, 0.2)], q: 5, a: 0.0005, h: 0.001, d: 0.025, lvl: 0.8 });
-      tone(b, t, 'sine', vary(1800, 0.2), 1700, 0.05, 0.18);
-      layer(b, t, { src: 'pink', f: [1200, 400], a: 0.001, d: 0.03, drive: 2, lvl: 0.35 });
+      const b = bus(t, pan, dist, 0.15, 0.16, 0.1);
+      layer(b, t, { src: 'pink', type: 'bandpass', f: [vary(1100, 0.25), 600], q: 1.4, a: 0.0005, h: 0.002, d: 0.035, drive: 4, lvl: 0.9 }); // dull "thk"
+      layer(b, t, { src: 'brown', f: [400, 150], a: 0.001, h: 0.004, d: 0.05, drive: 3, lvl: 0.6 });
+      if (Math.random() < 0.3) clank(b, t, vary(900, 0.2), 0.2, 0.08); // sometimes a bit of armor ring
       break;
     }
     case 'slughit': { // rail slug punching armor: heavy clang
       const b = bus(t, pan, dist, 0.25, 0.35, 0.3);
-      thud(b, t, 150, 0.8, 0.1, 4);
-      metal(b, t, vary(420, 0.12), 0.22, 0.3, 1.5);
-      layer(b, t, { src: 'white', type: 'highpass', f: [2500], a: 0.0005, h: 0.002, d: 0.03, lvl: 0.4 });
+      thud(b, t, 140, 1.0, 0.14, 5);
+      clank(b, t, vary(320, 0.12), 0.7, 0.25);
+      layer(b, t, { src: 'pink', f: [3000, 800], a: 0.0005, h: 0.003, d: 0.05, drive: 4, lvl: 0.35 }); // tearing
       break;
     }
     case 'missile': {
@@ -234,9 +241,9 @@ export function sfx(name, o = {}) {
     }
     case 'punch': { // Brawler melee: heavy metal-on-metal impact
       const b = bus(t, pan, dist, 0.25, 0.6, 0.35);
-      thud(b, t, vary(120), 1.0, 0.2, 5);
-      layer(b, t, { src: 'pink', f: [2600, 600], a: 0.001, h: 0.004, d: 0.08, drive: 4, lvl: 0.45 });
-      metal(b, t, vary(190), 0.25, 0.4, 2);
+      thud(b, t, vary(100), 1.1, 0.22, 6);
+      layer(b, t, { src: 'pink', type: 'bandpass', f: [vary(700), 300], q: 0.9, a: 0.001, h: 0.008, d: 0.12, drive: 6, lvl: 0.6 }); // crunch
+      clank(b, t + 0.003, vary(210, 0.15), 0.45, 0.22);
       break;
     }
     case 'zap': {
@@ -266,13 +273,15 @@ export function sfx(name, o = {}) {
     }
     case 'build': {
       const b = bus(t, pan, dist, 0.25, 0.5);
-      metal(b, t, 210, 0.25, 0.6); thud(b, t, 110, 0.8, 0.14);
-      for (let i = 0; i < 5; i++) noise(b, t + 0.08 + i * 0.05, 0.03, 'bandpass', 3500, null, 0.25, 4);
+      for (let i = 0; i < 7; i++) layer(b, t + i * 0.035, { src: 'pink', type: 'bandpass', f: [vary(1400, 0.1)], q: 2.5, a: 0.001, h: 0.004, d: 0.02, drive: 3, lvl: 0.45 }); // impact wrench
+      noise(b, t + 0.26, 0.25, 'highpass', 4000, 2500, 0.18, 0.7, white, 0.01); // air hiss
+      clank(b, t + 0.28, vary(240), 0.5, 0.25);
+      thud(b, t + 0.28, 105, 0.9, 0.16);
       break;
     }
     case 'sell': {
       const b = bus(t, pan, dist, 0.25, 0.45);
-      metal(b, t, 170, 0.2, 0.4); noise(b, t + 0.05, 0.4, 'highpass', 3000, 6000, 0.2);
+      clank(b, t, 170, 0.45, 0.3); noise(b, t + 0.05, 0.4, 'highpass', 3000, 6000, 0.2);
       break;
     }
     case 'engine': { // diesel start
