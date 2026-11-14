@@ -82,6 +82,22 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Risk:** stronger base defense encourages turtling, so keep the mortar's damage modest and its reach limited to your own quarter.
   - **Open question:** buy the Bastion Mortar with Workshop credits (proposed), or unlock it by stage progress?
 
+- **[feature] Lancer redesign as a proper rail gun** (user, 2026-11-14): today it sounds and looks like a laser.
+  - **Sound, why it sounds like a laser:** the shot is built around a "zing" (a tone sliding from 3200 down to 180 Hz) plus an electric buzz, the classic sci-fi "pew".
+  - **Sound proposal:**
+    - a very sharp, loud crack, the slug breaking the sound barrier, like a thunderclap
+    - a deep thump as the capacitors discharge
+    - a brief electrical arc crackle at the muzzle
+    - no falling tone
+    - during the reload, a quiet rising capacitor whine, so you can hear it charging
+  - **Visual, today:** a long pale-cyan streak (60 px) with a cyan muzzle flash, which reads as a laser beam.
+  - **Visual, the user's idea:** look less like a laser and more like a series of shells fired from the rail gun. Options:
+    - **A, one heavy slug, restyled:** a short, dark metal slug with a white-hot tip, a thin smoke trail, an orange-white muzzle flash with a shock ring, and sparks plus debris at the impact. Visual only, no rules change.
+    - **B, a burst of 3 slugs:** fired 0.08 s apart, each restyled as in A, with the damage split (3 × 10 instead of 1 × 30, still ×3 vs structures). This matches "a series of shells" best. It's a small rules change: if the target dies mid-burst, the remaining slugs retarget or miss, and armor counts 3 times.
+    - **C, as A, but visually a burst:** 3 slug streaks drawn close together that land as one hit. It looks like a burst, with no rules change, but the look and the damage don't quite match.
+  - **Recommendation:** the new sound plus **B**. It best matches the "series of shells" idea, and the small rules effect (less overkill, more affected by armor) suits a siege gun. If we'd rather not touch balance now, take A first.
+- **[feature] Tank mech** (user, 2026-11-14): *proposal text still to be added; the user mentioned it, but only the Lancer proposal came through.*
+
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
 - **[feature] Enemy AI that counters your army,** e.g. flanking massed artillery with fast units. Agreed for later.
