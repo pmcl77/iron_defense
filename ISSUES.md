@@ -39,6 +39,20 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - A **melee** mover overtakes a fighting friendly only to *join the fight* (moves up beside it into a free neighbor lane, if an enemy is within reach there), not to walk past it.
     - A **ranged** mover never needs to: it already has the target in range and stops (Hold), or stops at range (Advance, rule B).
   - **Goal:** one table where every cell has a rule we can explain in one sentence, and the help screen can show it.
+  - **Another dimension (user): what do Hold and Advance actually mean?** Each mode bundles two separate behaviors:
+    - **Firing:** stop to fire vs. fire on the move.
+    - **Pathing:** stay in lane vs. go around obstacles (overtake friendlies, step around turrets).
+
+    | | stays in lane | goes around obstacles |
+    |---|---|---|
+    | **stops to fire** | Hold today | the user's convoy rule B ("hold to fight, otherwise overtake") |
+    | **fires on the move** | (a column push, not used) | Advance today |
+
+  - **Proposal: define the modes by intent, not as two switches.**
+    - **Hold = "fight from where you are; move only when you have nothing to shoot."** While it moves (nothing in range), it goes around friendlies that are in the way, so nobody idles in a queue. It never needs to step around an enemy turret: an enemy turret ahead is in range sooner or later, and then the mech stops and fires.
+    - **Advance = "keep pushing toward the enemy base, firing on the way."** It goes around whatever it can: slower or stopped friendlies, and turrets with a gap. It stops only where the path really ends: a wall or the base (ranged at their range, rule B), and an enemy mech in contact.
+    - **Melee mechs** in both modes: they never go around enemies; they go around friendlies only to reach a fight.
+  - With this definition, evading isn't a third setting. It follows from whether the mech wants to move right now, and Hold vs. Advance only decides *when* a mech wants to move: only when idle, or always.
 - *(The overtake swing-back bug was fixed in 0.2.0-dev; see CHANGELOG.)*
 - **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
   - Cause: in Advance, *every* mech steps around an enemy turret if the neighboring cell is free, melee mechs included. The Breacher has the same problem, which defeats its purpose.
