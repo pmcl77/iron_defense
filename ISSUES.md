@@ -24,6 +24,15 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - Once the friendly ahead stands still, a mech with no target in range steps into a free neighboring lane and moves up until something is in range, then stops (Hold).
     - It returns to its home lane when that lane is clear.
     - Advance stays as is: keep walking and overtake anything slower.
+  - **Follow-up (user, 2026-11-14):** should Brawlers in Hold overtake when the unit in front is fighting? The user proposes a general rule:
+    - **Hold = "hold to fight, otherwise overtake":** a mech with a target in range stops and fights; a mech without one overtakes any friendly blocking it.
+    - **Advance = "always advance and overtake."**
+  - **Options to compare:**
+    - **A, convoy while marching, spread out when the front stops** (my earlier proposal): keeps the "Gunner takes cover behind the Brawler" effect while marching; idle units only move up once the front is fighting.
+    - **B, the user's rule:** simplest and easiest to predict; nobody ever idles. Downside: no cover while marching, since fast units always pass slow ones even when nothing is happening.
+    - **C, B plus roles:** like B, but ranged mechs don't overtake a melee mech (Brawler, Breacher) that's still marching, so tanks lead the column. Melee mechs overtake anything, so Brawlers push to the front of a fight.
+  - **Recommendation:** B as the base rule. If cover is missed in play-testing, add C's role rule on top.
+  - Decide together with the melee sidestep bug above, since both change the same movement code.
 
 ### Under discussion
 - **[feature] Production queue** (user idea, 2026-11-14): tapping a mech card without enough energy queues the order instead of refusing it, and it deploys automatically when energy and card cooldown allow. My recommendation:
