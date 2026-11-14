@@ -61,6 +61,21 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - this interacts with the convoy/overtake rules above (overtaking becomes more costly), and tests #19/#20 need new timings
   - **Recommendation: C with honest lane occupancy.** It looks like walking, gives each mech its own feel, and matches the plan for heavier units. It's best decided and built together with the convoy rule and the melee sidestep bug, since all three change the same movement code.
 
+- **[gameplay] Ranged mechs walk right up to the enemy base in Advance** (user, 2026-11-14)
+  - **Today:** in Advance, a mech keeps walking while firing until something physically blocks it. Ranged mechs (Mortar 520, Lancer 460, Seeker 380 …) end up pressed against the enemy base, inside its guns' range (340) and in the middle of the melee, although they could shoot from much further back. In Hold they already stop at their own range.
+  - **User's proposal:** ranged mechs only go as close to the base as needed to have it in range, even in Advance.
+  - **Should turrets count too? Options:**
+    - **A, base only** (the proposal as stated).
+    - **B, base plus anything that can't be passed:** a ranged mech stops at its range in front of the enemy base, a full turret wall, or a turret in its lane with no free gap to step around. Turrets it *can* get around don't stop it: it keeps shooting on the move and walks past, which is what Advance is for.
+    - **C, base plus every turret:** a ranged mech stops at its range in front of any turret. Advance would then behave like Hold against defenses, and stepping around turrets would almost never happen.
+  - **Details for B (and A):**
+    - **Where to stop:** at about 95% of its range, so small movements don't take it out of range.
+    - **Melee mechs** (Brawler, Breacher) still walk up and hit.
+    - **If the obstacle disappears** (turret destroyed, gap opens), the mech walks on.
+    - **The enemy AI** uses the same rule.
+  - **Recommendation: B.** It keeps what Advance means (push past turrets you can get around) and fixes the pointless walk into point-blank range wherever the path really ends. C would remove the difference between Hold and Advance at defenses.
+  - Fits together with the other movement topics (convoy, melee sidestep, lane change speed), since it changes the same code.
+
 ### Enemy AI
 - **[balance] The enemy AI deploys one-sided, in same-type groups** (play-test v0.2.0-dev): e.g. 3 Brawlers at once in the same lane.
   - **Causes in the code:**
