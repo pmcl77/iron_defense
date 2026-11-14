@@ -303,7 +303,7 @@ export class World {
     }
     const want = this.mode[e.team] === 'hold' ? !t : e.pause <= 0;
     if (!want) { e.moving = !!e.shift; return; }
-    const sp = this.stat(e, 'speed') * (e.shift ? 0.5 : 1);
+    const sp = this.stat(e, 'speed') * (e.shift && e.shift.slow ? 0.5 : 1);
     let ny = e.y + dir * sp * dt, block = null;
     for (const f of this.entities) {
       if (f.dead || f === e) continue;
@@ -325,15 +325,25 @@ export class World {
     const adv = this.mode[e.team] === 'advance';
     if (block && !e.shift && adv) {
       if (block.kind === 'turret') this.trySidestep(e, block);
-      else if (block.team === e.team) this.tryOvertake(e);
+      else if (block.team === e.team) this.tryOvertake(e, block);
     }
     // after overtaking, return to the home lane once it's clear
-    if (!e.shift && e.homeLane != null && e.homeLane !== e.lane && this.laneFree(e, e.homeLane)) this.shiftTo(e, e.homeLane);
-    if (e.homeLane === e.lane && !e.shift) e.homeLane = null;
+    if (!e.shift && e.homeLane != null && e.homeLane !== e.lane && this.passed(e)) {
+      const next = e.lane + Math.sign(e.homeLane - e.lane); // one lane at a time
+      if (this.laneFree(e, next)) this.shiftTo(e, next);
+    }
+    if (e.homeLane === e.lane && !e.shift) { e.homeLane = null; e.passing = null; }
   }
 
-  shiftTo(e, lane) {
-    e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0 };
+  // true once the overtaker is clearly ahead of the mech it was passing, or that mech is gone, has left the home lane or is far ahead
+  passed(e) {
+    const f = e.passing;
+    if (!f || f.dead || f.lane !== e.homeLane) return true;
+    const ahead = (f.y - e.y) * FWD[e.team];
+    return ahead < -(f.radius + e.radius + 10) || ahead > 150; // clearly passed it, or it's far ahead and no longer in the way
+  }
+  shiftTo(e, lane, slow = false) {
+    e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0, slow };
     e.lane = lane;
     this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
   }
@@ -349,14 +359,18 @@ export class World {
     }
     return true;
   }
-  tryOvertake(e) {
-    const opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneFree(e, l));
+  tryOvertake(e, blocker) {
+    // not worth it if the mech ahead is walking at almost the same speed
+    if (blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 10) return false;
+    // never swing back into the home lane before the mech being passed is behind us
+    const opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneFree(e, l) && !(l === e.homeLane && !this.passed(e)));
     if (!opts.length) return false;
     const home = e.homeLane ?? e.lane;
     // prefer the side closer to home, then the side with fewer friendlies ahead
     const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * FWD[e.team] > 0 && Math.abs(f.y - e.y) < 200).length;
     opts.sort((a, b) => Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b));
     e.homeLane = home;
+    if (blocker) e.passing = blocker;
     this.shiftTo(e, opts[0]);
     return true;
   }
@@ -370,8 +384,8 @@ export class World {
       const a = count(opts[0]), b = count(opts[1]);
       lane = a < b ? opts[0] : b < a ? opts[1] : opts[this.rnd() < 0.5 ? 0 : 1];
     }
-    e.homeLane = null; // stepping around a turret is permanent
-    this.shiftTo(e, lane);
+    e.homeLane = null; e.passing = null; // stepping around a turret is permanent
+    this.shiftTo(e, lane, true);
     return true;
   }
 

@@ -18,6 +18,11 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Capacitors** (Workshop) now also raises max energy permanently: +40 per level, on top of +50 starting energy.
 - **New Workshop perk: Power Grid,** +1 energy per second per level (3 levels: 200 / 400 / 650 credits), permanent in every battle.
 
+### Fixes
+- **Overtaking in Advance no longer swings back** behind the unit being passed. The overtaking mech stays out until it's clearly past (or the other unit is far ahead), and it also stays out when it gets held up in the neighboring lane.
+- **Overtaking changes one lane at a time:** mechs no longer jump across two lanes, through other mechs, on the way back to their own lane.
+- **Overtaking runs at full speed** (half speed only when stepping around turrets). A mech doesn't start passing a unit that walks at almost the same speed.
+
 ### UI
 - **New minimap, easier to read:**
   - keeps the narrow strip

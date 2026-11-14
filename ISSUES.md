@@ -12,14 +12,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - *(The minimap readability issue was fixed in 0.2.0-dev: a mix of variants B and D (narrow strip, dark background, big outlined triangles and squares). Variant D's wider 40 × 160 strip was tried first. The user is judging it on the phone; in the narrow strip, units in neighboring lanes can overlap.)*
 
 ### Gameplay / movement
-- **[bug] In Advance, an overtaking mech swings back behind the unit it's passing** (play-test v0.2.0-dev, 2026-11-14)
-  - **Seen:** a Gunner behind a Brawler starts to overtake, then swivels back into its lane behind the Brawler. It only gets past when the Brawler stops.
-  - **Cause (found in `World.move`):** a lane change runs at half speed (Gunner 55 → 27.5), so the Brawler (40) pulls ahead. The return-home check only asks "is my home lane clear right beside me?". It is, so the Gunner returns behind the Brawler, is blocked again, and repeats.
-  - **Proposed fix:**
-    - remember which friendly is being overtaken, and only return home once the overtaker is clearly **ahead** of it (or it's gone)
-    - keep full forward speed during an overtake (half speed only when stepping around turrets)
-    - don't start an overtake if the mech ahead is only slightly slower (e.g. less than 10 units/s difference), since it would take forever
-  - Independent of the convoy rule decision, so it can be fixed right away if the user wants.
+- *(The overtake swing-back bug was fixed in 0.2.0-dev; see CHANGELOG.)*
 - **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
   - Cause: in Advance, *every* mech steps around an enemy turret if the neighboring cell is free, melee mechs included. The Breacher has the same problem, which defeats its purpose.
   - Proposal: melee mechs (Brawler, Breacher) never step around enemies. They attack what blocks them and only change lanes to overtake slower friendlies. Ranged mechs keep stepping around turrets in Advance.

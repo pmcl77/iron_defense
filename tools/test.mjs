@@ -237,5 +237,38 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('slow shell misses a fast-moving mech', runner.hp === 1000, `hp ${runner.hp}`);
 }
 
+// 19. overtaking a moving slower mech completes (no swinging back behind it)
+{
+  const w = mk();
+  w.setMode('advance');
+  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), fast = mech(w, 'gunner', 0, 2, 540, 1e9);
+  let swings = 0, lastLane = fast.lane;
+  for (let t = 0; t < 14; t += 1 / 60) { w.update(1 / 60); if (fast.lane !== lastLane) { swings++; lastLane = fast.lane; } }
+  check('gunner overtakes a walking brawler', fast.y > slow.y + slow.radius + fast.radius, `fast ${fast.y.toFixed(0)} slow ${slow.y.toFixed(0)}`);
+  check('one lane change out and one back, no swinging', swings === 2 && fast.lane === 2, `lane changes ${swings}, lane ${fast.lane}`);
+  check('brawler kept walking (wasn\'t waited for)', slow.y > 900, `slow ${slow.y.toFixed(0)}`);
+}
+
+// 20. overtaking with slower mechs in both neighbouring lanes: one lane at a time, never back behind the passed mech
+{
+  const w = mk();
+  w.setMode('advance');
+  const br = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'gunner', 0, 2, 540, 1e9);
+  mech(w, 'mortar', 0, 1, 660, 1e9); mech(w, 'mortar', 0, 3, 660, 1e9);
+  let last = g.lane, jumps = 0, backBehind = 0, left = false;
+  for (let t = 0; t < 25; t += 1 / 60) {
+    w.update(1 / 60);
+    if (g.lane !== last) {
+      if (Math.abs(g.lane - last) > 1) jumps++;
+      if (left && g.lane === 2 && g.y < br.y) backBehind++;
+      if (g.lane !== 2) left = true;
+      last = g.lane;
+    }
+  }
+  check('lane changes are one lane at a time', jumps === 0, `jumps ${jumps}`);
+  check('never swings back behind the brawler', backBehind === 0, `swing-backs ${backBehind}`);
+  check('ends ahead of the brawler, back home', g.y > br.y && g.lane === 2, `lane ${g.lane}`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
