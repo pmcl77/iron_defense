@@ -93,9 +93,17 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
   1. On `dev`, rename "Unreleased" in CHANGELOG.md to `[X.Y.Z]: <date>`, set `src/version.js` to `X.Y.Z` and commit.
   2. Merge into `main` and tag `vX.Y.Z`.
   3. Back on `dev`, add a new "Unreleased" section and set the version to the next `-dev` (e.g. `0.3.0-dev`).
-  4. The user pushes `main`, `dev` and the tags (`git push origin main dev --tags`).
+  4. Push `main`, `dev` and the tags (`git push origin main dev --tags`).
 - **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. https://iron-defense.pages.dev updates about 1 minute after `main` is pushed.
-- **Pushing:** pushing from the container's terminal fails ("Invalid username or token"), and reading the token from VS Code's credential helper is blocked. So **the user pushes from VS Code** (Source Control → Sync/Push, or Command Palette → "Git: Push"). Ask them to push, then check with `git fetch origin && git status -sb`.
+- **Pushing (since 2026-11-14):** I push myself over SSH with a **repo-scoped deploy key**, which has write access to `pmcl77/iron_defense` only.
+  - The key is `~/.ssh/iron_defense_deploy` in the container, with the host alias `github-iron-defense` in `~/.ssh/config`. The remote is `git@github-iron-defense:pmcl77/iron_defense.git`.
+  - Push `dev` as part of normal work. Push `main` only for a release the user has agreed to. Use `git push origin <branch> --tags` when tags change.
+  - **After a container rebuild** the key is gone:
+    1. Generate a new one: `ssh-keygen -t ed25519 -N "" -f ~/.ssh/iron_defense_deploy`.
+    2. Recreate the `~/.ssh/config` entry. Add github.com's ED25519 host key to known_hosts and check its fingerprint (`SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`).
+    3. The user adds the new public key under repo Settings → Deploy keys (with write access) and deletes the old one.
+  - The user decided **not** to keep the private key in the project folder (the repo is public).
+  - Fallback if the key isn't set up: the user pushes from VS Code (Source Control → Sync/Push). HTTPS pushes from the container terminal fail.
 - **Checking a deploy:** `curl -s -o /dev/null -w "%{http_code}" https://dev.iron-defense.pages.dev/` (or the release address), then load it headless, as in `tools/shots.cjs`.
 - **Local server:** `python3 tools/serve.py` only works on the computer itself.
   - The container's port isn't reachable from the network.
