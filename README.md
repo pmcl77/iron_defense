@@ -13,6 +13,12 @@ python3 tools/serve.py        # http://localhost:8767
 
 To try it on a phone on the same Wi-Fi, open `http://<computer-ip>:8767`. Installing it as an app needs HTTPS; GitHub Pages works.
 
+## Play online
+
+https://pmcl77.github.io/iron_defense/. On Android, open it in Chrome and choose ⋮ → Add to Home screen to install it.
+
+GitHub Pages serves the `main` branch, which holds released builds. Development happens on `dev`, which is merged into `main` for each release.
+
 ## Gameplay
 
 [gameplay.md](gameplay.md) is the full specification and the source of truth: rules, stats, stages, progression, art and sound direction.

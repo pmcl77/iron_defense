@@ -34,8 +34,8 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
    - **During development:** flat vector (sample 4), which is what `src/render.js` draws now.
    - The user disliked the low-res angled pixel art (samples 1 and 2) and liked the painted style (sample 3), but picked sample 7.
 9. **Sound:** the user disliked Ironline's toy-like sounds and wants it "a tad more realistic". `src/audio.js` is new layered, positional synthesis. If that's still not enough, the fallback is CC0 samples (not decided).
-10. **Repo:** https://github.com/pmcl77/iron_defense (public). Pages: Settings → Pages → branch `main`, folder `/ (root)`. Game URL: https://pmcl77.github.io/iron_defense/
-    - Pushing from the container's terminal failed with "Invalid username or token". The user pushes from VS Code (Source Control → Push).
+10. **Repo:** https://github.com/pmcl77/iron_defense (public). GitHub Pages deploys from `main` (folder `/ (root)`). Game URL: https://pmcl77.github.io/iron_defense/ (live and verified 2026-11-14).
+11. **Branches:** `main` = the released, stable version (what Pages serves). `dev` = everyday work. See "Git workflow" below.
 
 ## Status
 - **First playable build:** everything in the spec is implemented.
@@ -60,6 +60,14 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 | `art_samples/` | Art studies. `sample.html?style=1…7`, renders saved as `style-N.png`, comparisons `comparison.png` and `comparison-2.png`. `fine.js` (ray-traced voxels, primitive-based models) is the start of the final renderer |
 | `tools/` | `serve.py`, `test.mjs`, `balance.mjs`, `shots.cjs`, `make_icons.cjs` |
 
+## Git workflow
+- **Work on `dev`.** Commit there and never commit straight to `main`.
+- **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. Pages redeploys about 1 minute after `main` is pushed.
+- **Pushing:** pushing from the container's terminal fails ("Invalid username or token"), and reading the token from VS Code's credential helper is blocked. So **the user pushes from VS Code** (Source Control → Sync/Push, or Command Palette → "Git: Push"). Ask them to push, then check with `git fetch origin && git status -sb`.
+- **Checking a deploy:** the public API needs no login. `curl -s "https://api.github.com/repos/pmcl77/iron_defense/actions/runs?per_page=1"` shows the "pages build and deployment" status. Then load the site.
+- **Testing a `dev` build on the phone before release:** run `python3 tools/serve.py` and open `http://<computer-ip>:8767` on the same Wi-Fi. It's playable in the browser but can't be installed (that needs HTTPS). There's only one Pages site per repo, so there's no preview URL.
+- **Commits:** end messages with the `Co-Authored-By` line. Commit and push only when the user asks or it's part of an agreed task.
+
 ## Commands
 ```bash
 python3 tools/serve.py                      # http://localhost:8767 (preview config "iron-defense" in .claude/launch.json)
@@ -80,6 +88,7 @@ node art_samples/shoot.cjs [styles…]        # re-render art samples
 - Shadows and the ground image in `render.js` are cached per resize and stage. Call `renderer.resize(...)` after layout changes (`main.js` `resize()` does this).
 
 ## Next steps (suggested)
+0. Check the branch with `git status -sb`: it should be `dev`. If `origin/dev` doesn't exist yet, ask the user to push `dev` from VS Code.
 1. Ask the user how the first build plays on the S25+: open https://pmcl77.github.io/iron_defense/ in Chrome, then "Add to Home screen".
 2. Play-test findings: touch target sizes, readability, difficulty curve, whether battles stall at turret walls, sound realism.
 3. Tune `STAGES` and the new mech stats. Keep gameplay.md §11 and §13c in sync.
