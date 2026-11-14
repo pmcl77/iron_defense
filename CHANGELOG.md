@@ -19,7 +19,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **New Workshop perk: Power Grid,** +1 energy per second per level (3 levels: 200 / 400 / 650 credits), permanent in every battle.
 
 - **Deployment queue:** tapping a mech card without enough energy (or while it cools down) queues the order instead of refusing it.
-  - up to 6 orders, each in the lane that was active when tapped
+  - up to 5 orders, each in the lane that was active when tapped
   - orders come out strictly in order; the whole queue waits for energy and card cooldowns
   - energy is paid on deploy, so cancelling is free
   - shown in a strip above the controls while something is queued: tap a mech to cancel it, CLEAR cancels all, Backspace removes the last; the front order shows its energy progress, and cards show ×2, ×3… when a type is queued more than once

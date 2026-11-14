@@ -74,7 +74,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 ### 5.1 Deploying
 
 - One lane is **active**. It's shown by a highlight on the field and on a strip of **5 lane buttons in the HUD**, just above the cards. It starts on the middle lane. (The buttons are needed because your base is off screen once you scroll forward.)
-- **Deployment queue:** a mech card tapped without enough energy, or while the card cools down, queues the order (max 6) in the active lane. Strictly first in, first out: the whole queue waits for energy and cooldowns, and energy is paid on deploy. Cancel one order by tapping it, or all with CLEAR. A queued deploy waits until its lane's spawn point is clear, at most 1.5 s.
+- **Deployment queue:** a mech card tapped without enough energy, or while the card cools down, queues the order (max 5) in the active lane. Strictly first in, first out: the whole queue waits for energy and cooldowns, and energy is paid on deploy. Cancel one order by tapping it, or all with CLEAR. A queued deploy waits until its lane's spawn point is clear, at most 1.5 s.
 - Tapping a mech card deploys that mech at your base, into the active lane.
 - Each card has a short cooldown after use, as in Ironline.
 - **Loadout:** you have up to 8 mech types, but the HUD holds 5 mech cards. Before each battle you pick a loadout of 5 unlocked mechs, which keeps hotkeys 1–5. The last loadout is remembered. *(Might later grow to allow all 8 mechs.)*

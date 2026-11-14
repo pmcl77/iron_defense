@@ -73,6 +73,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Melee mechs** (Brawler, Breacher) still walk up and hit.
     - **If the obstacle disappears** (turret destroyed, gap opens), the mech walks on.
     - **The enemy AI** uses the same rule.
+  - **Decided (user, 2026-11-14): B.** To be built together with the other movement topics (discussion planned for 2026-11-15).
   - **Recommendation: B.** It keeps what Advance means (push past turrets you can get around) and fixes the pointless walk into point-blank range wherever the path really ends. C would remove the difference between Hold and Advance at defenses.
   - Fits together with the other movement topics (convoy, melee sidestep, lane change speed), since it changes the same code.
 
