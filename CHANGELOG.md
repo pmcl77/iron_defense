@@ -7,7 +7,7 @@ All notable changes to Iron Defense. The newest version is at the top.
 
 Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev` suffix.
 
-## [Unreleased]: 0.2.0-dev
+## [0.2.0]: 2026-11-14
 
 ### Gameplay
 - **Lane reach:** a mech can only shoot at its own lane and the two lanes next to it. Seekers, turrets and bases still reach every lane, and the enemy base can be hit from any lane.
