@@ -141,6 +141,19 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Recommendation: A + B + C now, D later.** It makes the AI feel smarter and less predictable without the full counter AI. The difficulty will shift, so stages 1–12 need a rebalance with the bot afterwards.
 
 ### Under discussion
+- **[balance] Big melee mechs walk too fast** (user, play-test 0.3.0-dev, 2026-11-14)
+  - **Today:** Brawler 40, Breacher 38. For comparison: Gunner 55, Seeker 50, Aegis 45, Lancer 40, Mortar 35, Scout 95; the heavy tank proposal has 30.
+  - **Part of it may be perception:** in the voxel graphics the legs step about 5× too slowly for the actual speed, so the mechs seem to glide (see Art: leg sync). Fix that first, then judge again.
+  - **Options if it's still too fast:**
+    - **A:** about −20% (Brawler 40 → 32, Breacher 38 → 30)
+    - **B:** only the Breacher slower (it's the heavier one)
+    - **C:** slower, but with a short charge when an enemy comes within about 80 (heavy, yet still reaches its target)
+  - **Side effects:**
+    - slow tanks at the front make Hold convoys slower (convoy rule)
+    - they stay longer under turret fire before they reach anything
+    - the enemy uses the same mechs
+    - a bot rebalance is needed afterwards
+  - **Recommendation:** fix the leg sync first; if they still look fast, A, then rerun the balance bot.
 - **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
   - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
   - **Why that may be a problem:** one Seeker covers the whole field width, so it ignores the lane tactics that lane reach was introduced for. It's also hard to read: missiles cross the entire screen.
@@ -228,6 +241,10 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - readability: mech size, contrast against the ground, shadow strength, number of craters
   - still flat: effects (muzzle flashes, explosions, smoke), projectiles, HUD card icons, the destroyed base (only darkened), the Constructor's building animation
   - later: voxel card icons, voxel debris and explosions, team colors via tinting (halves image size)
+  - **Play-test feedback (user, 2026-11-14):** runs smoothly on the S25+, loading isn't noticeably slower, the overall look and the craters are fine. Proposed changes (not built yet, waiting for go):
+    - **Lane lines:** remove the dark double stripes (wheel tracks) inside the lanes; the grass edges already show the lanes.
+    - **Leg sync:** the walk cycle is about 5× too slow for the movement, so mechs glide. Make each stride match the distance walked (feet stay planted), with a longer stride for bigger mechs (slower, heavier steps), and 6–8 walk frames instead of 3 for a smoother cycle (+~2–3 MB of images).
+    - **Brawler bulkier:** today its fists sit in front of the body, low down, so from the camera behind it they're mostly hidden and one sticks out at the side, which reads as "one arm in front". Proposal: wider body, big shoulder plates that overhang both sides, both arms beside the body (so both are visible), heavy fists, a front bumper bar, maybe 10% bigger overall. A close-up mockup first.
 
 ### Tech / housekeeping
 - **[tech] Unpublish the old GitHub Pages site** (repo Settings → Pages). It still serves v0.1.0 at pmcl77.github.io/iron_defense. A task for the user.
