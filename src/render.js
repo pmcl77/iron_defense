@@ -192,21 +192,26 @@ export class Renderer {
     this.shadowCv = document.createElement('canvas');
     this.ground = null;
     this.groundKey = '';
+    this.squash = 1;  // ground y squash (voxel view: 0.78)
+    this.lift = 0;    // screen px to lift shots and muzzle flashes off the ground
   }
+  // circle lying on the ground
+  gArc(c, x, y, r) { c.ellipse(x, y, r, r * this.squash, 0, 0, 7); }
   resize(w, h, dpr, fieldTop, fieldBottom) {
     Object.assign(this, { w, h, dpr, fieldTop, fieldBottom });
     this.canvas.width = Math.round(w * dpr); this.canvas.height = Math.round(h * dpr);
     this.canvas.style.width = w + 'px'; this.canvas.style.height = h + 'px';
     this.shadowCv.width = this.canvas.width; this.shadowCv.height = this.canvas.height;
     this.scale = w / FIELD.w;
-    this.viewH = (fieldBottom - fieldTop) / this.scale;
+    this.ys = this.scale * this.squash; // vertical px per world unit (the voxel view squashes the ground)
+    this.viewH = (fieldBottom - fieldTop) / this.ys;
     this.groundKey = '';
     this.clampCam();
   }
   clampCam() { this.camY = Math.max(-20, Math.min(FIELD.h - this.viewH + 20, this.camY)); }
   sx(x) { return x * this.scale; }
-  sy(y) { return this.fieldBottom - (y - this.camY) * this.scale; }
-  screenToWorld(px, py) { return { x: px / this.scale, y: this.camY + (this.fieldBottom - py) / this.scale }; }
+  sy(y) { return this.fieldBottom - (y - this.camY) * this.ys; }
+  screenToWorld(px, py) { return { x: px / this.scale, y: this.camY + (this.fieldBottom - py) / this.ys }; }
 
   buildGround(seed) {
     const key = `${seed}:${this.w}:${this.dpr}`;
@@ -397,58 +402,60 @@ export class Renderer {
         if (w.cells[0][l][r] || w.orderAt(l, r)) continue;
         c.fillStyle = 'rgba(127,255,170,0.10)'; c.strokeStyle = 'rgba(127,255,170,0.45)'; c.lineWidth = 1;
         const x = this.sx(l * LANE_W + 6), y = this.sy(cellY(0, r) + 44);
-        c.fillRect(x, y, (LANE_W - 12) * s, 88 * s); c.strokeRect(x, y, (LANE_W - 12) * s, 88 * s);
+        c.fillRect(x, y, (LANE_W - 12) * s, 88 * this.ys); c.strokeRect(x, y, (LANE_W - 12) * s, 88 * this.ys);
       }
     }
     // planned cells with a ghost and build progress
     c.setLineDash([6, 5]); c.lineWidth = 2;
     for (const o of w.orders) {
-      const x = this.sx(o.lane * LANE_W + 6), y = this.sy(cellY(0, o.row) + 46), wd = (LANE_W - 12) * s, ht = 92 * s;
+      const x = this.sx(o.lane * LANE_W + 6), y = this.sy(cellY(0, o.row) + 46), wd = (LANE_W - 12) * s, ht = 92 * this.ys;
       c.fillStyle = 'rgba(78,163,255,0.10)'; c.fillRect(x, y, wd, ht); c.strokeStyle = '#4ea3ff'; c.strokeRect(x, y, wd, ht);
       c.save(); c.setLineDash([]); c.globalAlpha = 0.3 + 0.4 * o.progress;
-      c.translate(this.sx(laneX(o.lane)), this.sy(cellY(0, o.row))); c.scale(s * VIS_TURRET, s * VIS_TURRET); drawTurretShape(c, o.type, 0, 0); c.restore();
+      this.drawGhost(c, o.type, this.sx(laneX(o.lane)), this.sy(cellY(0, o.row))); c.restore();
       if (o.progress > 0) { c.save(); c.setLineDash([]); c.fillStyle = '#101010'; c.fillRect(x + 8, y + ht - 10, wd - 16, 5); c.fillStyle = '#8fdcff'; c.fillRect(x + 9, y + ht - 9, (wd - 18) * o.progress, 3); c.restore(); }
     }
     c.setLineDash([]);
     // pending bombs: shrinking target marks
     for (const b of w.bombs) {
       const r = (6 + b.t * 30) * s;
-      c.strokeStyle = 'rgba(255,90,60,0.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(this.sx(b.x), this.sy(b.y), r, 0, 7); c.stroke();
+      c.strokeStyle = 'rgba(255,90,60,0.8)'; c.lineWidth = 1.5; c.beginPath(); this.gArc(c, this.sx(b.x), this.sy(b.y), r); c.stroke();
     }
     // bombing targeting reticle
     if (ui.targeting && ui.aim) {
       const x = this.sx(ui.aim.x), y = this.sy(ui.aim.y), r = 110 * s;
-      c.strokeStyle = 'rgba(255,90,60,0.9)'; c.lineWidth = 2; c.setLineDash([8, 6]); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); c.setLineDash([]);
+      c.strokeStyle = 'rgba(255,90,60,0.9)'; c.lineWidth = 2; c.setLineDash([8, 6]); c.beginPath(); this.gArc(c, x, y, r); c.stroke(); c.setLineDash([]);
       c.beginPath(); c.moveTo(x - 12, y); c.lineTo(x + 12, y); c.moveTo(x, y - 12); c.lineTo(x, y + 12); c.stroke();
     }
     // aegis fields
     for (const e of w.entities) if (e.type === 'aegis' && !e.dead && e.stun <= 0) {
       c.strokeStyle = e.team ? 'rgba(255,140,120,0.5)' : 'rgba(127,233,255,0.6)'; c.lineWidth = 1.5; c.setLineDash([10, 8]); c.lineDashOffset = -this.time * 20;
-      c.beginPath(); c.arc(this.sx(e.x), this.sy(e.y), e.def.aura * s, 0, 7); c.stroke(); c.setLineDash([]);
+      c.beginPath(); this.gArc(c, this.sx(e.x), this.sy(e.y), e.def.aura * s); c.stroke(); c.setLineDash([]);
     }
     // selected turret
     if (ui.selected) {
       const t = ui.selected;
-      if (!t.dead) { c.strokeStyle = '#ffe08a'; c.lineWidth = 2; c.beginPath(); c.arc(this.sx(t.x), this.sy(t.y), t.radius * s * 1.5, 0, 7); c.stroke();
-        c.strokeStyle = 'rgba(255,224,138,0.35)'; c.setLineDash([6, 6]); c.beginPath(); c.arc(this.sx(t.x), this.sy(t.y), t.def.range * s, 0, 7); c.stroke(); c.setLineDash([]); }
+      if (!t.dead) { c.strokeStyle = '#ffe08a'; c.lineWidth = 2; c.beginPath(); this.gArc(c, this.sx(t.x), this.sy(t.y), t.radius * s * 1.5); c.stroke();
+        c.strokeStyle = 'rgba(255,224,138,0.35)'; c.setLineDash([6, 6]); c.beginPath(); this.gArc(c, this.sx(t.x), this.sy(t.y), t.def.range * s); c.stroke(); c.setLineDash([]); }
     }
   }
+
+  drawGhost(c, type, x, y) { const s = this.scale; c.translate(x, y); c.scale(s * VIS_TURRET, s * VIS_TURRET); drawTurretShape(c, type, 0, 0); }
 
   drawProjectiles(c, w) {
     const s = this.scale;
     for (const p of w.projectiles) {
-      const x = this.sx(p.x), y = this.sy(p.y);
+      const x = this.sx(p.x), y = this.sy(p.y) - (p.kind === 'shell' ? 0 : this.lift);
       if (p.kind === 'bullet' || p.kind === 'slug') {
-        const px = this.sx(p.px ?? p.x), py = this.sy(p.py ?? p.y), dx = x - px, dy = y - py, m = Math.hypot(dx, dy) || 1;
+        const px = this.sx(p.px ?? p.x), py = this.sy(p.py ?? p.y) - this.lift, dx = x - px, dy = y - py, m = Math.hypot(dx, dy) || 1;
         const len = (p.kind === 'slug' ? 60 : 14) * s;
         c.strokeStyle = p.kind === 'slug' ? '#bff0ff' : '#ffe08a'; c.lineWidth = p.kind === 'slug' ? 3 : 2; c.lineCap = 'round';
         c.beginPath(); c.moveTo(x - (dx / m) * len, y - (dy / m) * len); c.lineTo(x, y); c.stroke();
       } else if (p.kind === 'shell') {
         c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(x + p.z * s * 0.3, y + p.z * s * 0.2, 3, 0, 7); c.fill();
-        c.fillStyle = '#2d2d2a'; c.beginPath(); c.arc(x, y - p.z * s * 0.5, 3.5 + p.z * 0.01, 0, 7); c.fill();
+        c.fillStyle = '#2d2d2a'; c.beginPath(); c.arc(x, y - p.z * s * (this.squash < 1 ? 0.72 : 0.5), 3.5 + p.z * 0.01, 0, 7); c.fill();
       } else if (p.kind === 'missile') {
         c.strokeStyle = 'rgba(235,232,222,0.55)'; c.lineWidth = 2.5; c.lineCap = 'round'; c.beginPath();
-        p.trail.forEach((q, i) => (i ? c.lineTo(this.sx(q.x), this.sy(q.y)) : c.moveTo(this.sx(q.x), this.sy(q.y)))); c.stroke();
+        p.trail.forEach((q, i) => (i ? c.lineTo(this.sx(q.x), this.sy(q.y) - this.lift) : c.moveTo(this.sx(q.x), this.sy(q.y) - this.lift))); c.stroke();
         c.save(); c.translate(x, y); c.rotate(p.ang); c.fillStyle = '#ffb040'; c.beginPath(); c.arc(0, 5, 2.5, 0, 7); c.fill();
         c.fillStyle = '#e4e0d4'; c.fillRect(-1.5, -4, 3, 8); c.restore();
       }
@@ -460,7 +467,7 @@ export class Renderer {
     for (const p of this.particles) {
       const k = Math.max(0, p.life / p.max);
       if (p.k === 'scorch') continue;
-      const x = this.sx(p.x), y = this.sy(p.y);
+      const x = this.sx(p.x), y = this.sy(p.y) - (p.k === 'flash' || p.k === 'spark' ? this.lift : 0);
       if (p.k === 'flash') {
         c.fillStyle = p.col; c.beginPath();
         for (let i = 0; i < 8; i++) { const a = p.rot + (i / 8) * Math.PI * 2, r = (i % 2 ? 0.35 : 1) * p.s * s * (0.6 + k * 0.6); c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
@@ -472,7 +479,7 @@ export class Renderer {
       } else if (p.k === 'debris') {
         c.save(); c.translate(x, y); c.rotate(p.rot + p.life * 8); c.fillStyle = p.col; c.globalAlpha = Math.min(1, k * 2); c.fillRect(-p.s, -p.s, p.s * 2, p.s * 2); c.restore();
       } else if (p.k === 'ring') {
-        c.strokeStyle = p.col; c.globalAlpha = k; c.lineWidth = 2; c.beginPath(); c.arc(x, y, p.r * s * (1.4 - k * 0.6), 0, 7); c.stroke(); c.globalAlpha = 1;
+        c.strokeStyle = p.col; c.globalAlpha = k; c.lineWidth = 2; c.beginPath(); this.gArc(c, x, y, p.r * s * (1.4 - k * 0.6)); c.stroke(); c.globalAlpha = 1;
       } else if (p.k === 'boom') {
         if (p.life > p.max) continue; // delayed
         const r = 30 * p.s * s * (1.2 - k * 0.5);

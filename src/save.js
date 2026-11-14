@@ -10,7 +10,7 @@ export function defaultSave() {
     tech: {},                   // Workshop starting level per unit type (incl. 'builder' = Constructor)
     perks: { energy: 0, armor: 0, charge: 0, regen: 0 },
     loadout: ['scout', 'gunner'],
-    settings: { sound: true, speed: 1 },
+    settings: { sound: true, speed: 1, graphics: 'voxel' },
   };
 }
 

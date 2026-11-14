@@ -223,7 +223,11 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **[feature] Stage 1 tutorial overlay.**
 
 ### Art
-- **[feature] Voxel renderer (final art style, sample 7):** bake sprite sheets from `art_samples/fine.js` at 3 px voxels, and pre-render the ground.
+- **[feature] Voxel renderer: first playable version in 0.3.0-dev** (see CHANGELOG). To check on the S25+ and tune:
+  - frame rate and loading time (6.6 MB of images, loaded once, then cached)
+  - readability: mech size, contrast against the ground, shadow strength, number of craters
+  - still flat: effects (muzzle flashes, explosions, smoke), projectiles, HUD card icons, the destroyed base (only darkened), the Constructor's building animation
+  - later: voxel card icons, voxel debris and explosions, team colors via tinting (halves image size)
 
 ### Tech / housekeeping
 - **[tech] Unpublish the old GitHub Pages site** (repo Settings → Pages). It still serves v0.1.0 at pmcl77.github.io/iron_defense. A task for the user.

@@ -4,13 +4,26 @@ import {
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon } from './render.js';
+import { VoxelRenderer } from './render_voxel.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
 import { loadSave, writeSave, resetSave, defaultSave } from './save.js';
 import { VERSION } from './version.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app'), canvas = $('#game'), hud = $('#hud'), screen = $('#screen'), minimap = $('#minimap');
-const renderer = new Renderer(canvas);
+const flatRenderer = new Renderer(canvas);
+let renderer = flatRenderer, voxelRenderer = null;
+// Graphics: 'voxel' (final art, pre-baked sprites) or 'simple' (flat vector). Falls back to simple if assets fail.
+async function applyGraphics() {
+  let next = flatRenderer;
+  if (save.settings.graphics !== 'simple') {
+    try {
+      if (!voxelRenderer) { const v = new VoxelRenderer(canvas); await v.load(); voxelRenderer = v; }
+      next = voxelRenderer;
+    } catch (err) { console.warn('voxel graphics unavailable:', err.message); }
+  }
+  if (next !== renderer) { next.camY = renderer.camY; renderer = next; resize(); }
+}
 const mctx = minimap.getContext('2d');
 
 // Development builds (dev.iron-defense.pages.dev, localhost, LAN) are marked so they're never mistaken for the release.
@@ -285,14 +298,16 @@ function showSettings() {
     <div class="panel">
       <div class="head"><h2>Settings</h2><button class="btn small" data-a="back">Back</button></div>
       <div class="toggle"><span>Sound</span><button class="btn small" data-a="sound">${save.settings.sound ? 'On' : 'Off'}</button></div>
+      <div class="toggle"><span>Graphics</span><button class="btn small" data-a="gfx">${save.settings.graphics === 'simple' ? 'Simple' : 'Voxel'}</button></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
-      <p class="sub" style="margin-top:12px">Iron Defense v${VERSION} · development art.</p>
+      <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
     </div>`;
   bind({
     back: showMenu,
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showSettings(); },
     fs: () => { if (document.fullscreenElement) document.exitFullscreen(); else tryFullscreen(true); },
+    gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
     reset: (el) => { if (el.dataset.confirm) { save = resetSave(); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
   });
 }
@@ -532,7 +547,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (game.ui.targeting) game.ui.aim = renderer.screenToWorld(p.x, p.y);
   if (drag.id !== e.pointerId || game.mode !== 'play') return;
   if (Math.abs(p.y - drag.sy) > 10) drag.moved = true;
-  if (drag.moved) { renderer.camY += (p.y - drag.ly) / renderer.scale; renderer.clampCam(); hideSell(); }
+  if (drag.moved) { renderer.camY += (p.y - drag.ly) / renderer.ys; renderer.clampCam(); hideSell(); }
   drag.ly = p.y;
 });
 canvas.addEventListener('pointerup', (e) => {
@@ -543,7 +558,7 @@ canvas.addEventListener('pointerup', (e) => {
 canvas.addEventListener('pointercancel', () => { drag.id = null; });
 canvas.addEventListener('wheel', (e) => {
   if (game.mode !== 'play') return;
-  renderer.camY -= e.deltaY / renderer.scale; renderer.clampCam(); e.preventDefault();
+  renderer.camY -= e.deltaY / renderer.ys; renderer.clampCam(); e.preventDefault();
 }, { passive: false });
 
 function onTap(px, py) {
@@ -668,6 +683,7 @@ function frame(now) {
 
 // ---------- boot ----------
 resize();
+applyGraphics();
 startDemo();
 showMenu();
 requestAnimationFrame(frame);

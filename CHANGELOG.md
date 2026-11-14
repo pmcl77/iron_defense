@@ -9,6 +9,16 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.3.0-dev
 
+### Art
+- **Voxel graphics (first playable version, the final art style from sample 7):**
+  - an angled view with medium voxels
+  - mechs, turrets, the Constructor and both bases come from the voxel models, with hard sun shadows
+  - the ground has dirt tracks, craters, grass tufts and pebbles
+  - mechs show their walking legs and turning torso; turrets turn their heads
+  - all sprites are pre-rendered (`tools/bake_voxel.cjs`) in 16 body directions, 32 aim directions and 3 walk frames, so the phone doesn't compute voxels while playing
+  - effects, HP bars and overlays reuse the flat style, adjusted to the angled view
+- **Settings → Graphics:** Voxel (default) or Simple (the flat development art). It falls back to Simple automatically if the images can't be loaded.
+
 ## [0.2.0]: 2026-11-14
 
 ### Gameplay
