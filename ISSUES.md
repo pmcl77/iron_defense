@@ -12,6 +12,33 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - *(The minimap readability issue was fixed in 0.2.0-dev: a mix of variants B and D (narrow strip, dark background, big outlined triangles and squares). Variant D's wider 40 × 160 strip was tried first. The user is judging it on the phone; in the narrow strip, units in neighboring lanes can overlap.)*
 
 ### Gameplay / movement
+- **[discussion prep] Movement rules as one consistent matrix** (user, 2026-11-14, for the 2026-11-15 discussion)
+  - **Dimensions to compare:**
+    - Hold vs. Advance
+    - obstacle friendly vs. enemy
+    - obstacle mech vs. turret (plus the base)
+    - mover and obstacle ranged vs. melee
+  - **Observed (Advance):** the first Brawler attacks the enemy in front of it; the second Brawler, right behind, changes lanes and walks on. This follows today's rules (the first Brawler has stopped to fight, so to the second one it is a stopped friendly, and in Advance any stopped friendly is overtaken), but it feels inconsistent: a melee mech walks *away* from a fight it could join.
+  - **Today's behavior:**
+
+    | Mover meets … | Hold | Advance |
+    |---|---|---|
+    | friendly mech, walking | follows (convoy) | overtakes if ≥10 faster and a neighbor lane is free |
+    | friendly mech, stopped/fighting | waits behind it (convoy) | overtakes through a free neighbor lane |
+    | enemy mech | stops at own range (melee: at contact) and fights | fights on the move; stopped by contact; never changes lane for it |
+    | enemy turret, gap next to it | stops at own range | steps around it (**melee too**, the logged bug) |
+    | enemy turret, no gap / full wall | stops at own range | walks up to contact, then fights (ranged too) |
+    | enemy base | stops at own range | walks up to contact (ranged too) |
+
+  - **Already decided or proposed:**
+    - Ranged mechs in Advance stop at their range in front of anything they can't pass (decided, B).
+    - Melee mechs never step around enemies (proposed).
+    - Hold convoy rule A/B/C/D (open).
+    - Lane change speed C (proposed).
+  - **Open cell to settle tomorrow:** "friendly mech stopped and fighting", per mover type and mode. One candidate rule:
+    - A **melee** mover overtakes a fighting friendly only to *join the fight* (moves up beside it into a free neighbor lane, if an enemy is within reach there), not to walk past it.
+    - A **ranged** mover never needs to: it already has the target in range and stops (Hold), or stops at range (Advance, rule B).
+  - **Goal:** one table where every cell has a rule we can explain in one sentence, and the help screen can show it.
 - *(The overtake swing-back bug was fixed in 0.2.0-dev; see CHANGELOG.)*
 - **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
   - Cause: in Advance, *every* mech steps around an enemy turret if the neighboring cell is free, melee mechs included. The Breacher has the same problem, which defeats its purpose.
