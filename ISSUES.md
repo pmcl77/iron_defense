@@ -11,6 +11,21 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Turret squares are easy to see. Mech dots are almost invisible ("with my old eyes").
   - Make mech dots bigger.
   - Check the contrast too: team colors against the brown background, and maybe a dark outline around each dot.
+  - Follow-up from the user: probably mostly **color contrast**. Red dots on brown are hard to see; blue dots are easy.
+  - **Plan:** render 3–4 minimap variants side by side at real phone size and let the user pick. Options:
+    - a darker (near-black olive) background
+    - a lighter, more orange enemy red
+    - a dark outline around each dot
+    - bigger mech dots
+    - shapes as well as colors (mechs as direction triangles, turrets as squares)
+
+### Under discussion
+- **[feature] Production queue** (user idea, 2026-11-14): tapping a mech card without enough energy queues the order instead of refusing it, and it deploys automatically when energy and card cooldown allow. My recommendation:
+  - each order keeps the lane that was active when tapped
+  - strictly first in, first out
+  - energy is charged on deploy (other purchases delay the queue)
+  - limited to 5 orders, shown as icons with lane numbers above the cards; tap an icon to cancel
+  - the open question was "unlimited or limited"; I recommend limited (5) so the game doesn't become "fill the queue and watch"
 
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
