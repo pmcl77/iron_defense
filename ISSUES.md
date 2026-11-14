@@ -43,6 +43,24 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Trade-off to decide:** keep deploy order as a skill (rule A, or today's rule) vs. automatic sorting for convenience (rules B, C or D).
   - Decide together with the melee sidestep bug above, since both change the same movement code.
 
+- **[ui/gameplay] Lane changes are far too fast: mechs "fly" sideways** (user, 2026-11-14)
+  - **Today:** every lane change (overtake, return home, stepping around a turret) takes a fixed 0.5 s for the 120-unit lane width, for every mech. That's 240 units/s sideways, while mechs walk forward at 30–95 (a Brawler moves sideways 6× faster than it walks). The body only tilts up to 34° and eases back. The mech also counts as being in the new lane from the very first moment, for blocking and targeting.
+  - **Options:**
+    - **A, longer fixed time:** e.g. 1.5 s for everyone. Simplest, but the Scout and the Brawler would still change lanes at the same pace.
+    - **B, purely visual:** keep 0.5 s but turn the body fully and animate the legs. It doesn't fix the core problem, which is the speed itself.
+    - **C, walk over at the mech's own speed (realistic):**
+      - The mech turns toward the new lane at its turn rate and walks diagonally: sideways at about 0.8× its walk speed, forward at about 0.6×.
+      - If it's blocked in front (a turret, a stopped unit), it doesn't move forward and only steps sideways.
+      - It then turns back to face forward. The legs animate the whole time.
+      - Resulting times: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s (and a heavy tank ≈ 5 s).
+    - **Add-on for C, honest lane occupancy:** while changing lanes, the mech blocks *both* lanes, so nobody walks through it. Its lane for targeting and lane reach switches at the halfway point.
+  - **Gameplay effects of C:**
+    - overtaking and stepping around turrets take longer, and the mech is exposed while doing it
+    - heavy mechs commit to their lane, while light mechs stay nimble
+    - fewer, more deliberate lane changes overall
+    - this interacts with the convoy/overtake rules above (overtaking becomes more costly), and tests #19/#20 need new timings
+  - **Recommendation: C with honest lane occupancy.** It looks like walking, gives each mech its own feel, and matches the plan for heavier units. It's best decided and built together with the convoy rule and the melee sidestep bug, since all three change the same movement code.
+
 ### Under discussion
 - **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
   - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
