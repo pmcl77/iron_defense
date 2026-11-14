@@ -254,7 +254,8 @@ function showHelp() {
   const items = [
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
-    ['Hold / Advance', 'HOLD: mechs stop and fight anything in range. ADVANCE: mechs keep walking while firing and step around turrets through gaps. Only a full turret wall stops them.'],
+    ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers, turrets and bases reach every lane.'],
+    ['Hold / Advance', 'HOLD: mechs stop and fight anything in range, and march as a convoy behind slower mechs. ADVANCE: mechs keep walking while firing, step around turrets through gaps, and overtake slower mechs. Only a full turret wall stops them.'],
     ['Turrets', 'Open TURRETS, pick a turret, then tap free cells to queue orders (paid now). Your Constructor drives out and builds them. Tap a planned cell to cancel. Tap your turret to sell it.'],
     ['Constructor', 'Each trip costs 20 energy, refunded when it gets home safely. If it is destroyed, a new one leaves after 3 s.'],
     ['Specials', 'Bombing (tap a target), EMP (stuns enemies) and Energy Surge (+100 energy). They recharge over time.'],

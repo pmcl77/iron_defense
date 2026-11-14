@@ -13,12 +13,18 @@ function makeSave(variant) {
     for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 2;
     s.perks = { energy: 1, armor: 1, charge: 1 };
   }
+  if (variant === 'max') {
+    for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 3;
+    s.perks = { energy: 3, armor: 3, charge: 3 };
+  }
   return s;
 }
 
-function play(i, seed, variant) {
-  const u = unlockedSet(i);
-  const loadout = PREF.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
+// strategies: 'mixed' (random loadout units), 'mortar' (Brawler in front, Mortars behind), 'split' (alternate waves on lanes 2 and 4)
+function play(i, seed, variant, strat = 'mixed') {
+  const u = unlockedSet(Math.min(i, 6));
+  const pref = strat === 'mortar' ? ['mortar', 'brawler', 'gunner', 'aegis', 'seeker', 'lancer', 'breacher', 'scout'] : PREF;
+  const loadout = pref.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
   const w = new World(stageDef(i), makeSave(variant), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed });
   // wall plan: row 2 sentries center-out, then support turrets
   const plan = [[2, 2, 'sentry'], [1, 2, 'sentry'], [3, 2, 'sentry']];
@@ -26,7 +32,7 @@ function play(i, seed, variant) {
   plan.push([0, 2, 'sentry'], [4, 2, 'sentry']);
   if (u.turrets.includes('arc')) plan.push([2, 3, 'arc']);
   if (u.turrets.includes('howitzer')) plan.push([0, 0, 'howitzer'], [4, 0, 'howitzer']);
-  let waving = 0, waveLane = 2;
+  let waving = 0, waveLane = 2, waveNo = 0;
   let think = 0, r = seed * 9301 + 49297;
   const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
   const dt = 1 / 60;
@@ -52,7 +58,7 @@ function play(i, seed, variant) {
     }
     // engagement mode: push with a group, hold while gathering
     const front = mine.filter((e) => e.y > 1000).length;
-    w.setMode(front >= 4 || w.bases[1].hp / w.bases[1].maxHp < 0.35 ? 'advance' : 'hold');
+    w.setMode(strat !== 'mortar' && (front >= 4 || w.bases[1].hp / w.bases[1].maxHp < 0.35) ? 'advance' : 'hold');
     // defend threatened lanes at once; otherwise attack in waves down one lane
     const afford = () => loadout.filter((t) => w.canDeploy(t));
     if (threat.length && w.energy > 60) {
@@ -62,11 +68,16 @@ function play(i, seed, variant) {
       if (waving <= 0) {
         const cnt = Array.from({ length: LANES }, (_, l) => w.cells[1][l].filter(Boolean).length);
         const m = Math.min(...cnt), opts = cnt.map((c, l) => (c === m ? l : -1)).filter((l) => l >= 0);
-        waveLane = opts[Math.floor(rnd() * opts.length)]; waving = 4;
+        waveLane = strat === 'split' ? (waveNo++ % 2 ? 3 : 1) : opts[Math.floor(rnd() * opts.length)]; waving = 4;
       }
       w.setLane(waveLane);
       const a = afford();
-      if (a.length) { w.deploy(a[Math.floor(rnd() * a.length)]); waving--; } else if (w.energy < 40) waving = 0;
+      let pick = a[Math.floor(rnd() * a.length)];
+      if (strat === 'mortar' && a.length) {
+        const tanks = mine.filter((e) => e.lane === waveLane && e.type === 'brawler').length;
+        pick = !tanks && a.includes('brawler') ? 'brawler' : a.includes('mortar') ? 'mortar' : pick;
+      }
+      if (a.length) { w.deploy(pick); waving--; } else if (w.energy < 40) waving = 0;
     }
     // upgrades when energy piles up
     if (w.energy >= w.maxEnergy - 10) {
@@ -81,15 +92,17 @@ function play(i, seed, variant) {
 
 const runs = +(process.argv[2] || 6);
 const only = process.argv.slice(3).map((n) => +n - 1);
-console.log('stage            | no workshop: win%  time  hp% | mid workshop: win%  time  hp%');
-for (let i = 0; i < STAGES.length; i++) {
+const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['max', 'mortar']];
+console.log('win% / avg time per strategy. Workshop: none = no upgrades, mid = level 2 + perks 1, max = level 3 + perks 3');
+console.log('stage             | ' + COLS.map(([v, st]) => `${v}/${st}`.padEnd(13)).join('| '));
+const total = STAGES.length + 3;
+for (let i = 0; i < total; i++) {
   if (only.length && !only.includes(i)) continue;
-  const row = [];
-  for (const v of ['none', 'mid']) {
-    const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, v));
-    const wins = res.filter((x) => x.win);
-    const avg = (a, f) => (a.length ? a.reduce((s, x) => s + f(x), 0) / a.length : 0);
-    row.push(`${String(Math.round((100 * wins.length) / runs)).padStart(4)}% ${String(Math.round(avg(res, (x) => x.time))).padStart(5)}s ${String(Math.round(100 * avg(wins, (x) => x.hp))).padStart(4)}%${res.some((x) => x.timeout) ? ' T' : '  '}`);
-  }
-  console.log(`${String(i + 1).padStart(2)} ${STAGES[i].name.padEnd(13)} |        ${row[0]}   |         ${row[1]}`);
+  const cells = COLS.map(([v, st]) => {
+    const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, v, st));
+    const wins = res.filter((x) => x.win).length, t = res.reduce((s, x) => s + x.time, 0) / runs;
+    return `${String(Math.round((100 * wins) / runs)).padStart(4)}% ${String(Math.round(t)).padStart(4)}s${res.some((x) => x.timeout) ? 'T' : ' '} `;
+  });
+  const name = i < STAGES.length ? STAGES[i].name : `Endless ${i - STAGES.length + 1}`;
+  console.log(`${String(i + 1).padStart(2)} ${name.padEnd(14)} | ${cells.join('| ')}`);
 }

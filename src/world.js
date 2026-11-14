@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, cellY, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
@@ -13,6 +13,8 @@ const TAU = Math.PI * 2;
 const AIM_TOL = (10 * Math.PI) / 180;
 const SHIFT_TIME = 0.5;
 const PAUSE_TO_FIRE = 0.4;
+const GAP = 4;            // spacing kept between friendly mechs in a lane
+const LANE_REACH = 1;     // mechs target their own lane and this many lanes to each side
 
 export function mulberry32(a) {
   return () => {
@@ -246,10 +248,14 @@ export class World {
     if (pref === 'structure' && !isStructure(f)) k += 1e4;
     return k;
   }
+  // mechs only reach their own lane and the neighbours (bases span every lane; Seeker missiles are exempt)
+  inReach(e, f) {
+    return e.kind !== 'mech' || e.def.anyLane || f.kind === 'base' || Math.abs(laneOf(f.x) - e.lane) <= LANE_REACH;
+  }
   pickTarget(e, range) {
     let best = null, bestK = Infinity;
     for (const f of this.entities) {
-      if (f.dead || f.team === e.team) continue;
+      if (f.dead || f.team === e.team || !this.inReach(e, f)) continue;
       const d = this.dist(e, f);
       if (d > range) continue;
       const k = this.targetKey(e, f, d);
@@ -257,7 +263,7 @@ export class World {
     }
     // keep the current target until it dies or leaves range, unless a better category appears
     const cur = e.target;
-    if (cur && !cur.dead && cur !== best) {
+    if (cur && !cur.dead && cur !== best && this.inReach(e, cur)) {
       const d = this.dist(e, cur);
       if (d <= range && Math.floor(this.targetKey(e, cur, d) / 1e4) <= Math.floor(bestK / 1e4)) return cur;
     }
@@ -300,9 +306,12 @@ export class World {
     const sp = this.stat(e, 'speed') * (e.shift ? 0.5 : 1);
     let ny = e.y + dir * sp * dt, block = null;
     for (const f of this.entities) {
-      if (f.dead || f.team === e.team) continue;
+      if (f.dead || f === e) continue;
       let s;
-      if ((f.kind === 'mech' || f.kind === 'turret') && f.lane === e.lane) s = f.y - dir * (f.radius + e.radius);
+      if (f.team === e.team) {
+        if (f.kind !== 'mech' || f.lane !== e.lane) continue;
+        s = f.y - dir * (f.radius + e.radius + GAP); // convoy: queue behind friendly mechs
+      } else if ((f.kind === 'mech' || f.kind === 'turret') && f.lane === e.lane) s = f.y - dir * (f.radius + e.radius);
       else if (f.kind === 'base') s = f.y - dir * e.radius;
       else continue;
       if ((f.y - e.y) * dir <= 0) continue; // behind
@@ -313,7 +322,43 @@ export class World {
     e.y = ny;
     e.moving = moved > 1e-6 || !!e.shift;
     e.phase += moved / (e.radius * 0.9);
-    if (block && block.kind === 'turret' && this.mode[e.team] === 'advance' && !e.shift) this.trySidestep(e, block);
+    const adv = this.mode[e.team] === 'advance';
+    if (block && !e.shift && adv) {
+      if (block.kind === 'turret') this.trySidestep(e, block);
+      else if (block.team === e.team) this.tryOvertake(e);
+    }
+    // after overtaking, return to the home lane once it's clear
+    if (!e.shift && e.homeLane != null && e.homeLane !== e.lane && this.laneFree(e, e.homeLane)) this.shiftTo(e, e.homeLane);
+    if (e.homeLane === e.lane && !e.shift) e.homeLane = null;
+  }
+
+  shiftTo(e, lane) {
+    e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0 };
+    e.lane = lane;
+    this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
+  }
+  // a lane is free for a mech at its current position: no enemy turret close ahead, no mech beside it
+  laneFree(e, l) {
+    if (l < 0 || l >= LANES) return false;
+    const dir = FWD[e.team];
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.lane !== l) continue;
+      const dy = (f.y - e.y) * dir;
+      if (f.kind === 'turret' && f.team !== e.team && dy > -f.radius && dy < f.radius + e.radius + 60) return false;
+      if (f.kind === 'mech' && Math.abs(f.y - e.y) < f.radius + e.radius + 10) return false;
+    }
+    return true;
+  }
+  tryOvertake(e) {
+    const opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneFree(e, l));
+    if (!opts.length) return false;
+    const home = e.homeLane ?? e.lane;
+    // prefer the side closer to home, then the side with fewer friendlies ahead
+    const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * FWD[e.team] > 0 && Math.abs(f.y - e.y) < 200).length;
+    opts.sort((a, b) => Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b));
+    e.homeLane = home;
+    this.shiftTo(e, opts[0]);
+    return true;
   }
 
   trySidestep(e, turret) {
@@ -325,9 +370,8 @@ export class World {
       const a = count(opts[0]), b = count(opts[1]);
       lane = a < b ? opts[0] : b < a ? opts[1] : opts[this.rnd() < 0.5 ? 0 : 1];
     }
-    e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0 };
-    e.lane = lane;
-    this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
+    e.homeLane = null; // stepping around a turret is permanent
+    this.shiftTo(e, lane);
     return true;
   }
 
@@ -351,9 +395,11 @@ export class World {
       this.projectiles.push({ kind, x: m.x, y: m.y, target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, speed: kind === 'slug' ? 2600 : 1100 });
       this.fx.push({ t: kind === 'slug' ? 'slug' : 'shot', x: m.x, y: m.y, team: e.team, type: e.type, kind: e.kind, ang: e.aim });
     } else if (kind === 'shell') {
-      const tx = tp.x + (this.rnd() * 2 - 1) * 12, ty = tp.y + (this.rnd() * 2 - 1) * 12;
-      const dist = Math.hypot(tx - m.x, ty - m.y);
-      this.projectiles.push({ kind, x: m.x, y: m.y, z: 0, sx: m.x, sy: m.y, tx, ty, t: 0, T: 0.7 + dist / 900, apex: 60 + dist * 0.3, dmg, team: e.team, src: e, splash: e.def.splash });
+      const d0 = Math.hypot(tp.x - m.x, tp.y - m.y);
+      const sc = e.def.scatterMax ? 12 + (e.def.scatterMax - 12) * Math.min(1, d0 / this.stat(e, 'range')) : 12;
+      const tx = tp.x + (this.rnd() * 2 - 1) * sc, ty = tp.y + (this.rnd() * 2 - 1) * sc;
+      const dist = Math.hypot(tx - m.x, ty - m.y), [f0, f1] = e.def.flight || [0.7, 900];
+      this.projectiles.push({ kind, x: m.x, y: m.y, z: 0, sx: m.x, sy: m.y, tx, ty, t: 0, T: f0 + dist / f1, apex: 60 + dist * (e.def.flight ? 0.5 : 0.3), dmg, team: e.team, src: e, splash: e.def.splash });
       this.fx.push({ t: 'cannon', x: m.x, y: m.y, team: e.team, type: e.type, ang: e.aim });
     } else if (kind === 'missile') {
       for (let i = 0; i < e.def.salvo; i++) {

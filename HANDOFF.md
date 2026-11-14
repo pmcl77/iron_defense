@@ -37,9 +37,30 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 10. **Repo:** https://github.com/pmcl77/iron_defense (public). GitHub Pages deploys from `main` (folder `/ (root)`). Game URL: https://pmcl77.github.io/iron_defense/ (live and verified 2026-11-14).
 11. **Branches:** `main` = the released, stable version (what Pages serves). `dev` = everyday work. See "Git workflow" below.
 
+## Round 2 changes (after the user's first play-test, 2026-11-14)
+- **The user's feedback:**
+  - Stages 1–12 were easy with massed Mortars plus a few Brawlers.
+  - Endless 1 was always lost.
+  - Deploying in the middle lane covered every lane.
+  - Fast mechs ran straight through slower friendly ones.
+  - Max energy looked stuck at 300 (Capacitors only gave starting energy).
+- **What was done:**
+  - Lane reach: own lane ± 1.
+  - Mortar: slow, inaccurate shells, half damage to structures, reload 3.2.
+  - Friendly collision: convoy in Hold, overtake-and-return in Advance.
+  - Stages 7–12: +8% enemy income.
+  - Endless: a smooth ramp.
+  - Capacitors: +40 max energy per level.
+  - The balance bot now tests three strategies.
+  - 48 tests.
+- **Next round, already agreed:**
+  - **Sapper**, a mine-laying mech. The design is in gameplay.md §5.4; build it, then decide stats and unlock stage with the user.
+  - **Later:** an enemy AI that counters your army composition.
+- The user wants to play-test the lane rule to see whether lanes 2 + 4 become the only setup.
+
 ## Status
-- **First playable build:** everything in the spec is implemented.
-  - `node tools/test.mjs`: 32/32 pass.
+- **First playable build plus round 2:** everything in the spec is implemented except the Sapper.
+  - `node tools/test.mjs`: 48/48 pass.
   - Headless browser run (`tools/shots.cjs`): no console errors.
   - **Not yet played by hand or on the real phone.**
 - **Balance:** a bot-tuned first draft. Stage table and bot results are in gameplay.md §11.

@@ -193,5 +193,48 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('Veteran Training: Constructor', w.con && w.con.maxHp === 350, `hp ${w.con && w.con.maxHp}`);
 }
 
+// 16. lane reach: own lane ± 1 (Seeker exempt)
+{
+  const w = mk();
+  const g = mech(w, 'gunner', 0, 2, 1000, 1e9);
+  const far = mech(w, 'scout', 1, 4, 1100, 1e9); far.def = { ...far.def, speed: 0, dmg: 0 };
+  w.update(1 / 60);
+  check('gunner ignores targets two lanes away', g.target === null);
+  const near = mech(w, 'scout', 1, 3, 1150, 1e9); near.def = { ...near.def, speed: 0, dmg: 0 };
+  w.update(1 / 60);
+  check('gunner targets the neighbouring lane', g.target === near);
+  const sk = mech(w, 'seeker', 0, 0, 1000, 1e9); w.update(1 / 60);
+  check('seeker reaches any lane', sk.target === near || sk.target === far);
+}
+// 17. Hold = convoy behind slower friendly mechs; Advance = overtake and return home
+{
+  const w = mk();
+  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), fast = mech(w, 'scout', 0, 2, 540, 1e9);
+  run(w, 5);
+  check('hold: faster mech queues behind slower one', fast.lane === 2 && fast.y < slow.y && slow.y - fast.y >= slow.radius + fast.radius,
+    `gap ${(slow.y - fast.y).toFixed(1)}`);
+  w.setMode('advance');
+  run(w, 3);
+  check('advance: faster mech overtakes', fast.y > slow.y, `fast ${fast.y.toFixed(0)} slow ${slow.y.toFixed(0)}`);
+  run(w, 3);
+  check('advance: returns to its home lane after overtaking', fast.lane === 2 && !fast.shift && fast.homeLane == null, `lane ${fast.lane}`);
+}
+// 18. Mortar: half damage vs structures, slow shells miss moving targets
+{
+  const w = mk([['sentry', 2, 6]]);
+  const t = tough(w.cells[1][2][6]); t.def = { ...t.def, dmg: 0 };
+  const m = mech(w, 'mortar', 0, 2, t.y - 450, 1e9); m.cool = 0; m.aim = 0;
+  const h0 = t.hp; run(w, 4);
+  check('mortar deals half damage to turrets', h0 - t.hp > 0 && h0 - t.hp <= 30.0001, `dmg ${h0 - t.hp}`);
+  const w2 = mk();
+  const m2 = mech(w2, 'mortar', 0, 2, 1000, 1e9); m2.cool = 0;
+  const runner = mech(w2, 'scout', 1, 3, 1480, 1000); runner.def = { ...runner.def, dmg: 0, range: 1 };
+  w2.update(1 / 60);
+  const shell = w2.projectiles.find((p) => p.kind === 'shell');
+  check('mortar shell flight time ≥ 2 s at long range', shell && shell.T >= 2, `T ${shell && shell.T.toFixed(2)}`);
+  run(w2, 3);
+  check('slow shell misses a fast-moving mech', runner.hp === 1000, `hp ${runner.hp}`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

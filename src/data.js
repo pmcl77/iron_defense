@@ -34,8 +34,10 @@ export const MECHS = {
     proj: 'melee', radius: 28, turn: TURN, desc: 'Heavy melee tank. Smashes walls.',
   },
   mortar: {
-    name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 2.6, range: 520, speed: 35, cd: 4.5,
-    proj: 'shell', splash: 70, radius: 24, turn: TURN, pauseToFire: true, desc: 'Long-range splash. Fragile.',
+    name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 3.2, range: 520, speed: 35, cd: 4.5,
+    proj: 'shell', splash: 70, radius: 24, turn: TURN, pauseToFire: true,
+    flight: [1.0, 400], scatterMax: 40, structMult: 0.5,
+    desc: 'Long-range splash. Slow shells: best vs units that stand still.',
   },
   aegis: {
     name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 45, cd: 4,
@@ -43,7 +45,7 @@ export const MECHS = {
   },
   seeker: {
     name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 50, cd: 4,
-    proj: 'missile', salvo: 2, splash: 30, pref: 'mech', radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
+    proj: 'missile', salvo: 2, splash: 30, pref: 'mech', anyLane: true, radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
   },
   breacher: {
     name: 'Breacher', cost: 190, hp: 950, dmg: 30, reload: 1.2, range: 60, speed: 38, cd: 5,
@@ -142,44 +144,50 @@ export const STAGES = [
     turrets: [['sentry', 1, 4], ['sentry', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1]], base: { gun: 1, armor: 1 },
   }),
   S('Pylon Field', {
-    baseHp: 3300, lvl: 1, regen: 8.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer'],
+    baseHp: 3300, lvl: 1, regen: 9.2, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer'],
     turrets: [['arc', 2, 3], ['sentry', 0, 3], ['sentry', 4, 3], ['howitzer', 1, 1]], base: { reactor: 1 },
   }),
   S('Gravel Sea', {
-    baseHp: 3600, lvl: 1, regen: 9, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 3600, lvl: 1, regen: 9.7, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
     turrets: [['sentry', 0, 4], ['sentry', 1, 4], ['arc', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1], ['howitzer', 4, 2]],
     base: { armor: 1, gun: 1 },
   }),
   S('Ironwood', {
-    baseHp: 4000, lvl: 2, regen: 9.5, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4000, lvl: 2, regen: 10.3, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['arc', 2, 3], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Ash Ridge', {
-    baseHp: 4400, lvl: 2, regen: 10, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4400, lvl: 2, regen: 10.8, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
     turrets: [['arc', 1, 4], ['arc', 3, 4], ['sentry', 2, 4], ['howitzer', 0, 2], ['howitzer', 4, 2], ['sentry', 2, 1]],
     base: { armor: 2, gun: 1, reactor: 1 },
   }),
   S('Breakwater', {
-    baseHp: 4800, lvl: 2, regen: 10.5, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4800, lvl: 2, regen: 11.3, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 2, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Last Bastion', {
-    baseHp: 5400, lvl: 2, regen: 11.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 5400, lvl: 2, regen: 12.4, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
     turrets: [['arc', 0, 5], ['sentry', 1, 5], ['arc', 2, 5], ['sentry', 3, 5], ['arc', 4, 5], ['howitzer', 1, 1], ['howitzer', 3, 1]],
     base: { armor: 2, gun: 2, reactor: 1 },
   }),
 ];
 
+// Endless wave n starts just above Last Bastion and ramps up gradually.
 export function stageDef(i) {
   if (i < STAGES.length) return { ...STAGES[i], index: i };
   const n = i - STAGES.length + 1, last = STAGES[STAGES.length - 1];
   return {
     name: `Endless ${n}`, index: i, endless: true,
-    baseHp: Math.round(last.baseHp * (1 + 0.12 * n)), lvl: Math.min(MAX_UNIT_LEVEL, 3 + Math.floor(n / 3)),
-    regen: last.regen + n, roster: last.roster, turrets: last.turrets,
-    base: { armor: 3, gun: Math.min(3, 2 + Math.floor(n / 4)), reactor: Math.min(3, 2 + Math.floor(n / 4)) },
+    baseHp: Math.round(last.baseHp * (1 + 0.06 * n)),
+    lvl: Math.min(MAX_UNIT_LEVEL, last.lvl + Math.floor((n + 1) / 3)),
+    regen: +(last.regen * (1 + 0.04 * n)).toFixed(1), roster: last.roster, turrets: last.turrets,
+    base: {
+      armor: Math.min(3, (last.base.armor || 0) + Math.floor(n / 3)),
+      gun: Math.min(3, (last.base.gun || 0) + Math.floor(n / 4)),
+      reactor: Math.min(3, (last.base.reactor || 0) + Math.floor(n / 3)),
+    },
   };
 }
 
