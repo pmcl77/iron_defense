@@ -22,9 +22,9 @@ For phone testing, use the dev preview above. The local server only works on thi
 
 Both are hosted on Cloudflare Pages, which deploys automatically on every push. On Android, open the address in Chrome and choose ⋮ → Add to Home screen to install it. You can install the release and the dev preview side by side.
 
-## Changes
+## Changes and issues
 
-[CHANGELOG.md](CHANGELOG.md) lists every version and what changed. Its "Unreleased" section is what's on the dev preview.
+[CHANGELOG.md](CHANGELOG.md) lists every version and what changed. [ISSUES.md](ISSUES.md) lists open bugs, feedback and planned work. Its "Unreleased" section is what's on the dev preview.
 
 ## Gameplay
 

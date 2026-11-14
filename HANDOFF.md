@@ -2,6 +2,8 @@
 
 To pick this project up in a new session: "Read HANDOFF.md, README.md and gameplay.md, then continue."
 
+**Issue list:** `ISSUES.md` holds open bugs, play-test feedback and the agreed backlog. When the user reports something, add it there. When an item is fixed, move it to `CHANGELOG.md`.
+
 Last updated: 2026-11-14, after the first playable build (see `git log`).
 
 ## What this is
