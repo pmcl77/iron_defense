@@ -276,6 +276,7 @@ export class Renderer {
         case 'deploy': this.ring(f.x, f.y, f.team ? '#ff9a80' : '#8fdcff', 26); if (f.team === 0) sfx('deploy', f); break;
         case 'order': this.ring(f.x, f.y, '#4ea3ff', 40); sfx('click'); break;
         case 'cancel': sfx('click'); break;
+        case 'queue': sfx('click'); break;
         case 'build': this.ring(f.x, f.y, '#8fdcff', 50); this.sparks(f.x, f.y, 14, '#fff0a0', 80); sfx('build', f); break;
         case 'sell': this.debris(f.x, f.y, 0, 8); this.smoke(f.x, f.y, 4, 16); sfx('sell', f); break;
         case 'conOut': sfx('engine', f); break;

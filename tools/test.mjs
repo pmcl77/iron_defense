@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -268,6 +268,51 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('lane changes are one lane at a time', jumps === 0, `jumps ${jumps}`);
   check('never swings back behind the brawler', backBehind === 0, `swing-backs ${backBehind}`);
   check('ends ahead of the brawler, back home', g.y > br.y && g.lane === 2, `lane ${g.lane}`);
+}
+
+// 21. deployment queue: queue when poor, strict FIFO, lanes kept, cooldown blocks, limit, cancel, clear
+{
+  const w = mk(); w.energy = 100;
+  check('affordable tap with empty queue deploys at once', w.request('gunner', 1) === 'deployed' && w.queue.length === 0);
+  w.energy = 50;
+  check('poor tap queues', w.request('brawler', 1) === 'queued' && w.queue.length === 1);
+  check('later taps queue behind, even if affordable', (w.energy = 3000, w.request('scout', 3)) === 'queued' && w.queue[1].type === 'scout' && w.queue[1].lane === 3);
+  w.energy = 100; // not enough for the brawler (140) but enough for the scout: strict order, nothing deploys
+  const n0 = w.entities.filter((e) => e.team === 0 && e.kind === 'mech').length;
+  run(w, 0.5);
+  check('strict order: cheap order behind does not skip ahead', w.queue.length === 2 && w.entities.filter((e) => e.team === 0 && e.kind === 'mech').length === n0);
+  w.energy = 1000;
+  run(w, 3);
+  const mine = w.entities.filter((e) => e.team === 0 && e.kind === 'mech');
+  check('queue drains in order into the queued lanes', w.queue.length === 0 && mine.some((e) => e.type === 'brawler' && e.lane === 1) && mine.some((e) => e.type === 'scout' && e.lane === 3));
+  check('energy charged on deploy', Math.abs(w.energy - (1000 - MECHS.brawler.cost - MECHS.scout.cost)) < 1e-6, `energy ${w.energy}`);
+}
+{
+  const w = mk(); w.energy = 5000;
+  w.request('brawler', 0); w.request('brawler', 4);
+  check('cooldown: second brawler waits in queue', w.queue.length === 1);
+  run(w, MECHS.brawler.cd - 0.2);
+  check('still waiting during cooldown', w.queue.length === 1);
+  run(w, 0.5);
+  check('deploys after cooldown', w.queue.length === 0);
+}
+{
+  const w = mk(); w.energy = 0;
+  for (let i = 0; i < QUEUE.max; i++) w.request('scout', 2);
+  check('queue limit', w.request('scout', 2) === 'full' && w.queue.length === QUEUE.max);
+  w.cancelQueued(2);
+  check('cancel one', w.queue.length === QUEUE.max - 1 && w.energy === 0);
+  w.clearQueue();
+  check('clear all', w.queue.length === 0);
+}
+{
+  // spawn spacing: two queued mechs in one lane don't spawn on top of each other
+  const w = mk(); w.energy = 0;
+  w.request('brawler', 2); w.request('gunner', 2);
+  w.energy = 5000; w.deployCd = {};
+  run(w, 4);
+  const [a, b] = w.entities.filter((e) => e.team === 0 && e.kind === 'mech');
+  check('queued deploys in one lane are spaced', a && b && Math.abs(a.y - b.y) >= a.radius + b.radius - 6, a && b ? `dy ${Math.abs(a.y - b.y).toFixed(1)}` : 'missing');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

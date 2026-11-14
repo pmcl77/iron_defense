@@ -69,6 +69,21 @@ canvas#game { position: absolute; inset: 0; display: block; }
   position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 6px calc(6px + var(--safe-b));
   background: rgba(12, 15, 11, 0.9); border-top: 1px solid var(--edge); display: flex; flex-direction: column; gap: 5px;
 }
+/* deployment queue: floats above the controls, only while something is queued */
+#queue { position: absolute; left: 0; right: 0; bottom: 100%; display: flex; align-items: center; gap: 4px; height: 44px; padding: 4px 6px; background: rgba(12, 15, 11, 0.9); border-top: 1px solid var(--edge); }
+#queue[hidden] { display: none; }
+#queue .ql { font-size: 8px; font-weight: 800; letter-spacing: 0.06em; color: var(--dim); writing-mode: vertical-rl; transform: rotate(180deg); flex: none; }
+#queue .qitems { display: flex; gap: 3px; }
+#queue .q { position: relative; width: 40px; height: 34px; border: 1px solid var(--edge); background: var(--panel); overflow: hidden; flex: none; padding: 0; }
+#queue .q canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#queue .q.head { border-color: var(--amber); }
+#queue .q .fill { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--amber); }
+#queue .q .ln { position: absolute; right: 1px; bottom: 3px; font-family: var(--mono); font-size: 9px; font-weight: 800; color: #08121e; background: rgba(78, 163, 255, 0.95); padding: 0 3px; }
+#queue .q .x { position: absolute; right: 2px; top: 0; font-size: 9px; color: var(--dim); }
+#queue .q.slot { border-style: dashed; opacity: 0.35; }
+#queue .qinfo { margin-left: auto; font-size: 10px; color: var(--dim); text-align: right; line-height: 1.25; white-space: pre; }
+#queue .qclear { flex: none; height: 34px; padding: 0 8px; border: 1px solid rgba(255, 122, 74, 0.6); background: var(--panel); color: #ff9a7a; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; }
+.card .qn { position: absolute; top: 14px; right: 3px; font-family: var(--mono); font-size: 10px; font-weight: 800; color: #08121e; background: var(--amber); border-radius: 7px; padding: 0 4px; }
 .row1 { display: flex; align-items: center; gap: 6px; height: 28px; }
 .energy { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; }
 .energy .bolt { color: var(--amber); font-size: 14px; }

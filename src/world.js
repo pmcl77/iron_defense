@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, QUEUE, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -61,6 +61,8 @@ export class World {
     this.energy = Math.min(this.maxEnergy, ENERGY.start + ENERGY.perkStart * perks.energy);
     this.regen = ENERGY.regen + ENERGY.perkRegen * (perks.regen || 0);
     this.deployCd = {};
+    this.queue = []; // [{ type, lane }], strict first in, first out
+    this.queueWait = 0;
     this.specialMult = 1 - 0.1 * perks.charge;
     this.specialCd = {};
     for (const k of Object.keys(SPECIALS)) this.specialCd[k] = SPECIALS[k].cd * this.specialMult * 0.5;
@@ -132,6 +134,44 @@ export class World {
     this.stats.deployed++;
     this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 0, type });
     return true;
+  }
+  // Tap on a mech card: deploy now if nothing is waiting and it's affordable, otherwise queue.
+  // Returns 'deployed' | 'queued' | 'full' | false.
+  request(type, lane = this.activeLane) {
+    if (this.result || !this.unlocked.mechs.includes(type)) return false;
+    if (!this.queue.length && this.canDeploy(type) && this.spawnClear(lane)) return this.deploy(type, lane) ? 'deployed' : false;
+    if (this.queue.length >= QUEUE.max) return 'full';
+    this.queue.push({ type, lane });
+    this.fx.push({ t: 'queue', type, lane });
+    return 'queued';
+  }
+  cancelQueued(i) {
+    if (i < 0 || i >= this.queue.length) return false;
+    this.queue.splice(i, 1);
+    if (i === 0) this.queueWait = 0;
+    this.fx.push({ t: 'cancel' });
+    return true;
+  }
+  clearQueue() {
+    if (!this.queue.length) return false;
+    this.queue.length = 0; this.queueWait = 0;
+    this.fx.push({ t: 'cancel' });
+    return true;
+  }
+  // no friendly mech overlapping the spawn point of this lane
+  spawnClear(lane) {
+    const y0 = BASE_FACE[0] + 24, x0 = laneX(lane);
+    for (const e of this.entities)
+      if (!e.dead && e.team === 0 && e.kind === 'mech' && Math.abs(e.x - x0) < 50 && Math.abs(e.y - y0) < e.radius + 26) return false;
+    return true;
+  }
+  updateQueue(dt) {
+    const q = this.queue[0];
+    if (!q) return;
+    if (!this.canDeploy(q.type)) { this.queueWait = 0; return; } // energy or cooldown: the whole queue waits
+    this.queueWait += dt;
+    if (!this.spawnClear(q.lane) && this.queueWait < QUEUE.wait) return;
+    if (this.deploy(q.type, q.lane)) { this.queue.shift(); this.queueWait = 0; }
   }
   setLane(l) { if (l >= 0 && l < LANES) this.activeLane = l; }
   setMode(m) { if (m !== this.mode[0]) { this.mode[0] = m; this.fx.push({ t: 'mode', team: 0, mode: m }); } }
@@ -220,6 +260,7 @@ export class World {
       this.energy = Math.min(this.maxEnergy, this.energy + this.regen * dt);
       for (const k in this.deployCd) this.deployCd[k] -= dt;
       for (const k in this.specialCd) this.specialCd[k] = Math.max(0, this.specialCd[k] - dt);
+      this.updateQueue(dt);
       this.updateAI(dt);
       this.updateConstructor(dt);
     }

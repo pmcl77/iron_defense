@@ -18,6 +18,13 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Capacitors** (Workshop) now also raises max energy permanently: +40 per level, on top of +50 starting energy.
 - **New Workshop perk: Power Grid,** +1 energy per second per level (3 levels: 200 / 400 / 650 credits), permanent in every battle.
 
+- **Deployment queue:** tapping a mech card without enough energy (or while it cools down) queues the order instead of refusing it.
+  - up to 6 orders, each in the lane that was active when tapped
+  - orders come out strictly in order; the whole queue waits for energy and card cooldowns
+  - energy is paid on deploy, so cancelling is free
+  - shown in a strip above the controls while something is queued: tap a mech to cancel it, CLEAR cancels all, Backspace removes the last; the front order shows its energy progress, and cards show ×2, ×3… when a type is queued more than once
+  - queued mechs in the same lane don't spawn on top of each other
+
 ### Fixes
 - **Overtaking in Advance no longer swings back** behind the unit being passed. The overtaking mech stays out until it's clearly past (or the other unit is far ahead), and it also stays out when it gets held up in the neighboring lane.
 - **Overtaking changes one lane at a time:** mechs no longer jump across two lanes, through other mechs, on the way back to their own lane.
@@ -52,7 +59,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - Dev builds show a "DEV" tag, install as "Iron Defense (dev)" and keep their own save.
 - The version number is shown in the game.
 - The help screen explains lane reach and convoy/overtake.
-- Tests now cover every Workshop upgrade, lane reach, convoy/overtake and the Mortar (48 tests).
+- Tests now cover every Workshop upgrade, lane reach, convoy/overtake, the Mortar and the deployment queue (68 tests).
 - The balance bot tests three strategies: mixed, mass Mortar behind Brawlers, and split lanes.
 
 ## [0.1.0]: 2026-11-14

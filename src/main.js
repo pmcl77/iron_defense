@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES,
+  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon } from './render.js';
@@ -266,6 +266,7 @@ function showHelp() {
   const items = [
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
+    ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 6) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
     ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers, turrets and bases reach every lane.'],
     ['Hold / Advance', 'HOLD: mechs stop and fight anything in range, and march as a convoy behind slower mechs. ADVANCE: mechs keep walking while firing, step around turrets through gaps, and overtake slower mechs. Only a full turret wall stops them.'],
     ['Turrets', 'Open TURRETS, pick a turret, then tap free cells to queue orders (paid now). Your Constructor drives out and builds them. Tap a planned cell to cancel. Tap your turret to sell it.'],
@@ -369,6 +370,7 @@ function buildHud() {
   $('#btn-speed').textContent = game.speed + '×';
 }
 function refreshCards() {
+  queueSig = null; // rebuild queue strip + card counters
   const w = game.world, isMech = game.ui.tab === 'mechs';
   const list = isMech ? w.unlocked.mechs : w.unlocked.turrets;
   const box = $('#cards');
@@ -395,7 +397,7 @@ function onCard(t, mech) {
   if (game.paused || w.result) return;
   hideSell();
   if (mech) {
-    if (!w.deploy(t) && w.energy < MECHS[t].cost) toast('Not enough energy');
+    if (w.request(t) === 'full') toast(`Queue full (${QUEUE.max})`);
     renderer.consume(w.fx, sfx);
   } else {
     game.ui.targeting = false;
@@ -453,9 +455,38 @@ function updateHud() {
     s.el.classList.toggle('armed', s.k === 'bomb' && game.ui.targeting);
     setText(s.cdt, 'sp' + s.k, cd > 0 ? `${Math.ceil(cd)}s` : 'READY');
   }
+  updateQueue();
   if (game.ui.selected && game.ui.selected.dead) hideSell();
   renderer.drawMinimap(mctx, w, minimap.width, minimap.height);
 }
+// ---- deployment queue strip
+let queueSig = null;
+function updateQueue() {
+  const w = game.world, q = w.queue, box = $('#queue');
+  const sig = q.map((o) => o.type + o.lane).join(',');
+  if (sig !== queueSig) {
+    queueSig = sig;
+    box.hidden = !q.length;
+    const items = box.querySelector('.qitems');
+    items.innerHTML = q.map((o, i) => `<button class="q${i ? '' : ' head'}" data-i="${i}" aria-label="Cancel ${MECHS[o.type].name}"><canvas width="80" height="68" data-icon="mech:${o.type}"></canvas>${i ? '' : '<i class="fill"></i>'}<span class="ln">${o.lane + 1}</span><span class="x">✕</span></button>`).join('')
+      + '<div class="q slot"></div>'.repeat(QUEUE.max - q.length);
+    drawIcons(items);
+    items.querySelectorAll('button.q').forEach((b) => b.addEventListener('click', () => { w.cancelQueued(+b.dataset.i); renderer.consume(w.fx, sfx); }));
+    const cnt = {};
+    q.forEach((o) => { cnt[o.type] = (cnt[o.type] || 0) + 1; });
+    for (const c of cardEls) {
+      if (!c.mech) continue;
+      let b = c.el.querySelector('.qn');
+      if (cnt[c.t] > 1) { if (!b) { b = document.createElement('span'); b.className = 'qn'; c.el.appendChild(b); } b.textContent = '×' + cnt[c.t]; } else if (b) b.remove();
+    }
+  }
+  if (!q.length) return;
+  const h = q[0], cost = MECHS[h.type].cost, cd = w.deployCd[h.type] || 0;
+  const fill = box.querySelector('.q.head .fill');
+  if (fill) fill.style.width = `${Math.min(100, 100 * w.energy / cost).toFixed(0)}%`;
+  setText(box.querySelector('.qinfo'), 'qi', `${q.length} / ${QUEUE.max}\n${w.energy < cost ? `next ⚡${Math.ceil(cost - w.energy)}` : cd > 0 ? `cooldown ${Math.ceil(cd)}s` : 'deploying'}`);
+}
+$('#queue .qclear').addEventListener('click', () => { const w = game.world; if (w) { w.clearQueue(); renderer.consume(w.fx, sfx); } });
 let toastTimer = 0;
 function toast(msg) {
   const t = $('#toast');
@@ -567,6 +598,7 @@ window.addEventListener('keydown', (e) => {
   }
   const sp = { q: 'bomb', e: 'emp', r: 'surge' }[k];
   if (sp && w.unlocked.specials.includes(sp)) useSpecial(sp);
+  if (k === 'backspace' && w.queue.length) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
   if (k === 'u') showUpgrades();
   if (k === 'f') toggleMode();
   if (k === 't' || k === 'tab') { e.preventDefault(); setTab(game.ui.tab === 'mechs' ? 'turrets' : 'mechs'); }
