@@ -525,20 +525,23 @@ export class Renderer {
     const YOU = '#5ab0ff', FOE = '#ff7a4a';
     m.setTransform(1, 0, 0, 1, 0, 0);
     m.fillStyle = '#1c2016'; m.fillRect(0, 0, mw, mh);
-    const pad = 4 * k; // keep the big symbols inside the narrow strip
+    const pad = 3 * k; // keep the big symbols inside the narrow strip
     const sx = (x) => pad + (x / FIELD.w) * (mw - 2 * pad), sy = (y) => mh - (y / FIELD.h) * mh;
     m.fillStyle = 'rgba(255,255,255,0.10)'; for (let l = 1; l < LANES; l++) m.fillRect(Math.round(sx(l * LANE_W)), 0, Math.max(1, k * 0.6), mh);
     m.fillStyle = YOU; m.fillRect(0, sy(BASE_FACE[0]), mw, mh - sy(BASE_FACE[0]));
     m.fillStyle = FOE; m.fillRect(0, 0, mw, sy(BASE_FACE[1]));
     m.lineWidth = k; m.strokeStyle = '#000'; m.lineJoin = 'round';
-    // Turrets: all outlines first, then all fills. A lane is only ~3 px wide here, so neighboring
-    // squares overlap; this way a row of turrets reads as one solid block instead of thin slivers.
-    const turrets = w.entities.filter((e) => !e.dead && e.kind === 'turret'), r0 = 2.6 * k;
-    for (const pass of ['stroke', 'fill']) for (const e of turrets) {
+    // Turrets: upright rectangles, narrower than a lane (only ~3 px wide here), so turrets in
+    // neighboring lanes stay separate with a small gap between their outlines.
+    const pitch = (mw - 2 * pad) / LANES, hw = Math.max(0.5 * k, (pitch - 1.2 * k) / 2), hh = 2.8 * k;
+    m.lineWidth = 0.6 * k;
+    for (const e of w.entities) {
+      if (e.dead || e.kind !== 'turret') continue;
       const x = sx(e.x), y = sy(e.y);
-      m.beginPath(); m.rect(x - r0, y - r0, r0 * 2, r0 * 2);
-      if (pass === 'stroke') m.stroke(); else { m.fillStyle = e.team ? FOE : YOU; m.fill(); }
+      m.beginPath(); m.rect(x - hw, y - hh, hw * 2, hh * 2);
+      m.fillStyle = e.team ? FOE : YOU; m.fill(); m.stroke();
     }
+    m.lineWidth = k;
     // Mechs and Constructors, newest first, so the earliest deployed unit of a column ends up on top.
     for (let i = w.entities.length - 1; i >= 0; i--) {
       const e = w.entities[i];
