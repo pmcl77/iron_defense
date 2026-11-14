@@ -174,5 +174,24 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   void s;
 }
 
+// 15. Workshop upgrades carry over into battle
+{
+  const save = defaultSave();
+  save.perks = { energy: 3, armor: 3, charge: 3 };
+  for (const t of [...MECH_TYPES, ...TURRET_TYPES, 'builder']) save.tech[t] = 3;
+  const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets: [], base: {} };
+  const w = new World(st, save, ALL, { seed: 1 });
+  check('Capacitors: starting energy', w.energy === 250, `energy ${w.energy}`);
+  check('Capacitors: max energy', w.maxEnergy === 420, `max ${w.maxEnergy}`);
+  w.energy = 1000; w.upgradeBase('reactor');
+  check('Reactor stacks on top of Capacitors', w.maxEnergy === 480, `max ${w.maxEnergy}`);
+  check('Reinforced Walls: base HP', w.bases[0].maxHp === 4350, `hp ${w.bases[0].maxHp}`);
+  check('Fast Uplink: cooldowns', Math.abs(w.specialMult - 0.7) < 1e-9 && Math.abs(w.specialCd.bomb - 14) < 1e-9);
+  const m = w.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: 300, y: 500 });
+  check('Veteran Training: unit level', w.lvl[0].gunner === 3 && m.maxHp === 230 * 1.75, `hp ${m.maxHp}`);
+  w.order(2, 1, 'sentry'); w.update(1 / 60);
+  check('Veteran Training: Constructor', w.con && w.con.maxHp === 350, `hp ${w.con && w.con.maxHp}`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -55,8 +55,8 @@ export class World {
     this.gunLvl = [0, eb.gun];
 
     // player economy
-    this.energy = ENERGY.start + 50 * perks.energy;
-    this.maxEnergy = ENERGY.cap;
+    this.maxEnergy = ENERGY.cap + ENERGY.perkCap * perks.energy;
+    this.energy = Math.min(this.maxEnergy, ENERGY.start + ENERGY.perkStart * perks.energy);
     this.regen = ENERGY.regen;
     this.deployCd = {};
     this.specialMult = 1 - 0.1 * perks.charge;

@@ -61,7 +61,7 @@ The rules are the same as Ironline:
 |---|---|
 | Starting energy | 100, +50 per Capacitors perk level |
 | Regeneration | 8 per second, +2 per Reactor upgrade |
-| Energy cap | 300, +60 per Reactor upgrade |
+| Energy cap | 300, +40 per Capacitors perk level (permanent, Workshop), +60 per Reactor upgrade (in battle) |
 | Kill bounty | 25% of the destroyed unit's cost |
 | Turret sell refund | 25% (nearly dead) to 50% (full HP) of build cost |
 
@@ -254,7 +254,10 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 
 - **Workshop:**
   - Veteran Training: units start at up to level 3. This includes the Constructor, which gets more HP and builds faster.
-  - Perks: Capacitors, Reinforced Walls, Fast Uplink.
+  - Perks (permanent, apply to every battle):
+    - Capacitors: +50 starting energy and +40 max energy per level (150 / 300 / 500 credits).
+    - Reinforced Walls: +15% base HP per level (200 / 400 / 650).
+    - Fast Uplink: specials recharge 10% faster per level (200 / 400 / 650).
 
 ## 12. Controls (portrait touch first)
 

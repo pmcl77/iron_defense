@@ -92,7 +92,7 @@ export const SPECIALS = {
   surge: { name: 'Energy Surge', short: 'SURGE', key: 'R', cd: 50, amount: 100, desc: '+100 energy instantly.' },
 };
 
-export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25 };
+export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart: 50, perkCap: 40 };
 export const MAX_UNIT_LEVEL = 5;
 export const BASE_MAX_ENERGY = 300;
 export const upgradeCost = (def, lvl) => Math.min(BASE_MAX_ENERGY, Math.round(def.cost * 0.9 * (lvl + 1)));
@@ -188,7 +188,7 @@ export const lossReward = (kills) => 15 + 2 * kills;
 
 // ---------- workshop ----------
 export const PERKS = {
-  energy: { name: 'Capacitors', desc: '+50 starting energy', costs: [150, 300, 500] },
+  energy: { name: 'Capacitors', desc: '+50 starting energy and +40 max energy', costs: [150, 300, 500] },
   armor: { name: 'Reinforced Walls', desc: '+15% base HP', costs: [200, 400, 650] },
   charge: { name: 'Fast Uplink', desc: 'Specials recharge 10% faster', costs: [200, 400, 650] },
 };
