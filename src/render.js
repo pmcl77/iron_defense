@@ -524,7 +524,7 @@ export class Renderer {
     const YOU = '#5ab0ff', FOE = '#ff7a4a';
     m.setTransform(1, 0, 0, 1, 0, 0);
     m.fillStyle = '#1c2016'; m.fillRect(0, 0, mw, mh);
-    const pad = 5 * k; // keep the big symbols inside the narrow strip
+    const pad = 4 * k; // keep the big symbols inside the narrow strip
     const sx = (x) => pad + (x / FIELD.w) * (mw - 2 * pad), sy = (y) => mh - (y / FIELD.h) * mh;
     m.fillStyle = 'rgba(255,255,255,0.10)'; for (let l = 1; l < LANES; l++) m.fillRect(Math.round(sx(l * LANE_W)), 0, Math.max(1, k * 0.6), mh);
     m.fillStyle = YOU; m.fillRect(0, sy(BASE_FACE[0]), mw, mh - sy(BASE_FACE[0]));
@@ -534,9 +534,9 @@ export class Renderer {
       if (e.dead || e.kind === 'base') continue;
       const x = sx(e.x), y = sy(e.y);
       m.beginPath();
-      if (e.kind === 'turret') { const r = 4.2 * k; m.rect(x - r, y - r, r * 2, r * 2); }
-      else if (e.kind === 'constructor') { const r = 5 * k; m.moveTo(x, y - r); m.lineTo(x + r, y); m.lineTo(x, y + r); m.lineTo(x - r, y); m.closePath(); }
-      else { const r = 4.8 * k, d = e.team ? 1 : -1; m.moveTo(x, y + d * r * 1.1); m.lineTo(x + r, y - d * r * 0.8); m.lineTo(x - r, y - d * r * 0.8); m.closePath(); }
+      if (e.kind === 'turret') { const r = 3.2 * k; m.rect(x - r, y - r, r * 2, r * 2); }
+      else if (e.kind === 'constructor') { const r = 3.8 * k; m.moveTo(x, y - r); m.lineTo(x + r, y); m.lineTo(x, y + r); m.lineTo(x - r, y); m.closePath(); }
+      else { const r = 3.6 * k, d = e.team ? 1 : -1; m.moveTo(x, y + d * r * 1.1); m.lineTo(x + r, y - d * r * 0.8); m.lineTo(x - r, y - d * r * 0.8); m.closePath(); }
       m.fillStyle = e.kind === 'constructor' ? '#ffd166' : e.team ? FOE : YOU;
       m.fill(); m.stroke();
     }
