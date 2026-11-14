@@ -96,7 +96,27 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **B, a burst of 3 slugs:** fired 0.08 s apart, each restyled as in A, with the damage split (3 × 10 instead of 1 × 30, still ×3 vs structures). This matches "a series of shells" best. It's a small rules change: if the target dies mid-burst, the remaining slugs retarget or miss, and armor counts 3 times.
     - **C, as A, but visually a burst:** 3 slug streaks drawn close together that land as one hit. It looks like a burst, with no rules change, but the look and the damage don't quite match.
   - **Recommendation:** the new sound plus **B**. It best matches the "series of shells" idea, and the small rules effect (less overkill, more affected by armor) suits a siege gun. If we'd rather not touch balance now, take A first.
-- **[feature] Tank mech** (user, 2026-11-14): *proposal text still to be added; the user mentioned it, but only the Lancer proposal came through.*
+- **[feature] Heavy tank mech** (user idea, 2026-11-14): a slow, armored walker that fires heavy tank shells. They explode on impact for massive damage, with a little splash. The name is still open.
+  - **Does it fit the roster?** Yes, if its role stays distinct. Today nothing is both tough and ranged:
+    - the tough mechs (Brawler 700 HP, Breacher 950 HP) are melee
+    - the ranged ones are fragile (Mortar 180, Lancer 300, Seeker 260)
+    - the Tank would be the **frontline gun**: it soaks fire *and* hits hard at mid range
+  - **Keeping it apart from the others:**
+    - **vs. Mortar:** fast, direct shell (not a slow lob), so it hits moving units too. Small splash instead of big. Short range instead of artillery range.
+    - **vs. Lancer:** mid range (inside turret range, so it trades fire with turrets) and all-round damage, where the Lancer has long range and is anti-structure and fragile.
+    - **vs. Brawler:** fights from range, and is slower and more expensive.
+  - **Stats, first guess:**
+    - cost 240, HP 900, damage 90 per shell, splash 25 within radius 35 (falloff)
+    - reload 3.5 s, range 320, speed 30 (the slowest mech), deploy cooldown 6 s
+    - pauses briefly to fire (like the Lancer)
+    - the shell flies fast (about 700/s), so it almost always hits
+  - **Gameplay notes:**
+    - In Hold, it stops at range 320, so it fits naturally right behind the Brawler in the range-sorted convoy idea.
+    - Because it's the slowest, faster mechs would overtake it in Advance. That also makes the convoy rule decision more important.
+  - **Unlock:** after the Sapper, so stage 9 or so, with the Sapper at 8. The enemy gets it a bit later, from around stage 10.
+  - **Roster size:** 10 mechs with a loadout of 5 is still manageable, and more choice makes the loadout matter. I'd stop there, though: every further mech should fill a clear gap.
+  - **Sound and look:** a deep cannon boom (the new cannon sound, heavier, with recoil), a visible recoil step, and a bright, short tracer for the shell, the opposite of the Lancer's long streak.
+  - **Name ideas:** Goliath, Juggernaut, Rhino, Mauler, Warhound. **Recommendation: Goliath** (big, slow and heavy, and it doesn't clash with Bastion or Breacher).
 
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
