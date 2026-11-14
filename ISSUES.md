@@ -103,13 +103,22 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **D, comeback scaling:** the bounty grows when your base has less HP left than the enemy's. Very targeted, but harder to see and understand while playing.
   - **Recommendation: A + C:** no bounty for turrets, 25% for mech kills in your own half, 10% in the enemy half. Easy to explain and it rewards defending, not snowballing.
   - **Open point:** should the enemy AI get the same defensive bounty, so both sides follow one rule? Today it gets none.
-- **[feature] Production queue** (user idea, 2026-11-14): tapping a mech card without enough energy queues the order instead of refusing it, and it deploys automatically when energy and card cooldown allow. My recommendation:
-  - each order keeps the lane that was active when tapped
-  - strictly first in, first out
-  - energy is charged on deploy (other purchases delay the queue)
-  - limited to 5 orders, shown as icons with lane numbers above the cards; tap an icon to cancel
-  - the open question was "unlimited or limited"; I recommend limited (5) so the game doesn't become "fill the queue and watch"
-
+- **[feature] Production (deployment) queue** (user idea, 2026-11-14). **Decided (2026-11-14): strict order, limit 5, the queue waits for card cooldowns.**
+  - **Rule:** tapping a mech card deploys at once only if the queue is empty, the card is off cooldown and there's enough energy. Otherwise the order goes to the back of the queue. New taps never jump ahead.
+  - **Lane:** each order keeps the lane that was active when it was tapped.
+  - **Strict first in, first out:** an expensive order at the front blocks cheaper ones behind it. This makes deploy order a tool you can plan with (e.g. Brawler → Gunner → Seeker → Mortar comes out as a clean column).
+  - **Energy is charged on deploy,** with nothing reserved. Upgrades and specials bought in between just delay the queue. Cancelling is free.
+  - **Cooldowns:** if the front order's card is on cooldown, the whole queue waits.
+  - **Spacing:** at least about 0.4 s between queued deploys in the same lane, e.g. after an Energy Surge.
+  - **Limit:** 5 orders.
+  - **Display:**
+    - a strip above the cards with mech icons and lane numbers
+    - the front icon fills up toward its cost
+    - cards show a queued count
+    - tap an icon to cancel it
+  - **Keys:** the number keys queue too, and Backspace removes the last order.
+  - The queue clears when the battle ends. The enemy AI is unchanged.
+  - **Status:** a mockup image was requested before building.
 - **[feature] Base weaponry: a base mortar and Workshop base upgrades** (user idea, 2026-11-14). Proposals:
   - **Why:** enemy Mortars (520) and Lancers (460) outrange the base guns (340) and can shell your base or turrets without being fired on.
   - **Bastion Mortar:** a mortar battery in the base, same slow-shell rules as the Mortar mech.
