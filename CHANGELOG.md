@@ -23,6 +23,16 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Overtaking changes one lane at a time:** mechs no longer jump across two lanes, through other mechs, on the way back to their own lane.
 - **Overtaking runs at full speed** (half speed only when stepping around turrets). A mech doesn't start passing a unit that walks at almost the same speed.
 
+### Sound
+- **More weight ("oomph") in guns, cannons and explosions.** The old low end was a pitched tone sweeping down, which sounded like a toy drum. Now every layer is shaped noise:
+  - a short hold at full strength, then soft clipping, so the bass also comes through on phone speakers
+  - explosions have a crack, a blast, a deep body, a rolling rumble and falling debris; destroyed mechs add torn metal
+  - the Mortar launch gets a hollow tube "tunk"
+- **Outdoor echo:** a slapback echo off the terrain, on top of the reverb.
+- **New: bullet impacts** make a quiet tick on armor, and rail slugs a heavy clang.
+- Brawler punches, deploy steps and turret builds use the new heavy thump. Missiles are unchanged.
+- The master compressor lets attacks through, so shots sound sharper.
+
 ### UI
 - **New minimap, easier to read:**
   - keeps the narrow strip

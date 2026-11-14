@@ -262,7 +262,7 @@ export class Renderer {
         case 'slug': this.flash(f.x, f.y, 16, '#bff0ff'); sfx('slug', f); break;
         case 'cannon': this.flash(f.x, f.y, 20); this.smoke(f.x, f.y, 3, 10); sfx('cannon', f); break;
         case 'missile': this.flash(f.x, f.y, 10, '#ffd090'); sfx('missile', f); break;
-        case 'hit': this.sparks(f.x, f.y, f.kind === 'slug' ? 8 : 3, '#ffd890', 60); break;
+        case 'hit': this.sparks(f.x, f.y, f.kind === 'slug' ? 8 : 3, '#ffd890', 60); sfx(f.kind === 'slug' ? 'slughit' : 'hit', f); break;
         case 'punch': this.sparks(f.x, f.y, 10, '#ffe0a0', 90); this.flash(f.x, f.y, 14); sfx('punch', f); break;
         case 'zap': this.particles.push({ k: 'zap', pts: f.pts, life: 0.18, max: 0.18 }); sfx('zap', f.pts[0]); break;
         case 'boom': this.explosion(f.x, f.y, f.size || 1); sfx(f.size > 1.2 ? 'bigboom' : f.size < 0.7 ? 'smallboom' : 'boom', f); break;
