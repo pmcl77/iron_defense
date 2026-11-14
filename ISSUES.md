@@ -35,6 +35,16 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Decide together with the melee sidestep bug above, since both change the same movement code.
 
 ### Under discussion
+- **[balance] Kill bounty helps the winning side snowball** (user, 2026-11-14)
+  - **Current rule:** the player gets 25% of the destroyed unit's cost for every kill, mechs and turrets alike. The enemy AI gets no bounty (it has its own income, which grows when your mechs push close to its base).
+  - **Problem:** whoever is ahead gets richer and pulls further ahead. But energy for killing *attackers* near your own base is good: it helps a defender recover.
+  - **Options:**
+    - **A, no bounty for turrets** (user idea): destroying turrets no longer feeds an attack that's already winning.
+    - **B, lower the bounty overall,** e.g. 25% → 15%: simple, but it weakens comebacks too.
+    - **C, bounty by location:** 25% for kills in your own half of the field (defending), 10% in the enemy half (attacking). This matches the example "my base is under attack, I kill attackers, I get a boost".
+    - **D, comeback scaling:** the bounty grows when your base has less HP left than the enemy's. Very targeted, but harder to see and understand while playing.
+  - **Recommendation: A + C:** no bounty for turrets, 25% for mech kills in your own half, 10% in the enemy half. Easy to explain and it rewards defending, not snowballing.
+  - **Open point:** should the enemy AI get the same defensive bounty, so both sides follow one rule? Today it gets none.
 - **[feature] Production queue** (user idea, 2026-11-14): tapping a mech card without enough energy queues the order instead of refusing it, and it deploys automatically when energy and card cooldown allow. My recommendation:
   - each order keeps the lane that was active when tapped
   - strictly first in, first out
