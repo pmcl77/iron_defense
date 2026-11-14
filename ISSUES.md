@@ -19,6 +19,20 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - bigger mech dots
     - shapes as well as colors (mechs as direction triangles, turrets as squares)
 
+### Gameplay / movement
+- **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
+  - Cause: in Advance, *every* mech steps around an enemy turret if the neighboring cell is free, melee mechs included. The Breacher has the same problem, which defeats its purpose.
+  - Proposal: melee mechs (Brawler, Breacher) never step around enemies. They attack what blocks them and only change lanes to overtake slower friendlies. Ranged mechs keep stepping around turrets in Advance.
+  - Asked the user: was it enemy turrets, or also enemy mechs? (Mechs should never cause a lane change; that would be a separate bug.)
+- **[balance] Convoys in Hold stall** (play-test v0.2.0-dev)
+  - Units queue behind slower friendlies and sit idle; switching to Advance is the only way to break the queue.
+  - Worst case: a Mortar or Lancer in front stops at its long range, so the whole column waits far from the fight. Deep queues of melee or short-range units also idle.
+  - Proposal: convoy while marching, spread out when the front stops.
+    - While the friendly ahead is moving, follow it (keeps the "Gunner takes cover behind the Brawler" effect).
+    - Once the friendly ahead stands still, a mech with no target in range steps into a free neighboring lane and moves up until something is in range, then stops (Hold).
+    - It returns to its home lane when that lane is clear.
+    - Advance stays as is: keep walking and overtake anything slower.
+
 ### Under discussion
 - **[feature] Production queue** (user idea, 2026-11-14): tapping a mech card without enough energy queues the order instead of refusing it, and it deploys automatically when energy and card cooldown allow. My recommendation:
   - each order keeps the lane that was active when tapped
