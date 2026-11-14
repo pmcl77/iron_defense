@@ -534,7 +534,7 @@ export class Renderer {
       if (e.dead || e.kind === 'base') continue;
       const x = sx(e.x), y = sy(e.y);
       m.beginPath();
-      if (e.kind === 'turret') { const r = 4.2 * k; m.rect(x - r, y - r, r * 2, r * 2); }
+      if (e.kind === 'turret') { const r = 2.6 * k; m.rect(x - r, y - r, r * 2, r * 2); }
       else if (e.kind === 'constructor') { const r = 3.8 * k; m.moveTo(x, y - r); m.lineTo(x + r, y); m.lineTo(x, y + r); m.lineTo(x - r, y); m.closePath(); }
       else { const r = 3.6 * k, d = e.team ? 1 : -1; m.moveTo(x, y + d * r * 1.1); m.lineTo(x + r, y - d * r * 0.8); m.lineTo(x - r, y - d * r * 0.8); m.closePath(); }
       m.fillStyle = e.kind === 'constructor' ? '#ffd166' : e.team ? FOE : YOU;
