@@ -41,7 +41,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Pro:** no idle queues even with a "wrong" deploy order; formations look sensible.
     - **Con:** it takes away the deploy-order skill the user just described.
   - **Trade-off to decide:** keep deploy order as a skill (rule A, or today's rule) vs. automatic sorting for convenience (rules B, C or D).
-  - Decide together with the melee sidestep bug above, since both change the same movement code.
+  - Decide together with the melee sidestep bug above and the lane change speed below, since all three change the same movement code. Slower lane changes (option C there) make overtaking more costly, which shifts the convoy trade-off.
 
 - **[ui/gameplay] Lane changes are far too fast: mechs "fly" sideways** (user, 2026-11-14)
   - **Today:** every lane change (overtake, return home, stepping around a turret) takes a fixed 0.5 s for the 120-unit lane width, for every mech. That's 240 units/s sideways, while mechs walk forward at 30–95 (a Brawler moves sideways 6× faster than it walks). The body only tilts up to 34° and eases back. The mech also counts as being in the new lane from the very first moment, for blocking and targeting.
@@ -60,6 +60,28 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - fewer, more deliberate lane changes overall
     - this interacts with the convoy/overtake rules above (overtaking becomes more costly), and tests #19/#20 need new timings
   - **Recommendation: C with honest lane occupancy.** It looks like walking, gives each mech its own feel, and matches the plan for heavier units. It's best decided and built together with the convoy rule and the melee sidestep bug, since all three change the same movement code.
+
+### Enemy AI
+- **[balance] The enemy AI deploys one-sided, in same-type groups** (play-test v0.2.0-dev): e.g. 3 Brawlers at once in the same lane.
+  - **Causes in the code:**
+    - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group of 2–3, always of *one* type and always in one lane.
+    - **Brawler preference:** when your mechs push toward its base, it picks a Brawler half the time, regardless of what's attacking. So groups of 3 Brawlers come up often.
+    - **One-sided lanes:** 60% of the time it picks the lane with the least turret coverage. Once your turrets stand, that lane barely changes, so it keeps hitting the same lane. Otherwise it picks a random lane 20% of the time, and the lane your mechs push in 20% of the time.
+  - **Options:**
+    - **A, mixed groups from templates:** groups are compositions, not copies. Examples:
+      - Brawler in front + Gunner behind
+      - Brawler + Mortar
+      - Aegis + 2 Gunners
+      - Breacher + Lancer for sieges
+
+      Only cheap units (Scouts) come as same-type packs. Group members deploy in a sensible order: tank first, ranged behind.
+    - **B, varied lane choice:**
+      - lanes are weighted by weakness instead of always taking the weakest, with a penalty for lanes it used recently
+      - sometimes a split attack: two small groups in two lanes at the same time
+      - it still answers your pushes in their lane
+    - **C, a sensible defensive pick:** under pressure it picks from a defensive set (Brawler, Gunner, Seeker, Aegis) instead of always a Brawler. Real counter-picking against your army belongs to the agreed "counter AI" feature later.
+    - **D, stage personalities (later):** e.g. "swarm" (many light units), "siege" (Lancer, Mortar, Breacher), "armored" (Brawler, Aegis), for variety between stages.
+  - **Recommendation: A + B + C now, D later.** It makes the AI feel smarter and less predictable without the full counter AI. The difficulty will shift, so stages 1–12 need a rebalance with the bot afterwards.
 
 ### Under discussion
 - **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
