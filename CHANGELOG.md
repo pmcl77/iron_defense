@@ -47,6 +47,8 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - keeps the narrow strip
   - dark background, brighter team colors (a lighter orange-red for enemies), a black outline around every symbol
   - big symbols: mechs are triangles pointing the way they walk, turrets are squares, the Constructor is a yellow diamond
+  - in a column of mechs, the one deployed first is drawn on top
+  - turrets next to each other merge into one solid block instead of thin slivers
 
 ### Balance
 - Stages 7–12: enemy income about 8% higher.
