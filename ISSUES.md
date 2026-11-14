@@ -2,6 +2,8 @@
 
 Open bugs, play-test feedback and planned work. When something is done, move it to `CHANGELOG.md` and remove it here.
 
+**Workflow:** new findings and ideas are added here first, with options and a proposal. They're built only after we've discussed priorities and decided.
+
 Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came from, e.g. "(play-test v0.2.0-dev)".
 
 ## Open
