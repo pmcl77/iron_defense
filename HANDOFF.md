@@ -34,7 +34,8 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
    - **During development:** flat vector (sample 4), which is what `src/render.js` draws now.
    - The user disliked the low-res angled pixel art (samples 1 and 2) and liked the painted style (sample 3), but picked sample 7.
 9. **Sound:** the user disliked Ironline's toy-like sounds and wants it "a tad more realistic". `src/audio.js` is new layered, positional synthesis. If that's still not enough, the fallback is CC0 samples (not decided).
-10. **Repo:** git initialized on `main`. A GitHub repo and Pages hosting come **later**, when the user asks.
+10. **Repo:** https://github.com/pmcl77/iron_defense (public). Pages: Settings → Pages → branch `main`, folder `/ (root)`. Game URL: https://pmcl77.github.io/iron_defense/
+    - Pushing from the container's terminal failed with "Invalid username or token". The user pushes from VS Code (Source Control → Push).
 
 ## Status
 - **First playable build:** everything in the spec is implemented.
@@ -79,7 +80,7 @@ node art_samples/shoot.cjs [styles…]        # re-render art samples
 - Shadows and the ground image in `render.js` are cached per resize and stage. Call `renderer.resize(...)` after layout changes (`main.js` `resize()` does this).
 
 ## Next steps (suggested)
-1. Ask the user how the first build plays. If they want it on the phone: create a GitHub repo, enable Pages from `main` / root, and install it on the S25+ through Chrome → "Add to Home screen".
+1. Ask the user how the first build plays on the S25+: open https://pmcl77.github.io/iron_defense/ in Chrome, then "Add to Home screen".
 2. Play-test findings: touch target sizes, readability, difficulty curve, whether battles stall at turret walls, sound realism.
 3. Tune `STAGES` and the new mech stats. Keep gameplay.md §11 and §13c in sync.
 4. Add footstep and servo sounds and a stage 1 tutorial overlay.
