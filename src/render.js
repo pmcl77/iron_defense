@@ -193,7 +193,8 @@ export class Renderer {
     this.ground = null;
     this.groundKey = '';
     this.squash = 1;  // ground y squash (voxel view: 0.78)
-    this.lift = 0;    // screen px to lift shots and muzzle flashes off the ground
+    this.hy = 0;      // screen px up per world unit of height (voxel view: B * scale)
+    this.hx = 0;      // screen px sideways per world unit of height (voxel view: OX * scale)
   }
   // circle lying on the ground
   gArc(c, x, y, r) { c.ellipse(x, y, r, r * this.squash, 0, 0, 7); }
@@ -263,12 +264,12 @@ export class Renderer {
   consume(fx, sfx) {
     for (const f of fx) {
       switch (f.t) {
-        case 'shot': this.flash(f.x, f.y, f.kind === 'base' ? 14 : 9); sfx('shot', f); break;
-        case 'slug': this.flash(f.x, f.y, 16, '#bff0ff'); sfx('slug', f); break;
-        case 'cannon': this.flash(f.x, f.y, 20); this.smoke(f.x, f.y, 3, 10); sfx('cannon', f); break;
-        case 'missile': this.flash(f.x, f.y, 10, '#ffd090'); if (!f.quiet) sfx('missile', f); break;
-        case 'hit': this.sparks(f.x, f.y, f.kind === 'slug' ? 8 : 3, '#ffd890', 60); sfx(f.kind === 'slug' ? 'slughit' : 'hit', f); break;
-        case 'punch': this.sparks(f.x, f.y, 10, '#ffe0a0', 90); this.flash(f.x, f.y, 14); sfx('punch', f); break;
+        case 'shot': this.flash(f.x, f.y, f.kind === 'base' ? 14 : 9, undefined, f.z); sfx('shot', f); break;
+        case 'slug': this.flash(f.x, f.y, 16, '#bff0ff', f.z); sfx('slug', f); break;
+        case 'cannon': this.flash(f.x, f.y, 20, undefined, f.z); this.smoke(f.x, f.y, 3, 10); sfx('cannon', f); break;
+        case 'missile': this.flash(f.x, f.y, 10, '#ffd090', f.z); if (!f.quiet) sfx('missile', f); break;
+        case 'hit': this.sparks(f.x, f.y, f.kind === 'slug' ? 8 : 3, '#ffd890', 60, 12); sfx(f.kind === 'slug' ? 'slughit' : 'hit', f); break;
+        case 'punch': this.sparks(f.x, f.y, 10, '#ffe0a0', 90, 14); this.flash(f.x, f.y, 14, undefined, 14); sfx('punch', f); break;
         case 'zap': this.particles.push({ k: 'zap', pts: f.pts, life: 0.18, max: 0.18 }); sfx('zap', f.pts[0]); break;
         case 'boom': this.explosion(f.x, f.y, f.size || 1); sfx(f.size > 1.2 ? 'bigboom' : f.size < 0.7 ? 'smallboom' : 'boom', f); break;
         case 'die':
@@ -295,10 +296,10 @@ export class Renderer {
     }
     fx.length = 0;
   }
-  flash(x, y, s, col = '#ffe08a') { this.particles.push({ k: 'flash', x, y, s, col, life: 0.07, max: 0.07, rot: Math.random() }); }
+  flash(x, y, s, col = '#ffe08a', z = 0) { this.particles.push({ k: 'flash', x, y, z, s, col, life: 0.07, max: 0.07, rot: Math.random() }); }
   ring(x, y, col, r) { this.particles.push({ k: 'ring', x, y, col, r, life: 0.5, max: 0.5 }); }
-  sparks(x, y, n, col, sp) {
-    for (let i = 0; i < n; i++) { const a = Math.random() * 7, v = sp * (0.4 + Math.random()); this.particles.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, col, life: 0.25 + Math.random() * 0.2, max: 0.45 }); }
+  sparks(x, y, n, col, sp, z = 0) {
+    for (let i = 0; i < n; i++) { const a = Math.random() * 7, v = sp * (0.4 + Math.random()); this.particles.push({ k: 'spark', x, y, z, vx: Math.cos(a) * v, vy: Math.sin(a) * v, col, life: 0.25 + Math.random() * 0.2, max: 0.45 }); }
   }
   smoke(x, y, n, s) {
     for (let i = 0; i < n; i++) this.particles.push({ k: 'smoke', x: x + (Math.random() - 0.5) * s, y: y + (Math.random() - 0.5) * s, vx: 6 + Math.random() * 8, vy: 4 + Math.random() * 6, s: s * (0.6 + Math.random() * 0.6), life: 1 + Math.random(), max: 2 });
@@ -444,9 +445,11 @@ export class Renderer {
   drawProjectiles(c, w) {
     const s = this.scale;
     for (const p of w.projectiles) {
-      const x = this.sx(p.x), y = this.sy(p.y) - (p.kind === 'shell' ? 0 : this.lift);
+      // height: from the muzzle down to about mid-body of the target as the shot closes in
+      const left = p.d0 ? Math.min(1, Math.hypot(p.tx - p.x, p.ty - p.y) / p.d0) : 0, z = p.kind === 'shell' ? 0 : 12 + ((p.z0 ?? 12) - 12) * left;
+      const x = this.sx(p.x) + z * this.hx, y = this.sy(p.y) - z * this.hy;
       if (p.kind === 'bullet' || p.kind === 'slug') {
-        const px = this.sx(p.px ?? p.x), py = this.sy(p.py ?? p.y) - this.lift, dx = x - px, dy = y - py, m = Math.hypot(dx, dy) || 1;
+        const px = this.sx(p.px ?? p.x) + z * this.hx, py = this.sy(p.py ?? p.y) - z * this.hy, dx = x - px, dy = y - py, m = Math.hypot(dx, dy) || 1;
         const len = (p.kind === 'slug' ? 60 : 14) * s;
         c.strokeStyle = p.kind === 'slug' ? '#bff0ff' : '#ffe08a'; c.lineWidth = p.kind === 'slug' ? 3 : 2; c.lineCap = 'round';
         c.beginPath(); c.moveTo(x - (dx / m) * len, y - (dy / m) * len); c.lineTo(x, y); c.stroke();
@@ -455,7 +458,7 @@ export class Renderer {
         c.fillStyle = '#2d2d2a'; c.beginPath(); c.arc(x, y - p.z * s * (this.squash < 1 ? 0.72 : 0.5), 3.5 + p.z * 0.01, 0, 7); c.fill();
       } else if (p.kind === 'missile') {
         c.strokeStyle = 'rgba(235,232,222,0.55)'; c.lineWidth = 2.5; c.lineCap = 'round'; c.beginPath();
-        p.trail.forEach((q, i) => (i ? c.lineTo(this.sx(q.x), this.sy(q.y) - this.lift) : c.moveTo(this.sx(q.x), this.sy(q.y) - this.lift))); c.stroke();
+        p.trail.forEach((q, i) => (i ? c.lineTo(this.sx(q.x) + z * this.hx, this.sy(q.y) - z * this.hy) : c.moveTo(this.sx(q.x) + z * this.hx, this.sy(q.y) - z * this.hy))); c.stroke();
         c.save(); c.translate(x, y); c.rotate(p.ang); c.fillStyle = '#ffb040'; c.beginPath(); c.arc(0, 5, 2.5, 0, 7); c.fill();
         c.fillStyle = '#e4e0d4'; c.fillRect(-1.5, -4, 3, 8); c.restore();
       }
@@ -467,7 +470,7 @@ export class Renderer {
     for (const p of this.particles) {
       const k = Math.max(0, p.life / p.max);
       if (p.k === 'scorch') continue;
-      const x = this.sx(p.x), y = this.sy(p.y) - (p.k === 'flash' || p.k === 'spark' ? this.lift : 0);
+      const x = this.sx(p.x) + (p.z || 0) * this.hx, y = this.sy(p.y) - (p.z || 0) * this.hy;
       if (p.k === 'flash') {
         c.fillStyle = p.col; c.beginPath();
         for (let i = 0; i < 8; i++) { const a = p.rot + (i / 8) * Math.PI * 2, r = (i % 2 ? 0.35 : 1) * p.s * s * (0.6 + k * 0.6); c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }

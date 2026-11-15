@@ -1,6 +1,6 @@
 // Voxel renderer (final art style, sample 7): draws pre-baked sprite sheets from assets/voxel/
 // (made by tools/bake_voxel.cjs) in an oblique view. Effects, overlays and bars come from the
-// flat renderer, adjusted through its projection hooks (squash, lift).
+// flat renderer, adjusted through its projection hooks (squash, height offsets hx/hy).
 import { Renderer } from './render.js';
 import { FIELD, BASE_FACE } from './data.js';
 
@@ -24,7 +24,7 @@ export class VoxelRenderer extends Renderer {
   resize(w, h, dpr, top, bottom) {
     if (this.meta) this.squash = this.meta.A;
     super.resize(w, h, dpr, top, bottom);
-    this.lift = 20 * this.meta.B * this.scale; // gun height
+    this.hy = this.meta.B * this.scale; this.hx = this.meta.OX * this.scale; // height -> screen offset
   }
   buildGround() {}
 
@@ -120,7 +120,7 @@ export class VoxelRenderer extends Renderer {
       c.restore();
     }
     if (e.stun > 0 && Math.floor(this.time * 12) % 2) {
-      const r = e.radius * this.scale, cy = y - this.lift;
+      const r = e.radius * this.scale, cy = y - 20 * this.hy;
       c.strokeStyle = '#9ff4ff'; c.lineWidth = 1.5; c.beginPath();
       for (let i = 0; i < 5; i++) { const a = Math.random() * 7; c.moveTo(x + Math.cos(a) * r, cy + Math.sin(a) * r); c.lineTo(x + Math.cos(a + 0.4) * r * 1.3, cy + Math.sin(a + 0.4) * r * 1.3); }
       c.stroke();

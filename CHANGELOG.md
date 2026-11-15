@@ -10,7 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.3.0-dev
 
 ### Gameplay
-- **Shots leave from the actual weapons:** the Gunner fires alternately from its left and right gun, the Seeker launches one missile from each shoulder pod at once, the Mortar and the Sentry turret alternate between their two barrels, and the Scout, Aegis, Lancer and Howitzer fire from their gun's muzzle.
+- **Shots leave from the actual weapons** (at the right height, matching the voxel models; the torso now has 64 turn steps instead of 32 so the drawn gun and the shot line up): the Gunner fires alternately from its left and right gun, the Seeker launches one missile from each shoulder pod at once, the Mortar and the Sentry turret alternate between their two barrels, and the Scout, Aegis, Lancer and Howitzer fire from their gun's muzzle.
 
 ### Art
 - **Voxel graphics (first playable version, the final art style from sample 7):**
@@ -18,7 +18,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - mechs, turrets, the Constructor and both bases come from the voxel models, with hard sun shadows
   - the ground has dirt tracks, craters, grass tufts and pebbles
   - mechs show their walking legs and turning torso; turrets turn their heads
-  - all sprites are pre-rendered (`tools/bake_voxel.cjs`) in 16 body directions, 32 aim directions and 3 walk frames, so the phone doesn't compute voxels while playing
+  - all sprites are pre-rendered (`tools/bake_voxel.cjs`) in 16 body directions, 64 aim directions and 5 walk frames, so the phone doesn't compute voxels while playing
   - effects, HP bars and overlays reuse the flat style, adjusted to the angled view
 - **New Brawler design ("Bulwark"):** 10% bigger, wider body and stance, big shoulder plates over both sides, fists raised in a guard, a front bumper bar and exhaust stacks.
 - **New Mortar design:** twin short mortar tubes on the shoulders (lighter gunmetal) and an ammo box on the back, instead of one big tube in the middle.

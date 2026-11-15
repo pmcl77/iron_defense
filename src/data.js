@@ -75,11 +75,11 @@ export const TURRETS = {
 };
 export const TURRET_TYPES = Object.keys(TURRETS);
 
-// Weapon positions in world units ([right, forward] from the unit's center), matching the voxel models.
-// Guns alternate shot by shot; a missile salvo fires one missile from each position.
+// Weapon positions in world units ([right, forward, height] from the unit's center), matching the voxel
+// models. Guns alternate shot by shot; a missile salvo fires one missile from each position.
 const MUZZLES = {
-  scout: [[10, 20]], gunner: [[-16, 27], [16, 27]], mortar: [[-15, 4], [15, 4]], aegis: [[12, 22]],
-  seeker: [[-16, 9], [16, 9]], lancer: [[0, 38]], sentry: [[-4, 28], [4, 28]], howitzer: [[0, 50]],
+  scout: [[10, 20, 17]], gunner: [[-16, 27, 25], [16, 27, 25]], mortar: [[-15, 4, 44], [15, 4, 44]], aegis: [[12, 22, 22]],
+  seeker: [[-16, 9, 31], [16, 9, 31]], lancer: [[0, 38, 30], [0, 38, 30]], sentry: [[-4, 28, 12], [4, 28, 12]], howitzer: [[0, 50, 17]],
 };
 for (const [k, m] of Object.entries(MUZZLES)) (MECHS[k] || TURRETS[k]).muzzles = m;
 

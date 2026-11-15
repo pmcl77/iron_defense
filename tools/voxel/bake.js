@@ -9,7 +9,7 @@ export const A = 0.78, B = 0.72, OX = -0.32;
 export const VIS = { mech: 1.3, turret: 1.1, con: 1.2 };
 const P = V * UB;
 const MECH_TYPES = Object.keys(LEGS);
-export const N_HEAD = 16, N_AIM = 32;
+export const N_HEAD = 16, N_AIM = 64;
 // walk cycle: each foot slides between -amp and +amp (model units); 5 baked positions, played as a triangle wave
 export const STRIDE_POS = [-1, -0.5, 0, 0.5, 1];
 const AMP = { scout: 2.7, gunner: 3.6, brawler: 4.8, mortar: 3.6, aegis: 3.3, seeker: 3.3, breacher: 4, lancer: 3.3 };

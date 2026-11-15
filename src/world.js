@@ -434,15 +434,15 @@ export class World {
   muzzle(e, i = null) {
     if (e.kind === 'base') {
       const gx = BASE.guns.reduce((a, b) => (Math.abs(b - (e.target?.x ?? 300)) < Math.abs(a - (e.target?.x ?? 300)) ? b : a));
-      return { x: gx, y: e.y - FWD[e.team] * 20 };
+      return { x: gx, y: e.y - FWD[e.team] * 20, z: 36 };
     }
     const M = e.def.muzzles;
     if (M) {
-      const k = i ?? (e.gun = ((e.gun ?? -1) + 1) % M.length), [lx, ly] = M[k % M.length], ca = Math.cos(e.aim), sa = Math.sin(e.aim);
-      return { x: e.x + lx * ca + ly * sa, y: e.y - lx * sa + ly * ca };
+      const k = i ?? (e.gun = ((e.gun ?? -1) + 1) % M.length), [lx, ly, lz] = M[k % M.length], ca = Math.cos(e.aim), sa = Math.sin(e.aim);
+      return { x: e.x + lx * ca + ly * sa, y: e.y - lx * sa + ly * ca, z: lz };
     }
     const r = e.radius * (e.kind === 'turret' ? 0.95 : 0.9);
-    return { x: e.x + Math.sin(e.aim) * r, y: e.y + Math.cos(e.aim) * r };
+    return { x: e.x + Math.sin(e.aim) * r, y: e.y + Math.cos(e.aim) * r, z: 15 };
   }
 
   fire(e, t) {
@@ -453,21 +453,21 @@ export class World {
       this.damage(t, dmg, e);
       this.fx.push({ t: 'punch', x: (e.x + tp.x) / 2, y: (e.y + tp.y) / 2, type: e.type });
     } else if (kind === 'bullet' || kind === 'slug') {
-      this.projectiles.push({ kind, x: m.x, y: m.y, target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, speed: kind === 'slug' ? 2600 : 1100 });
-      this.fx.push({ t: kind === 'slug' ? 'slug' : 'shot', x: m.x, y: m.y, team: e.team, type: e.type, kind: e.kind, ang: e.aim });
+      this.projectiles.push({ kind, x: m.x, y: m.y, z0: m.z, d0: Math.hypot(tp.x - m.x, tp.y - m.y), target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, speed: kind === 'slug' ? 2600 : 1100 });
+      this.fx.push({ t: kind === 'slug' ? 'slug' : 'shot', x: m.x, y: m.y, z: m.z, team: e.team, type: e.type, kind: e.kind, ang: e.aim });
     } else if (kind === 'shell') {
       const d0 = Math.hypot(tp.x - m.x, tp.y - m.y);
       const sc = e.def.scatterMax ? 12 + (e.def.scatterMax - 12) * Math.min(1, d0 / this.stat(e, 'range')) : 12;
       const tx = tp.x + (this.rnd() * 2 - 1) * sc, ty = tp.y + (this.rnd() * 2 - 1) * sc;
       const dist = Math.hypot(tx - m.x, ty - m.y), [f0, f1] = e.def.flight || [0.7, 900];
       this.projectiles.push({ kind, x: m.x, y: m.y, z: 0, sx: m.x, sy: m.y, tx, ty, t: 0, T: f0 + dist / f1, apex: 60 + dist * (e.def.flight ? 0.5 : 0.3), dmg, team: e.team, src: e, splash: e.def.splash });
-      this.fx.push({ t: 'cannon', x: m.x, y: m.y, team: e.team, type: e.type, ang: e.aim });
+      this.fx.push({ t: 'cannon', x: m.x, y: m.y, z: m.z, team: e.team, type: e.type, ang: e.aim });
     } else if (kind === 'missile') {
       for (let i = 0; i < e.def.salvo; i++) {
         const mi = this.muzzle(e, i);
-        this.projectiles.push({ kind, x: mi.x, y: mi.y, ang: e.aim + (i % 2 ? 0.6 : -0.6), target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, splash: e.def.splash, speed: 520, life: 3, trail: [] });
+        this.projectiles.push({ kind, x: mi.x, y: mi.y, z0: mi.z, d0: Math.hypot(tp.x - mi.x, tp.y - mi.y), ang: e.aim + (i % 2 ? 0.6 : -0.6), target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, splash: e.def.splash, speed: 520, life: 3, trail: [] });
       }
-      for (let i = 0; i < Math.min(2, e.def.salvo); i++) { const mi = this.muzzle(e, i); this.fx.push({ t: 'missile', x: mi.x, y: mi.y, team: e.team, quiet: i > 0 }); }
+      for (let i = 0; i < Math.min(2, e.def.salvo); i++) { const mi = this.muzzle(e, i); this.fx.push({ t: 'missile', x: mi.x, y: mi.y, z: mi.z, team: e.team, quiet: i > 0 }); }
     } else if (kind === 'zap') {
       const pts = [{ x: m.x, y: m.y }], hit = new Set();
       let cur = t, d = dmg;
