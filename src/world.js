@@ -291,12 +291,19 @@ export class World {
   inReach(e, f) {
     return e.kind !== 'mech' || e.def.anyLane || f.kind === 'base' || Math.abs(laneOf(f.x) - e.lane) <= LANE_REACH;
   }
+  // side attack: melee Tanks also hit enemies in a neighbouring lane (gameplay.md §5.2)
+  sideReach(e) {
+    if (e.kind !== 'mech' || e.def.proj !== 'melee') return 0;
+    return ROLES[e.def.role].sideAttack || 0;
+  }
+  isSide(e, f) { return f.kind !== 'base' && laneOf(f.x) !== e.lane; }
+  rangeFor(e, f, range) { const s = this.sideReach(e); return s && this.isSide(e, f) ? Math.max(range, s) : range; }
   pickTarget(e, range) {
     let best = null, bestK = Infinity;
     for (const f of this.entities) {
       if (f.dead || f.team === e.team || !this.inReach(e, f)) continue;
       const d = this.dist(e, f);
-      if (d > range) continue;
+      if (d > this.rangeFor(e, f, range)) continue;
       const k = this.targetKey(e, f, d);
       if (k < bestK) { bestK = k; best = f; }
     }
@@ -304,7 +311,7 @@ export class World {
     const cur = e.target;
     if (cur && !cur.dead && cur !== best && this.inReach(e, cur)) {
       const d = this.dist(e, cur);
-      if (d <= range && Math.floor(this.targetKey(e, cur, d) / 1e4) <= Math.floor(bestK / 1e4)) return cur;
+      if (d <= this.rangeFor(e, cur, range) && Math.floor(this.targetKey(e, cur, d) / 1e4) <= Math.floor(bestK / 1e4)) return cur;
     }
     return best;
   }
@@ -395,6 +402,8 @@ export class World {
     const stopRange = e.def.proj === 'melee' ? 0 : this.stat(e, 'range') * STOP_AT;
     if (R.fireOnMove) {
       if (e.pause > 0) return false;
+      // a melee Tank stops beside an enemy in the next lane to fight it (side attack)
+      if (t && this.sideReach(e) && this.isSide(e, t) && this.dist(e, t) <= this.sideReach(e)) return false;
       if (R.goal === 'structure' && stopRange > 0) {
         for (const f of this.entities) {
           if (f.dead || f.team === e.team || !isStructure(f)) continue;
@@ -419,26 +428,39 @@ export class World {
       return; // everything else fights what blocks it
     }
     if (this.fighting(f)) {
+      // a fighting friendly it may pass is passed; otherwise the role's rule for this situation
+      if (this.canPass(R, f) && !R.noPassFighting) { this.tryOvertake(e, f, true); return; }
       if (R.behindFight === 'join') this.fanOut(e, true);
       else if (R.behindFight === 'fanout') { if (!e.target) this.fanOut(e, false); }
       else if (R.behindFight === 'around') this.tryOvertake(e, f, true);
       return;
     }
-    if (this.canPass(R, f)) this.tryOvertake(e, f);
+    if (this.canPass(R, f)) this.tryOvertake(e, f, !!R.alwaysPass);
   }
 
   // Step into a free neighbouring lane and stay there, to get into the fight. needEnemy: only if there
   // is something to fight in that lane (Tanks; until the side attack exists they can't hit across lanes).
   fanOut(e, needEnemy) {
     const dir = FWD[e.team];
-    const near = (l, reach) => this.entities.some((f) => !f.dead && f.team !== e.team && (f.kind === 'base' || (f.kind !== 'constructor' && laneOf(f.x) === l)) &&
-      (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < reach);
     let opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneAllowed(e, l) && this.laneFree(e, l));
-    if (needEnemy) opts = opts.filter((l) => near(l, 300));
     if (!opts.length) return false;
-    const reach = this.stat(e, 'range') + 150;
+    // prefer the side from which it would reach an enemy soonest (counting its lane reach), then fewer friendlies, then the center
+    const reachL = e.def.anyLane ? LANES : LANE_REACH, far = this.stat(e, 'range') + 150;
+    const nearest = (l) => {
+      let best = Infinity;
+      for (const f of this.entities) {
+        if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
+        if (f.kind !== 'base' && Math.abs(laneOf(f.x) - l) > reachL) continue;
+        const d = (f.y - e.y) * dir;
+        if (d > 0 && d < far && d < best) best = d;
+      }
+      return best;
+    };
     const friends = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < 200).length;
-    opts.sort((a, b) => (near(b, reach) - near(a, reach)) || friends(a) - friends(b) || Math.abs(a - 2) - Math.abs(b - 2));
+    const score = Object.fromEntries(opts.map((l) => [l, nearest(l)]));
+    if (needEnemy) opts = opts.filter((l) => score[l] < 300); // Tanks only step over to something they can fight
+    if (!opts.length) return false;
+    opts.sort((a, b) => (score[a] - score[b] || 0) || friends(a) - friends(b) || Math.abs(a - 2) - Math.abs(b - 2));
     e.homeLane = null; e.passing = null; // fanning out to fight is permanent
     this.shiftTo(e, opts[0], true);
     return true;

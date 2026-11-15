@@ -236,13 +236,45 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const t = tough(w.cells[1][2][6]); t.def = { ...t.def, dmg: 0 };
   const m = mech(w, 'mortar', 0, 2, 1150, 1e9), g = mech(w, 'gunner', 0, 2, 1090, 1e9);
   run(w, 20);
-  check('line fans out behind fighting artillery', Math.abs(g.lane - 2) === 1 && g.y > m.y + 40, `lane ${g.lane} y ${g.y.toFixed(0)} mortar ${m.y.toFixed(0)}`);
+  check('line passes fighting artillery', g.y > m.y + 40, `lane ${g.lane} y ${g.y.toFixed(0)} mortar ${m.y.toFixed(0)}`);
+  // Line behind a fighting Line with no shot of its own fans out (and stays out)
+  const wf = mk();
+  const tf = mech(wf, 'brawler', 1, 2, 1500, 1e9); tf.def = { ...tf.def, dmg: 0, speed: 0 };
+  const sk = mech(wf, 'seeker', 0, 2, 1150, 1e9), gf = mech(wf, 'gunner', 0, 2, 1090, 1e9);
+  run(wf, 12);
+  check('line fans out behind a fighting line mech', Math.abs(gf.lane - 2) === 1 && gf.target === tf, `lane ${gf.lane}`);
+  // Artillery with no shot fans out behind a fighting friendly it may not pass
+  const wa = mk([['sentry', 2, 6]]);
+  const ta = tough(wa.cells[1][2][6]); ta.def = { ...ta.def, dmg: 0 };
+  const g2 = mech(wa, 'gunner', 0, 2, 1150, 1e9), mo = mech(wa, 'mortar', 0, 2, 1000, 1e9);
+  mo.def = { ...mo.def, range: 200 };
+  run(wa, 20);
+  check('artillery without a shot fans out', Math.abs(mo.lane - 2) === 1, `lane ${mo.lane}`);
+  // Tanks: pass a fighting ranged friendly, and pass a marching Mortar although it's barely slower
+  const wt = mk([['sentry', 2, 6]]);
+  const tt = tough(wt.cells[1][2][6]); tt.def = { ...tt.def, dmg: 0 };
+  const mt = mech(wt, 'mortar', 0, 2, 1150, 1e9), bt = mech(wt, 'brawler', 0, 2, 1090, 1e9);
+  run(wt, 25);
+  check('tank passes a fighting mortar', bt.y > mt.y + 40, `brawler ${bt.y.toFixed(0)} mortar ${mt.y.toFixed(0)}`);
+  const wm = mk();
+  const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
+  run(wm, 40);
+  check('tank passes a marching mortar and leads', bm.y > mm.y && bm.lane === 2, `brawler ${bm.y.toFixed(0)} mortar ${mm.y.toFixed(0)} lane ${bm.lane}`);
   const w2 = mk();
   const f1 = mech(w2, 'brawler', 1, 2, 1300, 1e9), f2 = mech(w2, 'brawler', 1, 3, 1330, 1e9);
   for (const f of [f1, f2]) f.def = { ...f.def, dmg: 0, speed: 0 };
   const b1 = mech(w2, 'brawler', 0, 2, 1150, 1e9), b2 = mech(w2, 'brawler', 0, 2, 1080, 1e9);
   run(w2, 12);
-  check('tank joins a fight in the next lane', b2.lane === 3 && b2.target === f2, `lane ${b2.lane}`);
+  check('tank joins a fight from the next lane', Math.abs(b2.lane - 2) === 1 && (b2.target === f1 || b2.target === f2), `lane ${b2.lane}`);
+  // three Tanks attack one enemy from three sides
+  const w4 = mk();
+  const foe = mech(w4, 'brawler', 1, 2, 1300, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+  const t1 = mech(w4, 'brawler', 0, 2, 1150, 1e9), t2 = mech(w4, 'brawler', 0, 2, 1090, 1e9), t3 = mech(w4, 'brawler', 0, 2, 1030, 1e9);
+  run(w4, 15);
+  const lanes = [t1, t2, t3].map((t) => t.lane).sort().join();
+  check('three tanks attack from three sides', lanes === '1,2,3' && [t1, t2, t3].every((t) => t.target === foe && !t.moving), `lanes ${lanes}`);
+  const h0 = foe.hp; run(w4, 2);
+  check('side attackers deal damage', h0 - foe.hp >= 3 * 48 * 0.99, `dmg ${(h0 - foe.hp).toFixed(0)}`);
   const w3 = mk();
   const f3 = mech(w3, 'brawler', 1, 2, 1500, 1e9); f3.def = { ...f3.def, dmg: 0, speed: 0 };
   const g3 = mech(w3, 'gunner', 0, 2, 1150, 1e9), a = mech(w3, 'aegis', 0, 2, 1080, 1e9);
@@ -311,7 +343,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   w.energy = 1000;
   run(w, 3);
   const mine = w.entities.filter((e) => e.team === 0 && e.kind === 'mech');
-  check('queue drains in order into the queued lanes', w.queue.length === 0 && mine.some((e) => e.type === 'brawler' && e.lane === 1) && mine.some((e) => e.type === 'scout' && e.lane === 3));
+  check('queue drains in order into the queued lanes', w.queue.length === 0 && mine.some((e) => e.type === 'brawler' && e.home0 === 1) && mine.some((e) => e.type === 'scout' && e.home0 === 3));
   check('energy charged on deploy', Math.abs(w.energy - (1000 - MECHS.brawler.cost - MECHS.scout.cost)) < 1e-6, `energy ${w.energy}`);
 }
 {

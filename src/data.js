@@ -23,17 +23,22 @@ export const rowOf = (team, y) => {
 //   passes       roles of friendly mechs it may overtake ('all' = anyone)
 //   behindFight  what it does when the friendly ahead has stopped to fight:
 //                join (step beside it to reach an enemy), fanout (step over if it has no shot),
-//                stay, around (overtake it)
+//                stay, around (overtake it). Applies only to friendlies it may not pass: a fighting
+//                friendly it may pass is passed.
+//   sideAttack   melee weapons also hit enemies in a neighbouring lane up to this edge distance, and stop
+//                beside them to fight
+//   alwaysPass   passes a marching friendly it may pass even if that one is barely slower
+//   noPassFighting  never passes a friendly that is fighting
 //   follow       stays a little behind the nearest fighting friendly (own lane ± 1)
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
 export const ROLES = {
-  tank: { name: 'Tank', fireOnMove: true, passes: ['line', 'support', 'artillery', 'charger'], behindFight: 'join',
+  tank: { name: 'Tank', fireOnMove: true, passes: ['line', 'support', 'artillery', 'charger'], behindFight: 'join', alwaysPass: true, sideAttack: 100,
     desc: 'Leads from the front, draws fire and fights whatever blocks it.' },
   line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], behindFight: 'fanout',
     desc: 'Stops at range and shoots; takes cover behind a marching tank.' },
-  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40,
+  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true,
     desc: 'Follows the fight and stays just behind its front.' },
-  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'stay',
+  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'fanout',
     desc: 'Stays at the back and shoots from as far as possible.' },
   charger: { name: 'Charger', fireOnMove: true, passes: 'all', behindFight: 'around', goal: 'structure',
     desc: 'Charges the first enemy structure in its path, slipping past mechs and shooting on the move.' },

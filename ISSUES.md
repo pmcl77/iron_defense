@@ -22,7 +22,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar) **(built in 0.4.0-dev, 2026-11-15; to play-test)**
        - Balance bot, 4 runs per cell, old rules vs. roles: almost the same. Win rates equal in most cells; battles often 10–30% shorter (stages 4–8); a few cells shift by one run (stage 4 none 75% → 100%, stage 9 split 25% → 50%, stage 10 mid/mixed 25% → 0%, stage 12 max 100% → 50%). The bot no longer has an Advance switch to push with.
     2. walking lane changes and the detour around friendly turrets
-    3. melee side attack (about 100 units into the neighbor lane)
+    3. melee side attack (about 100 units into the neighbor lane) **(built in 0.4.0-dev, moved ahead of step 2)**
     4. traits
     5. enemy AI deploy variety, using roles (see Enemy AI)
     6. balance pass with the bot; expect clear changes in difficulty
@@ -48,6 +48,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **D, better fan-out side (bug fix):** pick the side from which the mech would actually have a target in range (counting its ±1 reach), then fewer friendlies, then toward the center.
     - **E, side attack (step 3) next:** makes Brawler groups readable: Brawler 2 steps beside Brawler 1 and hits the same enemy from the side.
   - **Recommendation:** A + B + D now; C yes (avoids idle artillery, the original "cowards" problem); then E as the next step before step 2.
+  - **Built (user: "build as suggested", 2026-11-15): A, B, C, D and E** in 0.4.0-dev. To play-test.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.

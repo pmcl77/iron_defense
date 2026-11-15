@@ -81,7 +81,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 
 ### 5.2 Movement: roles, types and traits
 
-*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Step 1 is built**; until the later steps are built, lane changes still take a quick 0.5 s, Tanks only join a fight in a neighbouring lane if there's an enemy in that lane, and the Seeker still reaches every lane.*
+*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Steps 1 and 3 are built** (step 3 was moved ahead after the first play-test); until the others are built, lane changes still take a quick 0.5 s and the Seeker still reaches every lane.*
 
 There is **no stance switch**. A mech's behavior comes from its type alone, and the same rules always apply:
 
@@ -111,15 +111,15 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 | Enemy turret or base ahead | walks up and fights it | stops at range | as above | stops at maximum range | stops at it and fights it (ranged: at range) |
 | Enemy mech blocks its lane | fights it, melee also from the neighbor lane (side attack) | fights it | fights it | fights it | slips past through a free neighbor lane; fights it only if every side is blocked |
 | Friendly ahead, marching | passes non-tanks | stays behind tanks; passes Support and Artillery | stays behind; passes only Artillery | stays behind | passes anyone |
-| Friendly ahead, stopped and fighting | steps beside it into a free neighbor lane and joins the fight | shoots from behind if it has a shot, otherwise fans out ±1 lane | stays behind it (its spot) | stays behind and waits for a shot | goes around it |
+| Friendly ahead, stopped and fighting (one it may pass is simply passed) | behind a Tank: steps beside it into a free neighbor lane and joins the fight | shoots from behind if it has a shot, otherwise fans out ±1 lane | stays behind it (its spot) | shoots from behind if it has a shot, otherwise fans out ±1 lane | goes around it |
 | Default target | whatever blocks it, otherwise nearest | nearest | nearest | nearest | nearest |
 
 **Charger goal:** the first structure in its path: the nearest enemy turret ahead within ±1 lane (it steps over toward it), otherwise the base.
 
 **Shared rules (all roles):**
-- **Passing:** Tank passes anyone who isn't a tank. Line passes Support and Artillery. Support passes only Artillery, and never a friendly that's fighting. Artillery passes nobody. Charger passes anyone. Otherwise a mech keeps a 4-unit gap behind the friendly in front.
+- **Passing:** applies to marching, waiting *and* fighting friendlies: a friendly a mech may pass is passed, and only otherwise does the "stopped and fighting" row apply. Tank passes anyone who isn't a tank, even if that one is only slightly slower (other roles pass only friendlies at least 8 slower). Line passes Support and Artillery. Support passes only Artillery, and never a friendly that's fighting. Artillery passes nobody. Charger passes anyone. Otherwise a mech keeps a 4-unit gap behind the friendly in front.
 - **Ranged units stop at about 95% of their range** in front of what stops them (enemy mechs, turrets, the base), so small movements don't take them out of range. Melee units walk up to contact.
-- **Fan-out** (Line behind a fighting friendly, Tank joining a fight): only once the friendly ahead has stopped to fight, never while it's still marching, so fresh deployments keep their cover. It prefers the side with a reachable target, then the side with fewer friendlies.
+- **Fan-out** (Line behind a fighting friendly, Tank joining a fight): only once the friendly ahead has stopped to fight, never while it's still marching, so fresh deployments keep their cover. It prefers the side from which it reaches an enemy soonest (counting its lane reach), then the side with fewer friendlies, then toward the center. A Tank only steps over if it can fight something from there.
 - **Lane changes:**
   - a mech walks over diagonally at a pace that matches its speed and turns its body; heavy mechs take longer
   - it starts only when the destination lane is free (reservation), and blocks only what it physically overlaps on the way
@@ -134,7 +134,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 **Build order** (each step followed by a play-test):
 1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special). **Built in 0.4.0-dev.**
 2. Walking lane changes and the detour around friendly turrets.
-3. Melee side attack.
+3. Melee side attack: a melee Tank hits enemies in a neighbouring lane up to about 100 units (edge distance) and stops beside them to fight, so a group of Brawlers attacks one enemy from three sides. **Built in 0.4.0-dev.**
 4. Traits (§5.5).
 5. Enemy AI deploy variety, using roles (§10).
 6. Balance pass with the bot.

@@ -20,6 +20,12 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - An enemy that physically blocks a mech always becomes its target.
   - The HOLD/ADVANCE button (and key F) is gone; the energy bar takes its place. The enemy no longer switches modes either.
   - The help screen lists the roles and which mechs belong to each.
+- **Movement fixes after the first role play-test:**
+  - a fighting friendly that a mech may pass is now passed (a Brawler no longer waits behind a fighting Mortar or Seeker, and a train like Mortar-Brawler-Gunner no longer gets stuck)
+  - a Brawler passes a marching Mortar although the Mortar is only slightly slower, so tanks really lead
+  - Artillery with no shot steps one lane over behind a fighting friendly instead of waiting
+  - fanning out picks the side from which the mech can actually reach an enemy soonest
+- **Side attack** (step 3): a Brawler also hits enemies in the neighbouring lane (up to about 100 units) and stops beside them to fight. Behind a fighting Brawler, the next one steps beside it, so a group of three attacks one enemy from three sides.
 
 ## [0.3.0]: 2026-11-15
 
