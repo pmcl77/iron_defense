@@ -25,6 +25,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
        - Balance bot, 4 runs per cell: same picture as after H, changes within noise (stage 9 max 100% → 75%, stage 10 mid/mixed 25% → 0%, Endless 1 max 25% → 50%).
     3. melee side attack (about 100 units into the neighbor lane) **(built in 0.4.0-dev, moved ahead of step 2)**
     4. traits **(built in 0.4.0-dev, 2026-11-15; to play-test)**
+       - Balance bot, 4 runs per cell: no clear change from step 2, all within noise (stage 9 max 75% → 100%, stage 13 max 50% → 75%, stage 6 mid/mortar 100% → 75%). The Aegis radius change (140 → 170) came after this run.
     5. enemy AI deploy variety, using roles (see Enemy AI)
     6. balance pass with the bot; expect clear changes in difficulty
   - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
