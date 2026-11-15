@@ -161,7 +161,7 @@ The first five are copied from Ironline; the last three are new *(tune)*:
 | Gunner | 80 | 230 | 18 | 0.6 | 260 | 55 | 2 s | Bullet |
 | Brawler | 140 | 700 | 48 | 1.0 | 60 | 40 | 3.5 s | Melee |
 | Mortar | 170 | 180 | 60 (×0.5 vs turrets and bases) | 3.2 | 520 | 35 | 4.5 s | Slow shell, splash 70 |
-| Aegis | 120 | 340 | 6 | 0.8 | 180 | 45 | 4 s | Bullet, 40% damage-reduction field within 170 (was 140 until 0.4.0-dev) |
+| Aegis | 120 | 340 | 6 | 0.8 | 180 | 45 | 4 s | Bullet, 40% damage-reduction field within 200 (was 140 until 0.4.0-dev) |
 | **Seeker** | 150 | 260 | 2 × 35 | 2.4 | 380 | 50 | 4 s | Missile salvo, splash 30, prefers mechs |
 | **Breacher** | 190 | 950 | 30 (×4 vs turrets and bases) | 1.2 | 60 | 38 | 5 s | Melee; each hit stuns a turret for 0.3 s |
 | **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 460 | 40 | 5 s | Siege slug, prefers turrets and bases |
