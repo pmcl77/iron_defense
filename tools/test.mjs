@@ -298,7 +298,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('second gunner walks on beside the first (pass becomes fan-out)', gb.target === fr2 && gb.homeLane == null && !gb.moving, `GU1 L${ga.lane} ${ga.y.toFixed(0)} GU2 L${gb.lane} ${gb.y.toFixed(0)} home ${gb.homeLane}`);
   const wm = mk();
   const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
-  run(wm, 40);
+  run(wm, 60); // slow: Brawler 32 vs Mortar 28, and it walks at 0.6× while changing lanes
   check('tank passes a marching mortar and leads', bm.y > mm.y && bm.lane === 2, `brawler ${bm.y.toFixed(0)} mortar ${mm.y.toFixed(0)} lane ${bm.lane}`);
   const w2 = mk();
   const f1 = mech(w2, 'brawler', 1, 2, 1300, 1e9), f2 = mech(w2, 'brawler', 1, 3, 1330, 1e9);
@@ -436,6 +436,74 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   g3.aim = Math.PI / 2; w3.fire(g3, t3);
   const p3 = w3.projectiles[0];
   check('muzzle follows the aim', p3.x > g3.x + 20 && p3.y > g3.y + 10, `${(p3.x - g3.x).toFixed(1)}, ${(p3.y - g3.y).toFixed(1)}`);
+}
+
+// step 2: walked lane changes, honest occupancy, detour around own turrets
+{
+  // a lane change takes lane width / speed (LANE_CHANGE.side = 1); the lane switches at the halfway point
+  const w = mk(), g = mech(w, 'gunner', 0, 2, 600, 1e9);
+  w.shiftTo(g, 1);
+  let tHalf = null, tDone = null, laneEarly = g.lane;
+  for (let i = 1; i < 6 * 60 && tDone == null; i++) {
+    w.update(1 / 60);
+    if (i === 30) laneEarly = g.lane;
+    if (tHalf == null && g.lane === 1) tHalf = i / 60;
+    if (!g.shift) tDone = i / 60;
+  }
+  const expect = 120 / MECHS.gunner.speed;
+  check('lane change is walked at the mech\'s pace', tDone != null && Math.abs(tDone - expect) < 0.3, `took ${tDone?.toFixed(2)} s, expected ${expect.toFixed(2)} s`);
+  check('lane counts as the new one from the halfway point', laneEarly === 2 && Math.abs(tHalf - expect / 2) < 0.3, `early ${laneEarly}, switched at ${tHalf?.toFixed(2)} s`);
+  // the body turns toward where it walks, and back afterwards
+  const w2 = mk(), b = mech(w2, 'brawler', 0, 2, 600, 1e9);
+  w2.shiftTo(b, 3);
+  run(w2, 1.5);
+  const midBody = b.body;
+  run(w2, 6);
+  check('legs turn while changing lanes and turn back', midBody > 0.5 && Math.abs(b.body) < 0.05, `mid ${midBody.toFixed(2)} after ${b.body.toFixed(2)}`);
+  // honest occupancy: a mech crossing into lane 1 blocks a mech walking up lane 1 behind it
+  const w3 = mk(), a3 = mech(w3, 'mortar', 0, 2, 900, 1e9), c3 = mech(w3, 'mortar', 0, 1, 820, 1e9); // Artillery passes nobody
+  a3.def = { ...a3.def, speed: 20 }; // slow crossing
+  w3.shiftTo(a3, 1);
+  let minGap = Infinity;
+  for (let i = 0; i < 4 * 60; i++) { w3.update(1 / 60); if (a3.shift) minGap = Math.min(minGap, a3.y - c3.y); }
+  check('a mech changing lanes blocks the lane it enters', minGap >= a3.radius + c3.radius, `closest ${minGap.toFixed(0)}`);
+  // ...and the lane it leaves, and nobody else starts into that spot (reservation)
+  const w4 = mk(), a4 = mech(w4, 'gunner', 0, 2, 900, 1e9), d4 = mech(w4, 'gunner', 0, 0, 900, 1e9);
+  w4.shiftTo(a4, 1); w4.update(1 / 60);
+  check('the lane being entered is reserved', !w4.laneFree(d4, 1) && !w4.laneFree(mech(w4, 'scout', 0, 3, 900), 2));
+}
+{
+  // own mechs walk around their own turrets at full speed and stay in their lane
+  const w = mk(), g = mech(w, 'gunner', 0, 1, 150, 1e9);
+  w.placeTurret(0, 'sentry', 1, 1);
+  const tur = w.cells[0][1][1] && w.entities.find((f) => f.kind === 'turret' && f.team === 0 && f.lane === 1);
+  let maxOff = 0, minDist = Infinity, laneOk = true;
+  const y0 = g.y;
+  for (let i = 0; i < 12 * 60; i++) {
+    w.update(1 / 60);
+    maxOff = Math.max(maxOff, Math.abs(g.x - laneX(1)));
+    minDist = Math.min(minDist, Math.hypot(g.x - tur.x, g.y - tur.y));
+    if (g.lane !== 1) laneOk = false;
+  }
+  check('own mech walks around its own turret', minDist >= 31 + g.radius, `closest ${minDist.toFixed(0)}, max drift ${maxOff.toFixed(0)}`);
+  check('detour keeps lane and full speed, and ends back in the lane', laneOk && g.y - y0 > 12 * MECHS.gunner.speed * 0.97 && Math.abs(g.x - laneX(1)) < 1, `lane ok ${laneOk}, walked ${(g.y - y0).toFixed(0)}, x off ${(g.x - laneX(1)).toFixed(1)}`);
+  // side: toward an empty neighbour cell; with both neighbours built, the middle of the gap
+  const w2 = mk(), g2 = mech(w2, 'gunner', 0, 1, 150, 1e9);
+  w2.placeTurret(0, 'sentry', 1, 1); w2.placeTurret(0, 'sentry', 2, 1);
+  let side2 = 0; for (let i = 0; i < 6 * 60; i++) { w2.update(1 / 60); if (Math.abs(g2.x - laneX(1)) > Math.abs(side2)) side2 = g2.x - laneX(1); }
+  check('detour goes toward the empty neighbour cell', side2 < -40, `drift ${side2.toFixed(0)}`);
+  const w3 = mk(), g3 = mech(w3, 'gunner', 0, 1, 150, 1e9);
+  for (const l of [0, 1, 2]) w3.placeTurret(0, 'sentry', l, 1);
+  let side3 = 0; for (let i = 0; i < 6 * 60; i++) { w3.update(1 / 60); if (Math.abs(g3.x - laneX(1)) > Math.abs(side3)) side3 = g3.x - laneX(1); }
+  check('between two built cells it keeps to the gap', side3 > 40 && side3 <= 61, `drift ${side3.toFixed(0)}`);
+  // the Constructor drives around own pads on its way to a cell further out
+  const w4 = mk();
+  w4.placeTurret(0, 'sentry', 2, 0);
+  w4.order(2, 3, 'sentry');
+  let cMin = Infinity; const t4 = w4.entities.find((f) => f.kind === 'turret' && f.team === 0);
+  for (let i = 0; i < 15 * 60; i++) { w4.update(1 / 60); if (w4.con && !w4.con.dead) cMin = Math.min(cMin, Math.hypot(w4.con.x - t4.x, w4.con.y - t4.y)); }
+  check('constructor drives around own turrets', cMin >= 31 + CONSTRUCTOR.radius, `closest ${cMin.toFixed(0)}`);
+  check('constructor still builds behind them', !!w4.cells[0][2][3], '');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -81,7 +81,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 
 ### 5.2 Movement: roles, types and traits
 
-*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Steps 1 and 3 are built** (step 3 was moved ahead after the first play-test); until the others are built, lane changes still take a quick 0.5 s and the Seeker still reaches every lane.*
+*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Steps 1, 2 and 3 are built** (step 3 was moved ahead after the first play-test); until step 4 is built, the Seeker still reaches every lane.*
 
 There is **no stance switch**. A mech's behavior comes from its type alone, and the same rules always apply:
 
@@ -122,19 +122,19 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 - **Ranged units stop at about 95% of their range** in front of what stops them (enemy mechs, turrets, the base), so small movements don't take them out of range. Melee units walk up to contact.
 - **Fan-out** (Line behind a fighting friendly, Tank joining a fight): only once the friendly ahead has stopped to fight, never while it's still marching, so fresh deployments keep their cover. It prefers the side from which it reaches an enemy soonest (counting its lane reach), then the side with fewer friendlies, then toward the center. A Tank only steps over if it can fight something from there.
 - **Lane changes:**
-  - a mech walks over diagonally at a pace that matches its speed and turns its body; heavy mechs take longer
-  - it starts only when the destination lane is free (reservation), and blocks only what it physically overlaps on the way
+  - a mech walks over diagonally at a pace that matches its speed and turns its legs toward where it walks (sideways at its walk speed, forward at 0.6× meanwhile; only sideways if blocked in front). 120 units of lane width: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s
+  - it starts only when the destination lane is free; while crossing it occupies **both** lanes (nobody walks through it, and nobody else starts into that spot: the reservation). Its lane for targeting and lane reach switches at the halfway point
   - at most ±1 lane from its home lane
   - after passing someone it returns home; after fanning out to fight it stays in the new lane
 - **A full turret wall** (no free cell in the row) stops everyone until a turret falls.
-- **Friendly turrets:** own mechs (and the Constructor) walk around them in the gap between the pads, while staying assigned to their lane. This is cosmetic: full speed, no effect on blocking, reach or targeting.
+- **Friendly turrets:** own mechs (and the Constructor) walk around them, while staying assigned to their lane. This is cosmetic: full speed, no effect on blocking, reach or targeting. A mech starts drifting about 60 units before the pad, toward an empty neighbour cell (otherwise toward the field center), far enough to clear the pad, and drifts back after it. If both neighbour cells are built, it keeps to the middle of the gap between the pads (60 from its lane center; a Brawler brushes them). Enemy mechs do the same around their own turrets. The Constructor steers around pads on its way to a cell.
 - Each mech gets a small cosmetic sideways offset (±20) inside its lane.
 
 **Tuning values to start with** *(tune after play-testing)*: side attack reaches about 100 units into the neighbor lane, and while fighting from the side the Tank leans about 35 units toward its target (it stays in its lane); Support stays about 40 units behind the friendly it follows.
 
 **Build order** (each step followed by a play-test):
 1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special). **Built in 0.4.0-dev.**
-2. Walking lane changes and the detour around friendly turrets.
+2. Walking lane changes and the detour around friendly turrets. **Built in 0.4.0-dev.**
 3. Melee side attack: a melee Tank hits enemies in a neighbouring lane up to about 100 units (edge distance) and stops beside them to fight, so a group of Brawlers attacks one enemy from three sides. **Built in 0.4.0-dev.**
 4. Traits (§5.5).
 5. Enemy AI deploy variety, using roles (§10).
@@ -401,7 +401,8 @@ These are the exact values the first build uses that aren't stated in the sectio
 | Deploy point | Player mechs appear at y = 124 (base face + 24) in the active lane, ±20 sideways jitter. Enemy mechs appear at y = 2276; groups are spaced 34 apart |
 | Turn rates | Mech torsos 2π rad/s. Sentry 5, Howitzer 2.5, Arc Coil instant. A unit fires only when aimed within 10° |
 | Target keeping | A unit keeps its target while it's alive and in range, unless a better category appears (ahead beats behind, preferred type beats others) |
-| Sidestep / overtake | 0.5 s smoothed sideways move at half forward speed. Around a turret the mech stays in its new lane; when overtaking it returns home once the home lane is clear (no mech within the two radii + 10, no enemy turret just ahead) |
+| Lane change | walked: sideways at the mech's speed, forward at 0.6× (`LANE_CHANGE` in data.js); occupies both lanes until it arrives, lane of record switches halfway. When passing it returns home once the home lane is clear (no mech within the two radii + 10, no enemy turret just ahead) |
+| Detour around own turrets | cosmetic x drift (`DETOUR` in data.js): pad half-width 31 (Howitzer 36) + 1.4 × the mech's radius, starts 60 before the pad, capped at 60 between two built cells |
 | Friendly spacing | Mechs in the same lane keep a gap of 4 units (edge to edge) |
 | Lane reach | Own lane ± 1, using the target's current x position (`laneOf`). Code: `World.inReach` |
 | Pause to fire | Mortar and Lancer stop for 0.4 s after each shot in Advance (obsolete once the roles are built: Artillery always stops) |

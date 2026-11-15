@@ -46,6 +46,12 @@ export const ROLES = {
     desc: 'Charges the first enemy structure in its path, slipping past mechs and shooting on the move.' },
 };
 export const STOP_AT = 0.95; // ranged units stop at this share of their range
+// lane changes are walked (gameplay.md §5.2): sideways at side × the mech's speed, forward at fwd × while doing it.
+// 120 units of lane width: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s.
+export const LANE_CHANGE = { side: 1.0, fwd: 0.6 };
+// walking around own turrets (cosmetic): pad half-widths, start this far ahead of the pad, how far a mech's
+// body counts (× radius), drift speed (× speed, at least minRate) and the drift cap when both sides are built up
+export const DETOUR = { pad: { default: 31, howitzer: 36 }, ahead: 60, body: 1.4, rate: 1.3, minRate: 40, gap: 60 };
 
 // turn = torso turn rate (rad/s). pref = target preference. structMult = damage multiplier vs turrets and bases.
 const TURN = Math.PI * 2; // about 360°/s

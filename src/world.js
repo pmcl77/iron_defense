@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, QUEUE, ROLES, STOP_AT, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
@@ -11,7 +11,6 @@ import {
 let nextId = 1;
 const TAU = Math.PI * 2;
 const AIM_TOL = (10 * Math.PI) / 180;
-const SHIFT_TIME = 0.5;
 const PAUSE_TO_FIRE = 0.4;
 const GAP = 4;            // spacing kept between friendly mechs in a lane
 const LANE_REACH = 1;     // mechs target their own lane and this many lanes to each side
@@ -26,6 +25,8 @@ export function mulberry32(a) {
 }
 export const angDiff = (a, b) => { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; };
 export const headingTo = (a, b) => Math.atan2(b.x - a.x, b.y - a.y);
+const BODY_TURN = 3;      // rad/s: how fast a mech's legs turn toward where it walks
+const turnTo = (a, b, step) => { const d = angDiff(a, b); return a + Math.max(-step, Math.min(step, d)); };
 const isStructure = (f) => f.kind === 'turret' || f.kind === 'base';
 
 export class World {
@@ -289,14 +290,14 @@ export class World {
   }
   // mechs only reach their own lane and the neighbours (bases span every lane; Seeker missiles are exempt)
   inReach(e, f) {
-    return e.kind !== 'mech' || e.def.anyLane || f.kind === 'base' || Math.abs(laneOf(f.x) - e.lane) <= LANE_REACH;
+    return e.kind !== 'mech' || e.def.anyLane || f.kind === 'base' || Math.abs(this.laneAt(f) - e.lane) <= LANE_REACH;
   }
   // side attack: melee Tanks also hit enemies in a neighbouring lane (gameplay.md §5.2)
   sideReach(e) {
     if (e.kind !== 'mech' || e.def.proj !== 'melee') return 0;
     return ROLES[e.def.role].sideAttack || 0;
   }
-  isSide(e, f) { return f.kind !== 'base' && laneOf(f.x) !== e.lane; }
+  isSide(e, f) { return f.kind !== 'base' && this.laneAt(f) !== e.lane; }
   rangeFor(e, f, range) { const s = this.sideReach(e); return s && this.isSide(e, f) ? Math.max(range, s) : range; }
   pickTarget(e, range) {
     let best = null, bestK = Infinity;
@@ -345,26 +346,37 @@ export class World {
     const dir = FWD[e.team];
     const home = e.team === 0 ? 0 : Math.PI;
     const R = ROLES[e.def.role];
+    const speed = this.stat(e, 'speed');
+    if (e.bx == null) e.bx = e.x;
+    // a lane change is walked: sideways at LANE_CHANGE.side × its speed (forward below at LANE_CHANGE.fwd ×).
+    // It occupies both lanes until it arrives; its lane for targeting and reach switches at the halfway point.
+    let side = 0;
     if (e.shift) {
-      const s = e.shift;
-      s.t += dt;
-      const k = Math.min(1, s.t / SHIFT_TIME), sm = k * k * (3 - 2 * k);
-      e.x = s.from + (s.to - s.from) * sm;
-      e.body = home + Math.sign(s.to - s.from) * dir * 0.6 * (1 - k);
-      if (k >= 1) { e.shift = null; e.body = home; }
+      const s = e.shift, d = s.x1 - e.bx, step = speed * LANE_CHANGE.side * dt;
+      side = Math.sign(d);
+      e.bx += Math.max(-step, Math.min(step, d));
+      if (e.lane !== s.to && Math.abs(s.x1 - e.bx) <= Math.abs(e.bx - s.x0)) e.lane = s.to;
+      e.phase += Math.min(step, Math.abs(d)) / (e.radius * 0.9);
+      if (Math.abs(s.x1 - e.bx) < 0.01) { e.bx = s.x1; e.shift = null; e.lane = s.to; }
     }
     // Chargers step over toward a turret ahead in a neighbouring lane
     if (R.goal === 'structure' && !e.shift && e.homeLane == null) this.seekStructure(e);
     this.lean(e, dt, t, R);
-    if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; return; }
-    const sp = this.stat(e, 'speed') * (e.shift && e.shift.slow ? 0.5 : 1);
+    this.detour(e, dt, speed);
+    e.x = e.bx + (e.lean || 0) + (e.detour || 0);
+    let fwd = 0;
+    const done = () => { // body faces where it walks: diagonal while changing lanes, sideways if blocked in front
+      e.body = turnTo(e.body, side ? Math.atan2(side * LANE_CHANGE.side, dir * fwd * LANE_CHANGE.fwd) : home, BODY_TURN * dt);
+    };
+    if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; done(); return; }
+    const sp = speed * (e.shift ? LANE_CHANGE.fwd : 1);
     let ny = e.y + dir * sp * dt, block = null;
     for (const f of this.entities) {
       if (f.dead || f === e) continue;
       let s;
       if (f.team === e.team) {
         if (f.kind !== 'mech') continue;
-        if (f.lane === e.lane) s = f.y - dir * (f.radius + e.radius + GAP); // keep a gap behind friendly mechs
+        if (this.shareLane(e, f)) s = f.y - dir * (f.radius + e.radius + GAP); // keep a gap behind friendly mechs
         // while passing in another lane, never get ahead of a *marching* friendly in the home lane it may not
         // pass; hang back far enough that the home lane counts as free behind it (laneFree: radii + 10).
         // If that friendly has stopped to fight, the pass becomes a fan-out: stay in this lane and walk on.
@@ -374,7 +386,7 @@ export class World {
         } else continue;
         // Support stays a little behind a fighting friendly in its own or a neighbouring lane
         if (R.follow && f.target && f.def.role !== 'support') s -= dir * R.follow;
-      } else if ((f.kind === 'mech' || f.kind === 'turret') && f.lane === e.lane) s = f.y - dir * (f.radius + e.radius);
+      } else if ((f.kind === 'mech' || f.kind === 'turret') && this.shareLane(e, f)) s = f.y - dir * (f.radius + e.radius);
       else if (f.kind === 'base') s = f.y - dir * e.radius;
       else continue;
       if ((f.y - e.y) * dir <= 0) continue; // behind
@@ -391,6 +403,8 @@ export class World {
     if ((ny - e.y) * dir < 0) ny = e.y; // never pushed backward
     const moved = Math.abs(ny - e.y);
     e.y = ny;
+    fwd = moved > 1e-6 ? 1 : 0;
+    done();
     e.moving = moved > 1e-6 || !!e.shift;
     e.phase += moved / (e.radius * 0.9);
     e.blocker = block && block.team !== e.team ? block : null;
@@ -404,16 +418,43 @@ export class World {
   }
 
   // side attack visuals: lean toward an enemy in the next lane while fighting it, back afterwards.
-  // Only the x position moves; the mech stays in its lane (never more than 50 from the lane center).
+  // Only the x position moves (e.lean on top of the lane position e.bx); the mech stays in its lane.
   lean(e, dt, t, R) {
-    if (!R.sideLean || e.shift) return; // a lane change resets the lean (shiftTo)
+    if (!R.sideLean) return;
     let want = 0;
-    if (t && this.isSide(e, t) && this.dist(e, t) <= this.sideReach(e)) want = Math.sign(t.x - e.x) * R.sideLean;
+    if (!e.shift && t && this.isSide(e, t) && this.dist(e, t) <= this.sideReach(e)) want = Math.sign(t.x - e.bx) * R.sideLean;
     const cur = e.lean || 0, step = 70 * dt;
-    let next = cur + Math.max(-step, Math.min(step, want - cur));
-    const cx = laneX(e.lane), base = e.x - cur;
-    next = Math.max(cx - 50 - base, Math.min(cx + 50 - base, next));
-    e.x = base + next; e.lean = next;
+    e.lean = cur + Math.max(-step, Math.min(step, want - cur));
+  }
+  // walk around own turrets (gameplay.md §5.2): drift into the gap between the pads, at full forward speed.
+  // Cosmetic: e.detour moves x only; lane, blocking and reach are unchanged.
+  detour(e, dt, speed) {
+    const dir = FWD[e.team];
+    let want = 0;
+    if (!e.shift) {
+      for (const f of this.entities) {
+        if (f.dead || f.team !== e.team || f.kind !== 'turret' || f.lane !== e.lane) continue;
+        const pad = DETOUR.pad[f.type] ?? DETOUR.pad.default, d = (f.y - e.y) * dir;
+        if (d < -(pad + e.radius) || d > pad + e.radius + DETOUR.ahead) continue;
+        want = this.detourSide(e, f) * Math.min(pad + e.radius * DETOUR.body + 2, this.detourRoom(e, f));
+        break;
+      }
+    }
+    const cur = e.detour || 0, step = Math.max(speed * DETOUR.rate, DETOUR.minRate) * dt;
+    e.detour = cur + Math.max(-step, Math.min(step, want - cur));
+  }
+  // side of the detour: toward an empty neighbour cell, otherwise toward the field center
+  detourSide(e, f) {
+    const free = (l) => l >= 0 && l < LANES && !this.cells[f.team][l][f.row];
+    const toCenter = f.lane < 2 ? 1 : f.lane > 2 ? -1 : (e.jitter >= 0 ? 1 : -1);
+    if (free(f.lane + toCenter)) return toCenter;
+    if (free(f.lane - toCenter)) return -toCenter;
+    return toCenter;
+  }
+  // how far it may drift: into an empty cell freely, else only to the middle of the gap between two pads
+  detourRoom(e, f) {
+    const l = f.lane + this.detourSide(e, f);
+    return l >= 0 && l < LANES && !this.cells[f.team][l][f.row] ? Infinity : DETOUR.gap;
   }
 
   // Does the mech walk on this tick? Roles that fire on the move keep walking (Chargers stop at
@@ -436,6 +477,13 @@ export class World {
     return !(t && this.dist(e, t) <= stopRange);
   }
 
+  // lanes a unit occupies: both while changing lanes (honest occupancy, also reserves the new lane)
+  inLane(f, l) { return f.shift ? f.shift.from === l || f.shift.to === l : f.lane === l; }
+  shareLane(a, b) { return a.shift ? this.inLane(b, a.shift.from) || this.inLane(b, a.shift.to) : this.inLane(b, a.lane); }
+  // lane a unit is in or heading to
+  destLane(f) { return f.shift ? f.shift.to : f.lane; }
+  // lane of a unit for reach and targeting: its lane of record (mechs switch at the halfway point), else by position
+  laneAt(f) { return f.kind === 'mech' || f.kind === 'turret' ? f.lane : laneOf(f.x); }
   // a fighting friendly: stopped with a target
   fighting(f) { return !!f.target && !f.dead && !f.moving; }
   // may e (with role rules R) pass friendly f? By role, plus passLonger: a fighting friendly with a longer range
@@ -477,7 +525,7 @@ export class World {
     if (!opts.length) return false;
     opts.sort((a, b) => (score[a] - score[b] || 0) || friends(a) - friends(b) || Math.abs(a - 2) - Math.abs(b - 2));
     e.homeLane = null; e.passing = null; // fanning out to fight is permanent
-    this.shiftTo(e, opts[0], true);
+    this.shiftTo(e, opts[0]);
     return true;
   }
 
@@ -488,7 +536,7 @@ export class World {
     let best = Infinity;
     for (const f of this.entities) {
       if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
-      if (f.kind !== 'base' && Math.abs(laneOf(f.x) - l) > reachL) continue;
+      if (f.kind !== 'base' && Math.abs(this.laneAt(f) - l) > reachL) continue;
       const d = (f.y - e.y) * dir;
       if (d > 0 && d < far && d < best) best = d;
     }
@@ -506,7 +554,7 @@ export class World {
     }
     if (!best || best.lane === e.lane || bd < 150) return false;
     if (!this.laneFree(e, best.lane)) return false;
-    this.shiftTo(e, best.lane, true);
+    this.shiftTo(e, best.lane);
     return true;
   }
 
@@ -517,10 +565,9 @@ export class World {
     const ahead = (f.y - e.y) * FWD[e.team];
     return ahead < -(f.radius + e.radius + 10) || ahead > 150; // clearly passed it, or it's far ahead and no longer in the way
   }
-  shiftTo(e, lane, slow = false) {
-    e.lean = 0; // a lane change starts from where it stands, leaning or not
-    e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0, slow };
-    e.lane = lane;
+  shiftTo(e, lane) {
+    if (e.bx == null) e.bx = e.x;
+    e.shift = { from: e.lane, to: lane, x0: e.bx, x1: laneX(lane) + e.jitter * 0.5 };
     this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
   }
   // a lane is free for a mech at its current position: no enemy turret close ahead, no mech beside it
@@ -528,7 +575,7 @@ export class World {
     if (l < 0 || l >= LANES) return false;
     const dir = FWD[e.team];
     for (const f of this.entities) {
-      if (f.dead || f === e || f.lane !== l) continue;
+      if (f.dead || f === e || !this.inLane(f, l)) continue;
       const dy = (f.y - e.y) * dir;
       if (f.kind === 'turret' && f.team !== e.team && dy > -f.radius && dy < f.radius + e.radius + 60) return false;
       if (f.kind === 'mech' && Math.abs(f.y - e.y) < f.radius + e.radius + 10) return false;
@@ -548,14 +595,14 @@ export class World {
     // stepped out ahead of it to pass. Take its side, and wait while that lane is still taken beside us.
     let leader = null;
     for (const f of this.entities) {
-      if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || Math.abs(f.lane - e.lane) !== 1) continue;
+      if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || Math.abs(this.destLane(f) - e.lane) !== 1) continue;
       if (f.homeLane !== home || this.canPass(R, f, e)) continue;
       const d = (f.y - e.y) * dir;
       if (d > -(f.radius + e.radius) && d < 200 && (!leader || d < (leader.y - e.y) * dir)) leader = f;
     }
-    if (leader && ok(leader.lane)) {
-      if (!this.laneFree(e, leader.lane)) return false;
-      return this.startPass(e, blocker, home, leader.lane);
+    if (leader && ok(this.destLane(leader))) {
+      if (!this.laneFree(e, this.destLane(leader))) return false;
+      return this.startPass(e, blocker, home, this.destLane(leader));
     }
     const opts = [e.lane - 1, e.lane + 1].filter((l) => ok(l) && this.laneFree(e, l));
     if (!opts.length) return false;
@@ -766,11 +813,20 @@ export class World {
     c.building = false;
     if (d > 2) {
       const step = Math.min(d, this.stat(c, 'speed') * dt);
-      const nx = c.x + (dx / d) * step, ny = c.y + (dy / d) * step;
+      // drive around own turret pads: the smallest turn away from the straight line that keeps it clear
+      const pads = this.entities.filter((f) => !f.dead && f.team === 0 && f.kind === 'turret' && Math.hypot(f.x - c.x, f.y - c.y) < 140);
+      const clear = (x, y) => pads.every((f) => Math.hypot(f.x - x, f.y - y) >= (DETOUR.pad[f.type] ?? DETOUR.pad.default) + c.radius + 4
+        || Math.hypot(f.x - x, f.y - y) > Math.hypot(f.x - c.x, f.y - c.y)); // moving away from a pad is always fine
+      let ang = Math.atan2(dx, dy);
+      for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6]) {
+        const a = Math.atan2(dx, dy) + k * 0.26;
+        if (clear(c.x + Math.sin(a) * step, c.y + Math.cos(a) * step)) { ang = a; break; }
+      }
+      const nx = c.x + Math.sin(ang) * step, ny = c.y + Math.cos(ang) * step;
       const blocked = this.entities.some((f) => !f.dead && f.team === 1 && f.kind === 'mech' &&
         Math.hypot(f.x - nx, f.y - ny) < f.radius + c.radius && Math.hypot(f.x - nx, f.y - ny) < Math.hypot(f.x - c.x, f.y - c.y));
       if (!blocked) { c.x = nx; c.y = ny; c.phase += step / 10; }
-      c.body = Math.atan2(dx, dy);
+      c.body = ang;
       c.moving = !blocked;
       return;
     }

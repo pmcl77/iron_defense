@@ -21,7 +21,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Build order**, each step followed by a play-test:
     1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar) **(built in 0.4.0-dev, 2026-11-15; to play-test)**
        - Balance bot, 4 runs per cell, old rules vs. roles: almost the same. Win rates equal in most cells; battles often 10–30% shorter (stages 4–8); a few cells shift by one run (stage 4 none 75% → 100%, stage 9 split 25% → 50%, stage 10 mid/mixed 25% → 0%, stage 12 max 100% → 50%). The bot no longer has an Advance switch to push with.
-    2. walking lane changes and the detour around friendly turrets
+    2. walking lane changes and the detour around friendly turrets **(built in 0.4.0-dev, 2026-11-15; to play-test)**
     3. melee side attack (about 100 units into the neighbor lane) **(built in 0.4.0-dev, moved ahead of step 2)**
     4. traits
     5. enemy AI deploy variety, using roles (see Enemy AI)
@@ -89,6 +89,9 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Bringing back the 8-speed rule for Tanks would end that, but then a Brawler-Gunner train follows a Mortar until the Mortar stops to shoot (the original reason for B).
   - Possible middle ways for later: a Tank passes a marching friendly only if it gains at least ~3 units/s *and* the pass would finish within ~8 s; or the friendly being passed slows down a little while a Tank passes it (it "lets it by").
   - **Decided for now (user): keep B as it is**, reconsider after more F play-testing.
+  - **Worse since step 2 (measured 2026-11-15):** a mech walks at 0.6× while changing lanes, so a Brawler passing a marching Mortar now needs about 46 s from stepping out to being back home in front (before: roughly 15–20 s). It spends most of a march in the neighbour lane.
+    - Options: (1) the 8-speed rule again for Tanks (then MO-BR-GU follows the Mortar until it stops); (2) the friendly being passed lets it by: it walks at about 70% while a Tank passes beside it (Mortar 28 → 20, Brawler gains 12/s, pass ≈ 12 s); (3) full forward speed while changing lanes when passing (LANE_CHANGE.fwd 1.0 for passes only); (4) a Tank passes a marching friendly only if it would finish within about 10 s, otherwise it follows.
+    - Recommendation: (2). It keeps "Tanks lead", reads naturally (the slow mech makes way), and only affects the moments a Tank actually passes.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
@@ -101,7 +104,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - side: the one with an empty neighboring cell, otherwise toward the field center
     - even a full turret row leaves a ~50-unit corridor between pads (a Brawler brushes them slightly)
     - the Constructor and the enemy behave the same around their own turrets
-  - **Decided (user, 2026-11-15): B.** Built in step 2 of the movement build.
+  - **Decided (user, 2026-11-15): B.** **Built** in step 2 (0.4.0-dev); to play-test. Tuning in `DETOUR` (data.js).
 
 ### Enemy AI
 - **[balance] The enemy AI deploys one-sided, in same-type groups** (play-test v0.2.0-dev): e.g. 3 Brawlers at once in the same lane.
