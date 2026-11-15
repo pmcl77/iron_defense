@@ -63,6 +63,13 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Proposal: 3 + 4.** Leaning closes most of the gap and reads as "stepping into the fight"; the punch lunge sells the hit. Rules are unchanged; only position and art.
     - **Built: lean-in (3)** in 0.4.0-dev (`sideLean: 35` on the Tank role). The punch lunge (4) isn't built. To play-test.
     - Later, not now (user): a redesigned Brawler with a thicker body would close the gap further.
+- **[gameplay] To discuss: passing side without a leader — avoid enemies or go for them?** (user, 2026-11-15, while testing F)
+  - Now (F): a passing mech without a leader prefers a side with no enemy within ~250 ahead, then closer to home, then fewer friendlies, then the center.
+  - User's concern: we also want to stop enemies before they reach our base, so steering away from them isn't always right.
+  - Ideas (user):
+    - **Strength check:** step toward the enemy's lane if that enemy is equal or weaker (e.g. compare HP × damage of the enemies there with the mech plus its followers); otherwise take the free side.
+    - **By role:** a Tank prefers the lane with enemies (its Line followers come along via follow-the-leader), while a Line mech on its own prefers a free lane.
+  - Note: the role variant fits the data-driven model (a role field such as `passSide: 'enemy' | 'free'`); the strength check needs a simple strength formula and could give unclear results when a fight is close. To discuss after testing F.
 - **[gameplay] Reconsider: Tanks pass marching non-tanks regardless of speed (fix B)** (user, play-test 2026-11-15)
   - Seen: a Brawler passing a marching Mortar took a long time. Brawler 32 vs Mortar 28 means it gains only 4 units/s; getting clearly past (about 60–70 units) takes roughly 15 s, all that time in the neighbour lane.
   - Bringing back the 8-speed rule for Tanks would end that, but then a Brawler-Gunner train follows a Mortar until the Mortar stops to shoot (the original reason for B).
