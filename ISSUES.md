@@ -49,6 +49,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **E, side attack (step 3) next:** makes Brawler groups readable: Brawler 2 steps beside Brawler 1 and hits the same enemy from the side.
   - **Recommendation:** A + B + D now; C yes (avoids idle artillery, the original "cowards" problem); then E as the next step before step 2.
   - **Built (user: "build as suggested", 2026-11-15): A, B, C, D and E** in 0.4.0-dev. To play-test.
+  - Balance bot afterwards (4 runs per cell): still close to the old rules. Stages 1–8 mostly unchanged (stage 3/4 without upgrades 100% → 75%, stage 6 mid/mortar 25% → 75%, stage 8 battles shorter); stages 9–13 mixed, within noise (stage 9 mid/mixed 25% → 50%, mid/split 50% → 0%, max/mortar 100% → 75%; Endless 1 max 75% → 25%). The enemy's Brawler groups now hit from three sides, which makes later stages a bit harder. No compensation yet: rebalance in step 6.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
