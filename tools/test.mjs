@@ -237,12 +237,25 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const m = mech(w, 'mortar', 0, 2, 1150, 1e9), g = mech(w, 'gunner', 0, 2, 1090, 1e9);
   run(w, 20);
   check('line passes fighting artillery', g.y > m.y + 40, `lane ${g.lane} y ${g.y.toFixed(0)} mortar ${m.y.toFixed(0)}`);
-  // Line behind a fighting Line with no shot of its own fans out (and stays out)
+  // Line behind a fighting Line with a longer range passes it (passLonger) and returns home in front
   const wf = mk();
   const tf = mech(wf, 'brawler', 1, 2, 1500, 1e9); tf.def = { ...tf.def, dmg: 0, speed: 0 };
   const sk = mech(wf, 'seeker', 0, 2, 1150, 1e9), gf = mech(wf, 'gunner', 0, 2, 1090, 1e9);
-  run(wf, 12);
-  check('line fans out behind a fighting line mech', Math.abs(gf.lane - 2) === 1 && gf.target === tf, `lane ${gf.lane}`);
+  run(wf, 15);
+  check('gunner passes a fighting seeker and returns home in front', gf.lane === 2 && gf.y > sk.y && gf.target === tf, `lane ${gf.lane} GU ${gf.y.toFixed(0)} SE ${sk.y.toFixed(0)}`);
+  // ...but behind a fighting Line of the same range it fans out (and stays out)
+  const wgs = mk();
+  const tgs = mech(wgs, 'brawler', 1, 2, 1400, 1e9); tgs.def = { ...tgs.def, dmg: 0, speed: 0 };
+  const gs1 = mech(wgs, 'gunner', 0, 2, 1150, 1e9), gs2 = mech(wgs, 'gunner', 0, 2, 1090, 1e9);
+  run(wgs, 15);
+  check('line fans out behind a fighting line mech of the same range', Math.abs(gs2.lane - 2) === 1 && gs2.homeLane == null && gs2.target === tgs, `lane ${gs2.lane} home ${gs2.homeLane}`);
+  // proposal H: passing a fighting friendly, it takes the side toward the shot (enemy in lane 3, not the default lane 1)
+  const wh = mk();
+  const th = mech(wh, 'brawler', 1, 3, 1650, 1e9); th.def = { ...th.def, dmg: 0, speed: 0 };
+  const mh = mech(wh, 'mortar', 0, 2, 1150, 1e9), gh = mech(wh, 'gunner', 0, 2, 1090, 1e9);
+  let hSide = null;
+  for (let i = 0; i < 10 * 60 && hSide == null; i++) { wh.update(1 / 60); wh.fx.length = 0; if (gh.lane !== 2) hSide = gh.lane; }
+  check('passing a fighting friendly goes toward the shot', mh.target === th && hSide === 3, `mortar target ${mh.target?.type} side ${hSide}`);
   // Artillery with no shot fans out behind a fighting friendly it may not pass
   const wa = mk([['sentry', 2, 6]]);
   const ta = tough(wa.cells[1][2][6]); ta.def = { ...ta.def, dmg: 0 };
@@ -276,7 +289,13 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const fr = mech(wr, 'brawler', 1, 2, 1340, 1e9); fr.def = { ...fr.def, dmg: 0, speed: 0 };
   const mr = mech(wr, 'mortar', 0, 2, 900, 1e9), sr = mech(wr, 'seeker', 0, 2, 600, 1e9), gr = mech(wr, 'gunner', 0, 2, 550, 1e9);
   run(wr, 30);
-  check('gunner walks on beside a fighting seeker (pass becomes fan-out)', gr.y > sr.y && gr.lane !== 2 && gr.homeLane == null, `SE ${sr.y.toFixed(0)} GU L${gr.lane} ${gr.y.toFixed(0)} home ${gr.homeLane}`);
+  check('gunner gets past a fighting seeker instead of standing idle', gr.y > sr.y, `SE ${sr.y.toFixed(0)} GU L${gr.lane} ${gr.y.toFixed(0)} home ${gr.homeLane}`);
+  // same with two Gunners: GU1 returns home and fights, GU2 (same range, may not pass) turns its pass into a fan-out
+  const wr2 = mk();
+  const fr2 = mech(wr2, 'brawler', 1, 2, 1200, 1e9); fr2.def = { ...fr2.def, dmg: 0, speed: 0 };
+  const mr2 = mech(wr2, 'mortar', 0, 2, 800, 1e9), ga = mech(wr2, 'gunner', 0, 2, 600, 1e9), gb = mech(wr2, 'gunner', 0, 2, 550, 1e9);
+  run(wr2, 30);
+  check('second gunner walks on beside the first (pass becomes fan-out)', gb.target === fr2 && gb.homeLane == null && !gb.moving, `GU1 L${ga.lane} ${ga.y.toFixed(0)} GU2 L${gb.lane} ${gb.y.toFixed(0)} home ${gb.homeLane}`);
   const wm = mk();
   const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
   run(wm, 40);

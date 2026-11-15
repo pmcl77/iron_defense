@@ -368,7 +368,7 @@ export class World {
         // while passing in another lane, never get ahead of a *marching* friendly in the home lane it may not
         // pass; hang back far enough that the home lane counts as free behind it (laneFree: radii + 10).
         // If that friendly has stopped to fight, the pass becomes a fan-out: stay in this lane and walk on.
-        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !this.canPass(R, f) && (f.y - e.y) * dir > 0) {
+        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !this.canPass(R, f, e) && (f.y - e.y) * dir > 0) {
           if (this.fighting(f)) { e.homeLane = null; e.passing = null; continue; }
           s = f.y - dir * (f.radius + e.radius + 12);
         } else continue;
@@ -438,7 +438,11 @@ export class World {
 
   // a fighting friendly: stopped with a target
   fighting(f) { return !!f.target && !f.dead && !f.moving; }
-  canPass(R, f) { return R.passes === 'all' || R.passes.includes(f.def.role); }
+  // may e (with role rules R) pass friendly f? By role, plus passLonger: a fighting friendly with a longer range
+  canPass(R, f, e = null) {
+    if (R.passes === 'all' || R.passes.includes(f.def.role)) return true;
+    return !!(R.passLonger && e && this.fighting(f) && this.stat(f, 'range') > this.stat(e, 'range'));
+  }
   // lanes a mech may use: at most one lane from where it was deployed
   laneAllowed(e, l) { return l >= 0 && l < LANES && Math.abs(l - e.home0) <= 1; }
 
@@ -449,13 +453,14 @@ export class World {
     }
     if (this.fighting(f)) {
       // a fighting friendly it may pass is passed; otherwise the role's rule for this situation
-      if (this.canPass(R, f) && !R.noPassFighting) { this.tryOvertake(e, f, true); return; }
+      // passing to get into the fight: the side is chosen like a fan-out, toward a shot (proposal H); Chargers just go around
+      if (this.canPass(R, f, e) && !R.noPassFighting) { this.tryOvertake(e, f, true, !R.goal); return; }
       if (R.behindFight === 'join') this.fanOut(e, true);
       else if (R.behindFight === 'fanout') { if (!e.target) this.fanOut(e, false); }
       else if (R.behindFight === 'around') this.tryOvertake(e, f, true);
       return;
     }
-    if (this.canPass(R, f)) this.tryOvertake(e, f, !!R.alwaysPass);
+    if (this.canPass(R, f, e)) this.tryOvertake(e, f, !!R.alwaysPass);
   }
 
   // Step into a free neighbouring lane and stay there, to get into the fight. needEnemy: only if there
@@ -465,17 +470,7 @@ export class World {
     let opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneAllowed(e, l) && this.laneFree(e, l));
     if (!opts.length) return false;
     // prefer the side from which it would reach an enemy soonest (counting its lane reach), then fewer friendlies, then the center
-    const reachL = e.def.anyLane ? LANES : LANE_REACH, far = this.stat(e, 'range') + 150;
-    const nearest = (l) => {
-      let best = Infinity;
-      for (const f of this.entities) {
-        if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
-        if (f.kind !== 'base' && Math.abs(laneOf(f.x) - l) > reachL) continue;
-        const d = (f.y - e.y) * dir;
-        if (d > 0 && d < far && d < best) best = d;
-      }
-      return best;
-    };
+    const nearest = (l) => this.shotScore(e, l);
     const friends = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < 200).length;
     const score = Object.fromEntries(opts.map((l) => [l, nearest(l)]));
     if (needEnemy) opts = opts.filter((l) => score[l] < 300); // Tanks only step over to something they can fight
@@ -484,6 +479,20 @@ export class World {
     e.homeLane = null; e.passing = null; // fanning out to fight is permanent
     this.shiftTo(e, opts[0], true);
     return true;
+  }
+
+  // how far ahead the nearest enemy is that e could shoot from lane l (counting its lane reach); Infinity if
+  // none within `far` (default: its range + 150)
+  shotScore(e, l, far = this.stat(e, 'range') + 150) {
+    const dir = FWD[e.team], reachL = e.def.anyLane ? LANES : LANE_REACH;
+    let best = Infinity;
+    for (const f of this.entities) {
+      if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
+      if (f.kind !== 'base' && Math.abs(laneOf(f.x) - l) > reachL) continue;
+      const d = (f.y - e.y) * dir;
+      if (d > 0 && d < far && d < best) best = d;
+    }
+    return best;
   }
 
   // Chargers: if the nearest enemy turret ahead is in a neighbouring lane, step over toward it
@@ -528,7 +537,7 @@ export class World {
   }
   // pass the mech ahead through a free neighbouring lane, then return home. force: also when it's
   // walking at about the same speed (Chargers going around a fight or an enemy mech)
-  tryOvertake(e, blocker, force = false) {
+  tryOvertake(e, blocker, force = false, toShot = false) {
     // not worth it if the mech ahead is walking at almost the same speed
     if (!force && blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 8) return false;
     const dir = FWD[e.team], R = ROLES[e.def.role];
@@ -540,7 +549,7 @@ export class World {
     let leader = null;
     for (const f of this.entities) {
       if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || Math.abs(f.lane - e.lane) !== 1) continue;
-      if (f.homeLane !== home || this.canPass(R, f)) continue;
+      if (f.homeLane !== home || this.canPass(R, f, e)) continue;
       const d = (f.y - e.y) * dir;
       if (d > -(f.radius + e.radius) && d < 200 && (!leader || d < (leader.y - e.y) * dir)) leader = f;
     }
@@ -550,11 +559,13 @@ export class World {
     }
     const opts = [e.lane - 1, e.lane + 1].filter((l) => ok(l) && this.laneFree(e, l));
     if (!opts.length) return false;
-    // otherwise: prefer a side without an enemy close ahead (passing is about getting by, not starting
-    // a fight), then the side closer to home, then fewer friendlies ahead, then toward the center
+    // otherwise, passing a fighting friendly to join the fight (toShot): the side with a shot soonest, like a
+    // fan-out (proposal H). Passing to get by: a side without an enemy close ahead. Then the side closer to
+    // home, fewer friendlies ahead, toward the center.
     const foe = (l) => this.entities.some((f) => !f.dead && f.team !== e.team && (f.kind === 'mech' || f.kind === 'turret') && f.lane === l && (f.y - e.y) * dir > 0 && (f.y - e.y) * dir < 250) ? 1 : 0;
     const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < 200).length;
-    opts.sort((a, b) => foe(a) - foe(b) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
+    const shot = (l) => (toShot ? this.shotScore(e, l, Infinity) : 0); // the fight ahead may be beyond its own range
+    opts.sort((a, b) => (shot(a) - shot(b) || 0) || (toShot ? 0 : foe(a) - foe(b)) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
     return this.startPass(e, blocker, home, opts[0]);
   }
   startPass(e, blocker, home, lane) {

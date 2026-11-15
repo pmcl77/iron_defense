@@ -29,13 +29,14 @@ export const rowOf = (team, y) => {
 //                beside them to fight
 //   alwaysPass   passes a marching friendly it may pass even if that one is barely slower
 //   noPassFighting  never passes a friendly that is fighting
+//   passLonger   also passes a fighting friendly with a longer range than its own (it can't reach that fight from behind)
 //   follow       stays a little behind the nearest fighting friendly (own lane ± 1)
 //   sideLean     while fighting an enemy in the next lane, slide this far toward it (stays in its lane)
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
 export const ROLES = {
   tank: { name: 'Tank', fireOnMove: true, passes: ['line', 'support', 'artillery', 'charger'], behindFight: 'join', alwaysPass: true, sideAttack: 100, sideLean: 35,
     desc: 'Leads from the front, draws fire and fights whatever blocks it.' },
-  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], behindFight: 'fanout',
+  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], passLonger: true, behindFight: 'fanout',
     desc: 'Stops at range and shoots; takes cover behind a marching tank.' },
   support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true,
     desc: 'Follows the fight and stays just behind its front.' },
