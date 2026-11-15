@@ -16,7 +16,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - The full design is in gameplay.md §5.2 (roles and their rules) and §5.5 (allocation, traits, card texts).
   - **Why:** the Hold/Advance switch meant two rule sets for every unit (too much to keep in mind), only some types actually reacted to it, and in play-testing Hold was used about 98% of the time.
   - **Roles:** Tank (Brawler), Line (Gunner, Seeker), Support (Aegis), Artillery (Mortar, Lancer), Charger (Scout, Breacher).
-  - **Traits** (each changes one role rule): Seeker prefers mechs + long reach (every lane, as today); Lancer prefers structures.
+  - **Traits** (each changes one role rule): Seeker prefers mechs + long reach (± 2 lanes); Lancer prefers structures.
   - **This replaces** the earlier movement topics: the rule matrix, the Hold/Advance meaning, the melee sidestep bug (Tanks never go around enemies), the convoy stall A–D (fan-out once the friendly ahead fights), the lane change speed (option C: walk over, with honest occupancy and a reservation) and the ranged-mechs-at-the-base decision B (ranged units stop at about 95% of their range in front of what stops them).
   - **Build order**, each step followed by a play-test:
     1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar)
@@ -105,7 +105,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **C, extended reach (±2 lanes):** a middle ground. From lane 3 it covers every lane, from the edge lanes only three, so placement still matters.
     - **D, normal reach, but missiles keep tracking:** it picks targets only within ±1 lane, but a missile that's already flying follows a target that changes lanes (as today). Mostly the same as B, just stated explicitly.
   - **Recommendation: C (±2 lanes).** It keeps the Seeker special (the only mech that can cover the whole field, but only from the middle lane), and the edge lanes no longer reach across the map. If it's still too strong, fall back to B.
-  - **Decided (user, 2026-11-15): A, keep every lane,** as the Seeker's "Long reach" trait. With ±2 it would have to be deployed in lane 3 to cover everything, without a tank in front there; with every lane it can stay behind any tank. Revisit only if play-testing shows it's too strong.
+  - **Decided (user, 2026-11-15): C, ± 2 lanes,** as the Seeker's "Long reach" trait (built in step 4). From lane 3 it covers every lane, but Brawlers usually go in lanes 2/4, so there it has no tank in front and walks into heavy fire. Where to deploy it becomes a real decision.
 - **[balance] Kill bounty helps the winning side snowball** (user, 2026-11-14)
   - **Current rule:** the player gets 25% of the destroyed unit's cost for every kill, mechs and turrets alike. The enemy AI gets no bounty (it has its own income, which grows when your mechs push close to its base).
   - **Problem:** whoever is ahead gets richer and pulls further ahead. But energy for killing *attackers* near your own base is good: it helps a defender recover.

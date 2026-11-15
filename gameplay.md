@@ -142,7 +142,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 ### 5.3 Targeting
 
 - A mech targets the **nearest enemy within range that's ahead of it or level with it**. Range is a straight-line (circle) distance measured to the target's edge.
-- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; **Seeker** missiles reach any lane; **turrets and bases** fire into any lane. Splash and zap chains still hit anything in their radius.
+- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; the **Seeker** reaches two lanes to each side (Long reach trait, §5.5; until step 4 is built it still reaches any lane); **turrets and bases** fire into any lane. Splash and zap chains still hit anything in their radius.
 - **Mechs turn to aim.** The upper body (torso and weapons) rotates toward the target at any angle, while the legs keep walking along the lane. Torso turn rate is about 360°/s *(tune)*, and a mech fires only once it's aimed within 10°.
 - **Ahead first:** a mech picks a target ahead of it or level with it whenever one is in range. It turns to shoot at targets behind it only when nothing ahead is in range.
 - **Turrets and bases fire in every direction.** Otherwise any mech that got past a turret would be safe from it.
@@ -166,7 +166,7 @@ The first five are copied from Ironline; the last three are new *(tune)*:
 | **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 460 | 40 | 5 s | Siege slug, prefers turrets and bases |
 
 The three new mechs fill roles a lane game needs *(tune)*:
-- **Seeker** (homing missiles): fires a salvo of 2 missiles that curve onto their target in any lane and explode with a small splash. It gives burst damage against mechs and punishes groups bunched in a gap.
+- **Seeker** (homing missiles): fires a salvo of 2 missiles that curve onto their target up to two lanes away and explode with a small splash. It gives burst damage against mechs and punishes groups bunched in a gap.
 - **Breacher** (wallbreaker): an armored demolition mech that walks up to a wall and tears it down. It's weak against mechs but deals ×4 damage to turrets and bases, and its hits briefly stun the turret it's hitting.
 - **Lancer** (wall attacker): a fragile long-range siege gun that outranges every turret. It picks turrets and bases over mechs and deals ×3 damage to them. It needs escorts against mechs.
 
@@ -194,7 +194,7 @@ Attack types work as in Ironline, measured in 2D:
 **Traits** (each replaces one role rule):
 - **Prefers mechs:** picks enemy mechs over structures.
 - **Prefers structures:** picks turrets and bases over mechs.
-- **Long reach:** targets every lane instead of own lane ± 1 (§5.3).
+- **Long reach:** targets own lane ± 2 instead of ± 1 (§5.3).
 
 | Type | Role | Weapon | Traits | Card text |
 |---|---|---|---|---|
@@ -202,7 +202,7 @@ Attack types work as in Ironline, measured in 2D:
 | Breacher | Charger | melee, ×4 vs structures, stuns turrets | none | Slowly charges the first structure in its path, walks past mechs and tears turrets down. |
 | Scout | Charger | bullets | none | Fast. Charges the first structure in its path, slips past mechs and shoots on the move. |
 | Gunner | Line | bullets | none | Stops at range and shoots the nearest enemy; takes cover behind marching tanks. |
-| Seeker | Line | homing missiles | prefers mechs, long reach | Stops at range and fires homing missiles at enemy mechs in any lane. |
+| Seeker | Line | homing missiles | prefers mechs, long reach | Stops at range and fires homing missiles at enemy mechs up to two lanes away. |
 | Aegis | Support | bullets + 40% damage-reduction field | none | Follows the fight, stays just behind its front and shields everyone nearby. |
 | Mortar | Artillery | slow shells, splash | none | Stays at the back and shells the nearest enemy from long range. |
 | Lancer | Artillery | slugs, ×3 vs structures | prefers structures | Stays at the back and snipes turrets and bases from beyond their range. |
@@ -431,7 +431,7 @@ These are the exact values the first build uses that aren't stated in the sectio
 10. **Mech aiming:** mechs turn their upper body to aim at any angle; turrets fire in all directions (§5.3).
 11. **Project setup:** a standalone project, separate from Ironline. Code may be copied from Ironline and adapted. Save key `iron-defense-save-v1`. Git repo initialized; GitHub and Pages come later.
 12. **Desktop:** a centered portrait column with letterbox bars.
-13. **Lane reach:** mechs target their own lane ± 1 (turrets and bases exempt; the Seeker's Long reach trait reaches every lane, kept on 2026-11-15 so it can stay behind any tank). Trying it out; the user expects lanes 2 + 4 may become the go-to setup and wants to see how it feels.
+13. **Lane reach:** mechs target their own lane ± 1 (turrets and bases exempt; the Seeker's Long reach trait reaches ± 2 lanes, decided 2026-11-15: from the middle lane it covers everything, but then it has no tank in front of it, which makes its lane a real decision). Trying it out; the user expects lanes 2 + 4 may become the go-to setup and wants to see how it feels.
 14. **Mortar:** stays long-range splash, with slow, inaccurate shells and half damage to structures.
 15. **Friendly collision:** by role: passing rules and fan-out (§5.2). *(Replaced convoy in Hold / overtake in Advance on 2026-11-15.)*
 16. **Capacitors perk:** permanent +40 max energy per level as well as +50 starting energy (Workshop upgrades should be lasting).
