@@ -84,6 +84,19 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Trade-off to decide:** keep deploy order as a skill (rule A, or today's rule) vs. automatic sorting for convenience (rules B, C or D).
   - Decide together with the melee sidestep bug above and the lane change speed below, since all three change the same movement code. Slower lane changes (option C there) make overtaking more costly, which shifts the convoy trade-off.
 
+- **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
+  - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
+  - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
+  - **Options:**
+    - **A, drawing only:** shots and hits would still start from the lane center, so they'd come from the wrong place during the detour.
+    - **B, a real detour position (recommended):** the mech's x drifts into the gap between turret pads while its lane stays the same for blocking, convoy, lane reach and targeting.
+  - **Details for B:**
+    - the drift starts about 60 units before the turret and goes back after it
+    - full forward speed, so it's purely cosmetic and doesn't affect balance
+    - side: the one with an empty neighboring cell, otherwise toward the field center
+    - even a full turret row leaves a ~50-unit corridor between pads (a Brawler brushes them slightly)
+    - the Constructor and the enemy behave the same around their own turrets
+  - Fits into step 2 of the movement build (smooth sideways movement); independent of the lane-change rules.
 - **[ui/gameplay] Lane changes are far too fast: mechs "fly" sideways** (user, 2026-11-14)
   - **Today:** every lane change (overtake, return home, stepping around a turret) takes a fixed 0.5 s for the 120-unit lane width, for every mech. That's 240 units/s sideways, while mechs walk forward at 30–95 (a Brawler moves sideways 6× faster than it walks). The body only tilts up to 34° and eases back. The mech also counts as being in the new lane from the very first moment, for blocking and targeting.
   - **Options:**
