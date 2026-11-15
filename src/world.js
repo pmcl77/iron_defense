@@ -541,6 +541,17 @@ export class World {
     return best;
   }
 
+  // how many friendlies (mechs and turrets) e's field would cover from lane l, a little ahead of where it is
+  protectScore(e, l) {
+    const r = e.def.aura || 150, x = laneX(l), y = e.y + FWD[e.team] * 60;
+    let n = 0;
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.team !== e.team || (f.kind !== 'mech' && f.kind !== 'turret')) continue;
+      if (Math.hypot(f.x - x, f.y - y) <= r) n++;
+    }
+    return n;
+  }
+
   // Chargers: if the nearest enemy turret ahead is in a neighbouring lane, step over toward it
   seekStructure(e) {
     const dir = FWD[e.team];
@@ -610,7 +621,9 @@ export class World {
     const foe = (l) => this.entities.some((f) => !f.dead && f.team !== e.team && (f.kind === 'mech' || f.kind === 'turret') && f.lane === l && (f.y - e.y) * dir > 0 && (f.y - e.y) * dir < 250) ? 1 : 0;
     const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < 200).length;
     const shot = (l) => (toShot ? this.shotScore(e, l, Infinity) : 0); // the fight ahead may be beyond its own range
-    opts.sort((a, b) => (shot(a) - shot(b) || 0) || (toShot ? 0 : foe(a) - foe(b)) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
+    // passSide 'protect' (Support): the side where its field would cover the most friendlies
+    const prot = (l) => (R.passSide === 'protect' ? this.protectScore(e, l) : 0);
+    opts.sort((a, b) => prot(b) - prot(a) || (shot(a) - shot(b) || 0) || (toShot ? 0 : foe(a) - foe(b)) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
     return this.startPass(e, blocker, home, opts[0]);
   }
   startPass(e, blocker, home, lane) {

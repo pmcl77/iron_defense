@@ -338,6 +338,13 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const g3 = mech(w3, 'gunner', 0, 2, 1150, 1e9), a = mech(w3, 'aegis', 0, 2, 1080, 1e9);
   run(w3, 12);
   check('support stays a little behind the fight', a.lane === 2 && g3.y - a.y >= g3.radius + a.radius + 40 - 0.5 && g3.y - a.y < 120, `gap ${(g3.y - a.y).toFixed(1)}`);
+  // Support passes toward the friendlies its field can cover (passSide 'protect'), not the default side
+  const wpr = mk();
+  const mpr = mech(wpr, 'mortar', 0, 2, 900, 1e9), apr = mech(wpr, 'aegis', 0, 2, 840, 1e9);
+  for (const y of [1000, 1060]) { const g = mech(wpr, 'gunner', 0, 3, y, 1e9); g.def = { ...g.def, speed: 28 }; }
+  let prSide = null;
+  for (let i = 0; i < 15 * 60 && prSide == null; i++) { wpr.update(1 / 60); if (apr.lane !== 2) prSide = apr.lane; }
+  check('support passes on the side where it protects more friendlies', prSide === 3, `side ${prSide}`);
 }
 // 18. Mortar: half damage vs structures, slow shells miss moving targets
 {
