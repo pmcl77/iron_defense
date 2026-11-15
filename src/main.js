@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES,
+  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon } from './render.js';
@@ -279,9 +279,10 @@ function showHelp() {
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
     ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 5) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
-    ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers, turrets and bases reach every lane.'],
+    ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers reach two lanes to each side (from the middle lane: every lane). Turrets and bases reach every lane.'],
     ['Roles', 'Every mech has a role that decides how it moves. Pick what you deploy and where:'],
     ...Object.entries(ROLES).map(([k, r]) => [r.name, `${r.desc} ${MECH_TYPES.filter((t) => MECHS[t].role === k).map((t) => MECHS[t].name).join(', ')}.`]),
+    ['Traits', `A trait changes one rule of a mech's role. ${MECH_TYPES.filter((t) => MECHS[t].traits.length).map((t) => `${MECHS[t].name}: ${MECHS[t].traits.map((k) => TRAITS[k].name.toLowerCase()).join(', ')}`).join('. ')}.`],
     ['Turrets', 'Open TURRETS, pick a turret, then tap free cells to queue orders (paid now). Your Constructor drives out and builds them. Tap a planned cell to cancel. Tap your turret to sell it.'],
     ['Constructor', 'Each trip costs 20 energy, refunded when it gets home safely. If it is destroyed, a new one leaves after 3 s.'],
     ['Specials', 'Bombing (tap a target), EMP (stuns enemies) and Energy Surge (+100 energy). They recharge over time.'],

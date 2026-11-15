@@ -13,7 +13,6 @@ const TAU = Math.PI * 2;
 const AIM_TOL = (10 * Math.PI) / 180;
 const PAUSE_TO_FIRE = 0.4;
 const GAP = 4;            // spacing kept between friendly mechs in a lane
-const LANE_REACH = 1;     // mechs target their own lane and this many lanes to each side
 
 export function mulberry32(a) {
   return () => {
@@ -283,19 +282,19 @@ export class World {
   targetKey(e, f, d) {
     let k = d;
     if (e.kind === 'mech' && !this.ahead(e, f)) k += 1e6;
-    const pref = e.def.pref;
+    const pref = e.kind === 'mech' ? e.def.rules.pref : null;
     if (pref === 'mech' && f.kind !== 'mech') k += 1e4;
     if (pref === 'structure' && !isStructure(f)) k += 1e4;
     return k;
   }
-  // mechs only reach their own lane and the neighbours (bases span every lane; Seeker missiles are exempt)
+  // mechs reach their own lane ± their reach (role default 1; the long-reach trait 2); bases span every lane
   inReach(e, f) {
-    return e.kind !== 'mech' || e.def.anyLane || f.kind === 'base' || Math.abs(this.laneAt(f) - e.lane) <= LANE_REACH;
+    return e.kind !== 'mech' || f.kind === 'base' || Math.abs(this.laneAt(f) - e.lane) <= e.def.rules.reach;
   }
   // side attack: melee Tanks also hit enemies in a neighbouring lane (gameplay.md §5.2)
   sideReach(e) {
     if (e.kind !== 'mech' || e.def.proj !== 'melee') return 0;
-    return ROLES[e.def.role].sideAttack || 0;
+    return e.def.rules.sideAttack || 0;
   }
   isSide(e, f) { return f.kind !== 'base' && this.laneAt(f) !== e.lane; }
   rangeFor(e, f, range) { const s = this.sideReach(e); return s && this.isSide(e, f) ? Math.max(range, s) : range; }
@@ -345,7 +344,7 @@ export class World {
   move(e, dt, t) {
     const dir = FWD[e.team];
     const home = e.team === 0 ? 0 : Math.PI;
-    const R = ROLES[e.def.role];
+    const R = e.def.rules; // role + traits
     const speed = this.stat(e, 'speed');
     if (e.bx == null) e.bx = e.x;
     // a lane change is walked: sideways at LANE_CHANGE.side × its speed (forward below at LANE_CHANGE.fwd ×).
@@ -532,7 +531,7 @@ export class World {
   // how far ahead the nearest enemy is that e could shoot from lane l (counting its lane reach); Infinity if
   // none within `far` (default: its range + 150)
   shotScore(e, l, far = this.stat(e, 'range') + 150) {
-    const dir = FWD[e.team], reachL = e.def.anyLane ? LANES : LANE_REACH;
+    const dir = FWD[e.team], reachL = e.def.rules.reach;
     let best = Infinity;
     for (const f of this.entities) {
       if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
@@ -587,7 +586,7 @@ export class World {
   tryOvertake(e, blocker, force = false, toShot = false) {
     // not worth it if the mech ahead is walking at almost the same speed
     if (!force && blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 8) return false;
-    const dir = FWD[e.team], R = ROLES[e.def.role];
+    const dir = FWD[e.team], R = e.def.rules;
     const home = e.homeLane ?? e.lane;
     // never swing back into the home lane before the mech being passed is behind us
     const ok = (l) => this.laneAllowed(e, l) && !(l === e.homeLane && !this.passed(e));

@@ -81,7 +81,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 
 ### 5.2 Movement: roles, types and traits
 
-*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Steps 1, 2 and 3 are built** (step 3 was moved ahead after the first play-test); until step 4 is built, the Seeker still reaches every lane.*
+*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Steps 1–4 are built** (step 3 was moved ahead after the first play-test).*
 
 There is **no stance switch**. A mech's behavior comes from its type alone, and the same rules always apply:
 
@@ -136,14 +136,14 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special). **Built in 0.4.0-dev.**
 2. Walking lane changes and the detour around friendly turrets. **Built in 0.4.0-dev.**
 3. Melee side attack: a melee Tank hits enemies in a neighbouring lane up to about 100 units (edge distance) and stops beside them to fight, so a group of Brawlers attacks one enemy from three sides. **Built in 0.4.0-dev.**
-4. Traits (§5.5).
+4. Traits (§5.5). **Built in 0.4.0-dev.** In code: `TRAITS` in data.js; each mech type's effective rules (`MECHS[type].rules`) are its role's rules with its traits on top, and world.js reads only those.
 5. Enemy AI deploy variety, using roles (§10).
 6. Balance pass with the bot.
 
 ### 5.3 Targeting
 
 - A mech targets the **nearest enemy within range that's ahead of it or level with it**. Range is a straight-line (circle) distance measured to the target's edge.
-- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; the **Seeker** reaches two lanes to each side (Long reach trait, §5.5; until step 4 is built it still reaches any lane); **turrets and bases** fire into any lane. Splash and zap chains still hit anything in their radius.
+- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; the **Seeker** reaches two lanes to each side (Long reach trait, §5.5: from lane 3 every lane, from lane 1 lanes 1–3); **turrets and bases** fire into any lane. Splash and zap chains still hit anything in their radius.
 - **Mechs turn to aim.** The upper body (torso and weapons) rotates toward the target at any angle, while the legs keep walking along the lane. Torso turn rate is about 360°/s *(tune)*, and a mech fires only once it's aimed within 10°.
 - **Ahead first:** a mech picks a target ahead of it or level with it whenever one is in range. It turns to shoot at targets behind it only when nothing ahead is in range.
 - **Turrets and bases fire in every direction.** Otherwise any mech that got past a turret would be safe from it.

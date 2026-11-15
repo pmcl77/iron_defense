@@ -22,8 +22,9 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar) **(built in 0.4.0-dev, 2026-11-15; to play-test)**
        - Balance bot, 4 runs per cell, old rules vs. roles: almost the same. Win rates equal in most cells; battles often 10–30% shorter (stages 4–8); a few cells shift by one run (stage 4 none 75% → 100%, stage 9 split 25% → 50%, stage 10 mid/mixed 25% → 0%, stage 12 max 100% → 50%). The bot no longer has an Advance switch to push with.
     2. walking lane changes and the detour around friendly turrets **(built in 0.4.0-dev, 2026-11-15; to play-test)**
+       - Balance bot, 4 runs per cell: same picture as after H, changes within noise (stage 9 max 100% → 75%, stage 10 mid/mixed 25% → 0%, Endless 1 max 25% → 50%).
     3. melee side attack (about 100 units into the neighbor lane) **(built in 0.4.0-dev, moved ahead of step 2)**
-    4. traits
+    4. traits **(built in 0.4.0-dev, 2026-11-15; to play-test)**
     5. enemy AI deploy variety, using roles (see Enemy AI)
     6. balance pass with the bot; expect clear changes in difficulty
   - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
@@ -162,16 +163,6 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - with 4 runs per cell this is partly noise
     - **Not compensated yet:** play-test first. If stages 4–9 feel harder, lower enemy income there by about 4%, or give the player +0.5 energy/s.
 
-- **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
-  - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
-  - **Why that may be a problem:** one Seeker covers the whole field width, so it ignores the lane tactics that lane reach was introduced for. It's also hard to read: missiles cross the entire screen.
-  - **Options:**
-    - **A, keep it:** the Seeker is the one "any lane" mech; that's its identity. Balance it through cost and damage if needed.
-    - **B, normal reach (±1 lane) like everyone else:** simplest and consistent. The Seeker keeps its homing missiles and mech preference but loses its special role.
-    - **C, extended reach (±2 lanes):** a middle ground. From lane 3 it covers every lane, from the edge lanes only three, so placement still matters.
-    - **D, normal reach, but missiles keep tracking:** it picks targets only within ±1 lane, but a missile that's already flying follows a target that changes lanes (as today). Mostly the same as B, just stated explicitly.
-  - **Recommendation: C (±2 lanes).** It keeps the Seeker special (the only mech that can cover the whole field, but only from the middle lane), and the edge lanes no longer reach across the map. If it's still too strong, fall back to B.
-  - **Decided (user, 2026-11-15): C, ± 2 lanes,** as the Seeker's "Long reach" trait (built in step 4). From lane 3 it covers every lane, but Brawlers usually go in lanes 2/4, so there it has no tank in front and walks into heavy fire. Where to deploy it becomes a real decision.
 - **[balance] Kill bounty helps the winning side snowball** (user, 2026-11-14)
   - **Current rule:** the player gets 25% of the destroyed unit's cost for every kill, mechs and turrets alike. The enemy AI gets no bounty (it has its own income, which grows when your mechs push close to its base).
   - **Problem:** whoever is ahead gets richer and pulls further ahead. But energy for killing *attackers* near your own base is good: it helps a defender recover.

@@ -80,7 +80,7 @@ export const MECHS = {
   },
   seeker: {
     role: 'line', name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 40, cd: 4,
-    proj: 'missile', salvo: 2, splash: 30, pref: 'mech', anyLane: true, radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
+    proj: 'missile', salvo: 2, splash: 30, traits: ['prefersMechs', 'longReach'], radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
   },
   breacher: {
     role: 'charger', name: 'Breacher', cost: 190, hp: 950, dmg: 30, reload: 1.2, range: 60, speed: 30, cd: 5,
@@ -88,11 +88,25 @@ export const MECHS = {
   },
   lancer: {
     role: 'artillery', name: 'Lancer', cost: 200, hp: 300, dmg: 30, reload: 2.5, range: 460, speed: 32, cd: 5,
-    proj: 'slug', structMult: 3, pref: 'structure', radius: 22, turn: TURN, pauseToFire: true,
+    proj: 'slug', structMult: 3, traits: ['prefersStructures'], radius: 22, turn: TURN, pauseToFire: true,
     desc: 'Siege gun. Outranges turrets, ×3 vs structures.',
   },
 };
 export const MECH_TYPES = Object.keys(MECHS);
+// Traits (gameplay.md §5.5): each changes exactly one rule of the mech's role.
+//   pref   targeting: 'mech' or 'structure' first (role default: nearest, no preference)
+//   reach  lanes to each side it can target (role default: 1)
+export const TRAITS = {
+  prefersMechs: { name: 'Prefers mechs', set: { pref: 'mech' }, desc: 'Picks enemy mechs over structures.' },
+  prefersStructures: { name: 'Prefers structures', set: { pref: 'structure' }, desc: 'Picks turrets and bases over mechs.' },
+  longReach: { name: 'Long reach', set: { reach: 2 }, desc: 'Targets its own lane ± 2 instead of ± 1.' },
+};
+const ROLE_DEFAULTS = { pref: null, reach: 1 };
+// the effective rules of each mech type: role, then its traits on top (the movement code reads only these)
+for (const def of Object.values(MECHS)) {
+  def.traits = def.traits || [];
+  def.rules = Object.assign({}, ROLE_DEFAULTS, ROLES[def.role], ...def.traits.map((t) => TRAITS[t].set));
+}
 
 export const TURRETS = {
   sentry: {

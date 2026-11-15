@@ -214,8 +214,22 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const near = mech(w, 'scout', 1, 3, 1150, 1e9); near.def = { ...near.def, speed: 0, dmg: 0 };
   w.update(1 / 60);
   check('gunner targets the neighbouring lane', g.target === near);
+  // traits: the Seeker's long reach is ± 2 lanes
   const sk = mech(w, 'seeker', 0, 0, 1000, 1e9); w.update(1 / 60);
-  check('seeker reaches any lane', sk.target === near || sk.target === far);
+  check('seeker (long reach) does not reach three lanes away', sk.target === null, `target lane ${sk.target?.lane}`);
+  const sk2 = mech(w, 'seeker', 0, 2, 1000, 1e9); w.update(1 / 60);
+  check('seeker (long reach) reaches two lanes away', sk2.target === far || sk2.target === near);
+  const sk1 = mech(w, 'seeker', 0, 1, 1000, 1e9); w.update(1 / 60);
+  check('seeker in lane 1 reaches lane 3', sk1.target === near, `target lane ${sk1.target?.lane}`);
+  // traits: preferences
+  const wp = mk([['sentry', 2, 7]]);
+  const tp = tough(wp.cells[1][2][7]); tp.def = { ...tp.def, dmg: 0 };
+  const mp = mech(wp, 'scout', 1, 2, tp.y - 30, 1e9); mp.def = { ...mp.def, speed: 0, dmg: 0 };
+  const lp = mech(wp, 'lancer', 0, 2, tp.y - 400, 1e9), sp = mech(wp, 'seeker', 0, 2, tp.y - 360, 1e9);
+  wp.update(1 / 60);
+  check('lancer (prefers structures) picks the turret over a closer mech', lp.target === tp, `target ${lp.target?.kind}`);
+  check('seeker (prefers mechs) picks the mech', sp.target === mp, `target ${sp.target?.kind}`);
+  check('rules = role + traits', MECHS.seeker.rules.reach === 2 && MECHS.seeker.rules.pref === 'mech' && MECHS.seeker.rules.fireOnMove === false && MECHS.gunner.rules.reach === 1 && MECHS.gunner.rules.pref === null);
 }
 // 17. Line stays behind a marching tank; a Charger passes it and returns home
 {
