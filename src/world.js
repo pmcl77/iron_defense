@@ -391,11 +391,15 @@ export class World {
       if ((f.y - e.y) * dir <= 0) continue; // behind
       if ((ny - s) * dir > 0) { ny = s; block = f; }
     }
-    if (R.follow) { // also hang back behind fighting friendlies in the neighbouring lanes
+    if (R.follow) { // stay just behind the *frontmost* fighting friendly in its own and the neighbouring lanes
+      let front = null;
       for (const f of this.entities) {
-        if (f.dead || f.team !== e.team || f.kind !== 'mech' || f === e || f.lane === e.lane || Math.abs(f.lane - e.lane) > 1) continue;
+        if (f.dead || f.team !== e.team || f.kind !== 'mech' || f === e || Math.abs(f.lane - e.lane) > 1) continue;
         if (!f.target || f.def.role === 'support' || (f.y - e.y) * dir <= 0) continue;
-        const s = f.y - dir * (f.radius + e.radius + R.follow);
+        if (!front || (f.y - front.y) * dir > 0) front = f;
+      }
+      if (front) {
+        const s = front.y - dir * (front.radius + e.radius + R.follow);
         if ((ny - s) * dir > 0) { ny = s; block = null; }
       }
     }

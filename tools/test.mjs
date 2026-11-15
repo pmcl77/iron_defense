@@ -338,6 +338,12 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const g3 = mech(w3, 'gunner', 0, 2, 1150, 1e9), a = mech(w3, 'aegis', 0, 2, 1080, 1e9);
   run(w3, 12);
   check('support stays a little behind the fight', a.lane === 2 && g3.y - a.y >= g3.radius + a.radius + 40 - 0.5 && g3.y - a.y < 120, `gap ${(g3.y - a.y).toFixed(1)}`);
+  // Support follows the frontmost fighting friendly nearby, not the nearest one (play-test: an Aegis parked behind a Seeker)
+  const wfm = mk();
+  const ffm = mech(wfm, 'brawler', 1, 1, 1500, 1e9); ffm.def = { ...ffm.def, dmg: 0, speed: 0 };
+  const gfm = mech(wfm, 'gunner', 0, 1, 1200, 1e9), sfm = mech(wfm, 'seeker', 0, 1, 1000, 1e9), afm = mech(wfm, 'aegis', 0, 2, 850, 1e9);
+  run(wfm, 15);
+  check('support follows the frontmost fighting friendly', !!gfm.target && !!sfm.target && afm.y > sfm.y && gfm.y - afm.y >= gfm.radius + afm.radius + 40 - 0.5 && gfm.y - afm.y < 120, `GU ${gfm.y.toFixed(0)} SE ${sfm.y.toFixed(0)} AE ${afm.y.toFixed(0)}`);
   // Support passes toward the friendlies its field can cover (passSide 'protect'), not the default side
   const wpr = mk();
   const mpr = mech(wpr, 'mortar', 0, 2, 900, 1e9), apr = mech(wpr, 'aegis', 0, 2, 840, 1e9);

@@ -30,7 +30,7 @@ export const rowOf = (team, y) => {
 //   alwaysPass   passes a marching friendly it may pass even if that one is barely slower
 //   noPassFighting  never passes a friendly that is fighting
 //   passLonger   also passes a fighting friendly with a longer range than its own (it can't reach that fight from behind)
-//   follow       stays this far behind the friendly ahead in its lane (marching or fighting) and behind fighting friendlies in the next lanes
+//   follow       stays this far behind the friendly ahead in its lane (marching or fighting) and behind the frontmost fighting friendly in its own and the next lanes
 //   sideLean     while fighting an enemy in the next lane, slide this far toward it (stays in its lane)
 //   passSide     'protect': when passing, pick the side where its field covers the most friendlies
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
