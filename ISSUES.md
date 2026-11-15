@@ -132,6 +132,16 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Timing (proposed 2026-11-15): after the movement steps 1–4,** as step 5. The group templates can then use roles (tank first, Line and Artillery behind it), play-tests of the movement rules aren't mixed up with AI changes, and one balance pass covers both. Until then the AI's triple-Brawler groups are a good test for the side attack.
 
 ### Under discussion
+- **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
+  - **Today:** the field (40% less damage taken, radius 140, doesn't stack, not on the Aegis itself; it also covers own turrets and the base) is shown only as a dashed rotating circle. You can't tell who is inside.
+  - **Note:** it reduces damage taken; it doesn't add HP.
+  - **Options:**
+    - **A, permanent beams:** a thin flickering arc from the Aegis to every protected friendly. Clearest, but with 2 Aegis and 6–8 units nearby it's 10+ lines all the time, which gets busy on the phone.
+    - **B, beam on hit:** a short, bright arc (about 0.2 s) from the Aegis to a protected unit only when it actually takes reduced damage. Shows the effect exactly when it matters; quiet otherwise.
+    - **C, shimmer on the protected unit:** a faint blue glint or hex outline on protected units instead of lines.
+    - **D, A but subtle:** faint, mostly still lines with an occasional spark travelling along them.
+  - **Recommendation: B, plus D as an option.** B reads as "the shield absorbed that" and stays readable in big fights. A settings toggle "Aegis links: off / on hit / always" covers both; default "on hit". Cheap to draw (a few lines), no gameplay effect.
+  - Status: idea, to decide.
 - **[balance/art] All mechs move too fast: they look like insects, not massive machines** (user, play-test 0.3.0-dev; started as "big melee mechs too fast")
   - **User (2026-11-15):** with the legs now synced, the fast stepping looks like insects scurrying. Slow all mechs down a bit, combined with bigger steps, but not so much that the game becomes sluggish.
   - **Today:** steps per second (2 footfalls per walk cycle):
