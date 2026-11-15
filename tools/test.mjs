@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -273,8 +273,12 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   run(w4, 15);
   const lanes = [t1, t2, t3].map((t) => t.lane).sort().join();
   check('three tanks attack from three sides', lanes === '1,2,3' && [t1, t2, t3].every((t) => t.target === foe && !t.moving), `lanes ${lanes}`);
+  const side = [t1, t2, t3].filter((t) => t.lane !== 2);
+  check('side attackers lean in but stay in their lane', side.every((t) => Math.abs(t.x - foe.x) < 120 - 25 && laneOf(t.x) === t.lane), side.map((t) => `${t.lane}@${t.x.toFixed(0)}`).join(' '));
   const h0 = foe.hp; run(w4, 2);
   check('side attackers deal damage', h0 - foe.hp >= 3 * 48 * 0.99, `dmg ${(h0 - foe.hp).toFixed(0)}`);
+  foe.dead = true; run(w4, 2);
+  check('they lean back once the fight is over', side.every((t) => !t.lean), side.map((t) => (t.lean || 0).toFixed(0)).join(' '));
   const w3 = mk();
   const f3 = mech(w3, 'brawler', 1, 2, 1500, 1e9); f3.def = { ...f3.def, dmg: 0, speed: 0 };
   const g3 = mech(w3, 'gunner', 0, 2, 1150, 1e9), a = mech(w3, 'aegis', 0, 2, 1080, 1e9);

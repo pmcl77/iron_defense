@@ -129,7 +129,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 - **Friendly turrets:** own mechs (and the Constructor) walk around them in the gap between the pads, while staying assigned to their lane. This is cosmetic: full speed, no effect on blocking, reach or targeting.
 - Each mech gets a small cosmetic sideways offset (±20) inside its lane.
 
-**Tuning values to start with** *(tune after play-testing)*: side attack reaches about 100 units into the neighbor lane; Support stays about 40 units behind the friendly it follows.
+**Tuning values to start with** *(tune after play-testing)*: side attack reaches about 100 units into the neighbor lane, and while fighting from the side the Tank leans about 35 units toward its target (it stays in its lane); Support stays about 40 units behind the friendly it follows.
 
 **Build order** (each step followed by a play-test):
 1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special). **Built in 0.4.0-dev.**

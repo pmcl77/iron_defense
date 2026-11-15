@@ -25,7 +25,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - a Brawler passes a marching Mortar although the Mortar is only slightly slower, so tanks really lead
   - Artillery with no shot steps one lane over behind a fighting friendly instead of waiting
   - fanning out picks the side from which the mech can actually reach an enemy soonest
-- **Side attack** (step 3): a Brawler also hits enemies in the neighbouring lane (up to about 100 units) and stops beside them to fight. Behind a fighting Brawler, the next one steps beside it, so a group of three attacks one enemy from three sides.
+- **Side attack** (step 3): a Brawler also hits enemies in the neighbouring lane (up to about 100 units) and stops beside them to fight. Behind a fighting Brawler, the next one steps beside it, so a group of three attacks one enemy from three sides. While fighting from the side it leans about 35 units toward the enemy (still in its own lane) and moves back afterwards, so there's no gap between the two mechs.
 
 ## [0.3.0]: 2026-11-15
 

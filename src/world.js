@@ -355,6 +355,7 @@ export class World {
     }
     // Chargers step over toward a turret ahead in a neighbouring lane
     if (R.goal === 'structure' && !e.shift && e.homeLane == null) this.seekStructure(e);
+    this.lean(e, dt, t, R);
     if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; return; }
     const sp = this.stat(e, 'speed') * (e.shift && e.shift.slow ? 0.5 : 1);
     let ny = e.y + dir * sp * dt, block = null;
@@ -394,6 +395,19 @@ export class World {
       if (this.laneFree(e, next)) this.shiftTo(e, next);
     }
     if (e.homeLane === e.lane && !e.shift) { e.homeLane = null; e.passing = null; }
+  }
+
+  // side attack visuals: lean toward an enemy in the next lane while fighting it, back afterwards.
+  // Only the x position moves; the mech stays in its lane (never more than 50 from the lane center).
+  lean(e, dt, t, R) {
+    if (!R.sideLean || e.shift) return; // a lane change resets the lean (shiftTo)
+    let want = 0;
+    if (t && this.isSide(e, t) && this.dist(e, t) <= this.sideReach(e)) want = Math.sign(t.x - e.x) * R.sideLean;
+    const cur = e.lean || 0, step = 70 * dt;
+    let next = cur + Math.max(-step, Math.min(step, want - cur));
+    const cx = laneX(e.lane), base = e.x - cur;
+    next = Math.max(cx - 50 - base, Math.min(cx + 50 - base, next));
+    e.x = base + next; e.lean = next;
   }
 
   // Does the mech walk on this tick? Roles that fire on the move keep walking (Chargers stop at
@@ -489,6 +503,7 @@ export class World {
     return ahead < -(f.radius + e.radius + 10) || ahead > 150; // clearly passed it, or it's far ahead and no longer in the way
   }
   shiftTo(e, lane, slow = false) {
+    e.lean = 0; // a lane change starts from where it stands, leaning or not
     e.shift = { from: e.x, to: laneX(lane) + e.jitter * 0.5, t: 0, slow };
     e.lane = lane;
     this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
