@@ -141,19 +141,32 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Recommendation: A + B + C now, D later.** It makes the AI feel smarter and less predictable without the full counter AI. The difficulty will shift, so stages 1–12 need a rebalance with the bot afterwards.
 
 ### Under discussion
-- **[balance] Big melee mechs walk too fast** (user, play-test 0.3.0-dev, 2026-11-14)
-  - **Today:** Brawler 40, Breacher 38. For comparison: Gunner 55, Seeker 50, Aegis 45, Lancer 40, Mortar 35, Scout 95; the heavy tank proposal has 30.
-  - **Part of it may be perception:** in the voxel graphics the legs stepped about 5× too slowly for the actual speed, so the mechs seemed to glide. Fixed in 0.3.0-dev (legs synced, 2026-11-15); judge the speed again now.
-  - **Options if it's still too fast:**
-    - **A:** about −20% (Brawler 40 → 32, Breacher 38 → 30)
-    - **B:** only the Breacher slower (it's the heavier one)
-    - **C:** slower, but with a short charge when an enemy comes within about 80 (heavy, yet still reaches its target)
-  - **Side effects:**
-    - slow tanks at the front make Hold convoys slower (convoy rule)
-    - they stay longer under turret fire before they reach anything
-    - the enemy uses the same mechs
-    - a bot rebalance is needed afterwards
-  - **Recommendation:** fix the leg sync first; if they still look fast, A, then rerun the balance bot.
+- **[balance/art] All mechs move too fast: they look like insects, not massive machines** (user, play-test 0.3.0-dev; started as "big melee mechs too fast")
+  - **User (2026-11-15):** with the legs now synced, the fast stepping looks like insects scurrying. Slow all mechs down a bit, combined with bigger steps, but not so much that the game becomes sluggish.
+  - **Today:** steps per second (2 footfalls per walk cycle):
+
+    | Mech | speed | steps/s |
+    |---|---|---|
+    | Scout | 95 | 13.6 |
+    | Gunner | 55 | 5.9 |
+    | Seeker | 50 | 6.1 |
+    | Aegis | 45 | 5.5 |
+    | Lancer | 40 | 4.8 |
+    | Mortar | 35 | 3.7 |
+    | Brawler | 40 | 2.9 |
+    | Breacher | 38 | ~3 |
+
+    A walking person takes about 2 steps/s, and something big should take fewer.
+  - **Proposal:**
+    - **Speed −20% for every mech** (e.g. Gunner 55 → 44, Brawler 40 → 32, Scout 95 → 76). Battles get about 20% longer, and the 2× speed button is there.
+    - **Strides ×1.6:** the cadence drops by half again without any further slowing. Gunner ≈ 2.9 steps/s, Brawler ≈ 1.5, Mortar ≈ 1.8, Scout ≈ 7 (light and quick is fine for it).
+    - **Weight cues** that cost no speed:
+      - a small body dip on each footfall
+      - dust puffs under heavy mechs (Brawler, Breacher, Mortar)
+      - footstep thuds (already planned in the sound backlog)
+    - **Rebalance:** slower mechs spend longer under turret and base fire, which favors defense. Rerun the bot; if needed, compensate with slightly more energy income or turret tweaks.
+  - **Alternatives:** only bigger strides, no slowing (keeps the pace, still looks somewhat brisk); or −30% speed (heavier, but battles drag).
+
 - **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
   - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
   - **Why that may be a problem:** one Seeker covers the whole field width, so it ignores the lane tactics that lane reach was introduced for. It's also hard to read: missiles cross the entire screen.
