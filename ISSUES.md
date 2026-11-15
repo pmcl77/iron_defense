@@ -63,6 +63,11 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Proposal: 3 + 4.** Leaning closes most of the gap and reads as "stepping into the fight"; the punch lunge sells the hit. Rules are unchanged; only position and art.
     - **Built: lean-in (3)** in 0.4.0-dev (`sideLean: 35` on the Tank role). The punch lunge (4) isn't built. To play-test.
     - Later, not now (user): a redesigned Brawler with a thicker body would close the gap further.
+- **[gameplay] Reconsider: Tanks pass marching non-tanks regardless of speed (fix B)** (user, play-test 2026-11-15)
+  - Seen: a Brawler passing a marching Mortar took a long time. Brawler 32 vs Mortar 28 means it gains only 4 units/s; getting clearly past (about 60–70 units) takes roughly 15 s, all that time in the neighbour lane.
+  - Bringing back the 8-speed rule for Tanks would end that, but then a Brawler-Gunner train follows a Mortar until the Mortar stops to shoot (the original reason for B).
+  - Possible middle ways for later: a Tank passes a marching friendly only if it gains at least ~3 units/s *and* the pass would finish within ~8 s; or the friendly being passed slows down a little while a Tank passes it (it "lets it by").
+  - **Decided for now (user): keep B as it is**, reconsider after more F play-testing.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
