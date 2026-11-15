@@ -12,7 +12,7 @@ const MECH_TYPES = Object.keys(LEGS);
 export const N_HEAD = 16, N_AIM = 64;
 // walk cycle: each foot slides between -amp and +amp (model units); 5 baked positions, played as a triangle wave
 export const STRIDE_POS = [-1, -0.5, 0, 0.5, 1];
-const AMP = { scout: 2.7, gunner: 3.6, brawler: 4.8, mortar: 3.6, aegis: 3.3, seeker: 3.3, breacher: 4, lancer: 3.3 };
+const AMP = { scout: 4.3, gunner: 5.8, brawler: 7.7, mortar: 5.8, aegis: 5.3, seeker: 5.3, breacher: 6.4, lancer: 5.3 }; // long, heavy strides
 const TYPE_SCALE = { brawler: 1.1 };
 
 // extent of a primitive list in model units: horizontal radius and top height

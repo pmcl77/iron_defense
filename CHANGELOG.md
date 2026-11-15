@@ -10,6 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.3.0-dev
 
 ### Gameplay
+- **All mechs walk 20% slower,** so they feel big and heavy rather than scurrying: Scout 76, Gunner 44, Seeker 40, Aegis 36, Brawler 32, Lancer 32, Breacher 30, Mortar 28. The overtake threshold scales with it (8 instead of 10 faster).
 - **Shots leave from the actual weapons** (at the right height, matching the voxel models; the torso now has 64 turn steps instead of 32 so the drawn gun and the shot line up): the Gunner fires alternately from its left and right gun, the Seeker launches one missile from each shoulder pod at once, the Mortar and the Sentry turret alternate between their two barrels, and the Scout, Aegis, Lancer and Howitzer fire from their gun's muzzle.
 
 ### Art
@@ -22,6 +23,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - effects, HP bars and overlays reuse the flat style, adjusted to the angled view
 - **New Brawler design ("Bulwark"):** 10% bigger, wider body and stance, big shoulder plates over both sides, fists raised in a guard, a front bumper bar and exhaust stacks.
 - **New Mortar design:** twin short mortar tubes on the shoulders (lighter gunmetal) and an ammo box on the back, instead of one big tube in the middle.
+- **Longer, heavier strides** (1.6×): about 3 steps per second for a Gunner and 1.5 for a Brawler. Heavy mechs (Brawler, Breacher, Mortar) dip slightly on each step and kick up dust when a foot lands.
 - **Legs step in sync with movement:** one walk cycle per stride length, so feet no longer slide; bigger mechs take longer, slower steps. 5 leg positions instead of 3.
 - No more stripes inside the lanes; the grass edges mark them.
 - **Settings → Graphics:** Voxel (default) or Simple (the flat development art). It falls back to Simple automatically if the images can't be loaded.

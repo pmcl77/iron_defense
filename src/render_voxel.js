@@ -5,6 +5,8 @@ import { Renderer } from './render.js';
 import { FIELD, BASE_FACE } from './data.js';
 
 const TAU = Math.PI * 2;
+// heavy walkers: body dip at full stride (world units), foot spacing and dust puff size
+const HEAVY = { brawler: { dip: 1.8, lx: 21, dust: 9 }, breacher: { dip: 1.6, lx: 21, dust: 9 }, mortar: { dip: 1.3, lx: 13, dust: 7 } };
 const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('missing ' + src)); i.src = src; });
 
 export class VoxelRenderer extends Renderer {
@@ -35,14 +37,29 @@ export class VoxelRenderer extends Renderer {
     c.drawImage(this.img[sh.file], fr[0], fr[1], fr[2], fr[3], x + (fr[4] - sh.ax) * f, y + (fr[5] - sh.ay) * f, fr[2] * f, fr[3] * f);
   }
   dirIndex(a, n) { return ((Math.round((a / TAU) * n) % n) + n) % n; }
-  // Walk frame synced to the distance walked: one full cycle per `stride` world units, so the
-  // planted foot stays put on the ground. Baked foot positions are played as a triangle wave.
+  // Walk cycle synced to the distance walked: one full cycle per `stride` world units, so the
+  // planted foot stays put on the ground. Returns the cycle count; feet are fully spread (a footfall)
+  // at every half cycle.
+  walkCycles(e, sh) { return (e.phase * e.radius * 0.9) / sh.stride; }
+  // foot position -1..1 as a triangle wave over the cycle
+  walkTri(cycles) { const u = ((cycles % 1) + 1) % 1; return u < 0.5 ? -1 + 4 * u : 3 - 4 * u; }
   strideIndex(e, sh) {
     const n = this.meta.STRIDE_POS.length;
     if (!e.moving) return (n - 1) / 2;
-    const u = (((e.phase * e.radius * 0.9) / sh.stride) % 1 + 1) % 1;
-    const tri = u < 0.5 ? -1 + 4 * u : 3 - 4 * u;
-    return Math.round(((tri + 1) / 2) * (n - 1));
+    return Math.round(((this.walkTri(this.walkCycles(e, sh)) + 1) / 2) * (n - 1));
+  }
+  // weight: the body dips when the feet are spread, heavy mechs kick up dust on each footfall
+  walkFx(e, sh) {
+    if (!e.moving) return 0;
+    const cyc = this.walkCycles(e, sh), tri = this.walkTri(cyc), heavy = HEAVY[e.type];
+    const fall = Math.floor(cyc * 2);
+    if (heavy && e._fall !== undefined && fall !== e._fall) {
+      const side = fall % 2 ? 1 : -1, ca = Math.cos(e.body), sa = Math.sin(e.body), lx = heavy.lx * side;
+      const fx = e.x + lx * ca + 4 * sa, fy = e.y - lx * sa + 4 * ca;
+      for (let i = 0; i < 2; i++) this.particles.push({ k: 'dust', x: fx + (Math.random() - 0.5) * 6, y: fy + (Math.random() - 0.5) * 4, vx: (Math.random() - 0.5) * 14, vy: (Math.random() - 0.5) * 10, s: heavy.dust * (0.7 + Math.random() * 0.5), life: 0.7, max: 0.7 });
+    }
+    e._fall = fall;
+    return (heavy ? heavy.dip : 0.7) * tri * tri * this.scale;
   }
 
   draw(w, dt, ui) {
@@ -103,9 +120,9 @@ export class VoxelRenderer extends Renderer {
     const parts = [];
     if (e.kind === 'mech') {
       const back = (e.recoil || 0) * 3 * this.scale;
-      const legs = `mech_${e.type}_${e.team}_legs`, sh = this.meta.sheets[legs];
+      const legs = `mech_${e.type}_${e.team}_legs`, sh = this.meta.sheets[legs], dip = this.walkFx(e, sh);
       parts.push([legs, this.dirIndex(e.body, this.meta.N_HEAD) * this.meta.STRIDE_POS.length + this.strideIndex(e, sh), x, y]);
-      parts.push([`mech_${e.type}_${e.team}_top`, this.dirIndex(e.aim, this.meta.N_AIM), x - Math.sin(e.aim) * back, y + Math.cos(e.aim) * back * this.squash]);
+      parts.push([`mech_${e.type}_${e.team}_top`, this.dirIndex(e.aim, this.meta.N_AIM), x - Math.sin(e.aim) * back, y + Math.cos(e.aim) * back * this.squash + dip]);
     } else if (e.kind === 'turret') {
       const back = (e.recoil || 0) * 4 * this.scale;
       parts.push([`turret_${e.type}_pad`, 0, x, y]);

@@ -477,6 +477,8 @@ export class Renderer {
         c.fill();
       } else if (p.k === 'spark') {
         c.strokeStyle = p.col; c.globalAlpha = k; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x, y); c.lineTo(x - p.vx * 0.03 * s, y + p.vy * 0.03 * s); c.stroke(); c.globalAlpha = 1;
+      } else if (p.k === 'dust') { // footfall dust: low, flat, ground-colored
+        c.fillStyle = `rgba(176,160,120,${0.5 * k})`; c.beginPath(); this.gArc(c, x, y, p.s * s * (1.5 - k * 0.7)); c.fill();
       } else if (p.k === 'smoke') {
         c.fillStyle = `rgba(90,85,78,${0.45 * k})`; c.beginPath(); c.arc(x, y, p.s * s * (1.6 - k * 0.8), 0, 7); c.fill();
       } else if (p.k === 'debris') {

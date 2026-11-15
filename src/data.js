@@ -22,37 +22,37 @@ export const rowOf = (team, y) => {
 const TURN = Math.PI * 2; // about 360°/s
 export const MECHS = {
   scout: {
-    name: 'Scout', cost: 40, hp: 90, dmg: 8, reload: 0.35, range: 150, speed: 95, cd: 1.2,
+    name: 'Scout', cost: 40, hp: 90, dmg: 8, reload: 0.35, range: 150, speed: 76, cd: 1.2,
     proj: 'bullet', radius: 16, turn: TURN, desc: 'Fast and cheap. Harasses and screens.',
   },
   gunner: {
-    name: 'Gunner', cost: 80, hp: 230, dmg: 18, reload: 0.6, range: 260, speed: 55, cd: 2,
+    name: 'Gunner', cost: 80, hp: 230, dmg: 18, reload: 0.6, range: 260, speed: 44, cd: 2,
     proj: 'bullet', radius: 20, turn: TURN, desc: 'Reliable mid-range firepower.',
   },
   brawler: {
-    name: 'Brawler', cost: 140, hp: 700, dmg: 48, reload: 1.0, range: 60, speed: 40, cd: 3.5,
+    name: 'Brawler', cost: 140, hp: 700, dmg: 48, reload: 1.0, range: 60, speed: 32, cd: 3.5,
     proj: 'melee', radius: 28, turn: TURN, desc: 'Heavy melee tank. Smashes walls.',
   },
   mortar: {
-    name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 3.2, range: 520, speed: 35, cd: 4.5,
+    name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 3.2, range: 520, speed: 28, cd: 4.5,
     proj: 'shell', splash: 70, radius: 24, turn: TURN, pauseToFire: true,
     flight: [1.0, 400], scatterMax: 40, structMult: 0.5,
     desc: 'Long-range splash. Slow shells: best vs units that stand still.',
   },
   aegis: {
-    name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 45, cd: 4,
+    name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 36, cd: 4,
     proj: 'bullet', aura: 140, auraDR: 0.4, radius: 22, turn: TURN, desc: 'Field: allies nearby take 40% less damage.',
   },
   seeker: {
-    name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 50, cd: 4,
+    name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 40, cd: 4,
     proj: 'missile', salvo: 2, splash: 30, pref: 'mech', anyLane: true, radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
   },
   breacher: {
-    name: 'Breacher', cost: 190, hp: 950, dmg: 30, reload: 1.2, range: 60, speed: 38, cd: 5,
+    name: 'Breacher', cost: 190, hp: 950, dmg: 30, reload: 1.2, range: 60, speed: 30, cd: 5,
     proj: 'melee', structMult: 4, stunOnHit: 0.3, radius: 30, turn: TURN, desc: 'Wallbreaker. ×4 damage to turrets and bases.',
   },
   lancer: {
-    name: 'Lancer', cost: 200, hp: 300, dmg: 30, reload: 2.5, range: 460, speed: 40, cd: 5,
+    name: 'Lancer', cost: 200, hp: 300, dmg: 30, reload: 2.5, range: 460, speed: 32, cd: 5,
     proj: 'slug', structMult: 3, pref: 'structure', radius: 22, turn: TURN, pauseToFire: true,
     desc: 'Siege gun. Outranges turrets, ×3 vs structures.',
   },

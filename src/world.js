@@ -402,7 +402,7 @@ export class World {
   }
   tryOvertake(e, blocker) {
     // not worth it if the mech ahead is walking at almost the same speed
-    if (blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 10) return false;
+    if (blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 8) return false;
     // never swing back into the home lane before the mech being passed is behind us
     const opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneFree(e, l) && !(l === e.homeLane && !this.passed(e)));
     if (!opts.length) return false;

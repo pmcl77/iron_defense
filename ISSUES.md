@@ -23,7 +23,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 
     | Mover meets … | Hold | Advance |
     |---|---|---|
-    | friendly mech, walking | follows (convoy) | overtakes if ≥10 faster and a neighbor lane is free |
+    | friendly mech, walking | follows (convoy) | overtakes if ≥8 faster and a neighbor lane is free |
     | friendly mech, stopped/fighting | waits behind it (convoy) | overtakes through a free neighbor lane |
     | enemy mech | stops at own range (melee: at contact) and fights | fights on the move; stopped by contact; never changes lane for it |
     | enemy turret, gap next to it | stops at own range | steps around it (**melee too**, the logged bug) |
@@ -166,6 +166,11 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
       - footstep thuds (already planned in the sound backlog)
     - **Rebalance:** slower mechs spend longer under turret and base fire, which favors defense. Rerun the bot; if needed, compensate with slightly more energy income or turret tweaks.
   - **Alternatives:** only bigger strides, no slowing (keeps the pace, still looks somewhat brisk); or −30% speed (heavier, but battles drag).
+  - **Built in 0.3.0-dev (2026-11-15):** −20% speed, 1.6× strides, body dip and dust for heavy mechs, overtake threshold 10 → 8. Balance bot, 4 runs per cell, old vs. new speeds:
+    - win rates mostly unchanged; slightly harder in a few cells (stage 4 without upgrades 100% → 75%; stage 6 mid/mixed 100% → 75%; stage 9 mid/mixed 100% → 25%; Endless 2 max 25% → 0%)
+    - battles about 10–25% longer
+    - with 4 runs per cell this is partly noise
+    - **Not compensated yet:** play-test first. If stages 4–9 feel harder, lower enemy income there by about 4%, or give the player +0.5 energy/s.
 
 - **[balance] The Seeker reaches every lane** (play-test v0.2.0-dev)
   - **Current rule (by design, so far):** Seeker missiles are exempt from lane reach (gameplay.md §5.3, decision 13). A Seeker in lane 1 can hit targets in lane 5, within its range of 380.
