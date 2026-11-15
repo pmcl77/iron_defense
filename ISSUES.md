@@ -28,6 +28,26 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     6. balance pass with the bot; expect clear changes in difficulty
   - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
   - **Code:** data-driven. `ROLES` and `TRAITS` in data.js, each mech type gets `role` and `traits`; world.js asks for the effective rules (role merged with traits) and never checks type names.
+- **[gameplay] Play-test of step 1 (roles), user 2026-11-15.** Notation: "Brawler-Gunner" = a train deployed in that order; ".f" = fighting, ".b" = waiting/blocked.
+  - **Observations and causes:**
+    - *Mortar.f-Brawler-Gunner: the Brawler and the Gunner wait behind the fighting Mortar.* The Brawler applies "behind a fighting friendly: join", which needs an enemy in a neighbouring lane within 300. The Mortar's enemy is ~500 away, so the Brawler waits; the Gunner may not pass a Tank, so it waits too.
+    - *The Brawler doesn't get past a fighting Seeker.* Same cause.
+    - *Mortar.f-Mortar.b-Brawler-Gunner: the Brawler and Gunner fan out; once the front Mortar dies, the second becomes Mortar.f and the others fan out.* A *waiting* Mortar is passed (Tanks pass non-tanks); a *fighting* one isn't (the join rule above).
+    - *Mortar-Brawler-Gunner on the march: the Brawler follows the Mortar.* Overtaking a marching friendly needs at least 8 speed difference; Brawler 32 vs Mortar 28 isn't enough. So the Mortar leads and the Gunner stays behind the Brawler.
+    - *Mortar-Gunner: the Gunner overtakes.* As intended (Line passes Artillery).
+    - *Mortar waits behind a fighting Seeker with nothing in range.* As designed (Artillery stays behind); the Seeker's target is in a lane the Mortar can't reach (any-lane Seeker until step 4).
+    - *Gunners fan out to the side with nothing to fight.* The side choice only looks for enemies in that exact lane, not what the Gunner could reach from there (±1 lane), and a target can die during the move.
+    - *Brawler groups: no clear pattern when they fan out.* They only step over when an enemy is in the next lane (no side attack yet, step 3).
+    - *The Brawler doesn't hit enemies in the next lane.* Intended until the side attack (step 3).
+    - *The Aegis never goes around anyone.* As designed: Support passes only Artillery, and never a fighting friendly.
+    - Scout and Breacher change lanes to charge correctly.
+  - **Proposals:**
+    - **A, a fighting friendly you may pass is passed:** behind a fighting friendly, a mech first checks the passing rules; only if it may not pass does its role's "behind a fighting friendly" rule apply (Tank joins beside a Tank, Line fans out behind a Tank or Line, Artillery waits). Fixes Mortar.f blocking Brawler-Gunner and the Brawler behind a Seeker.f. Support keeps "never passes a fighting friendly".
+    - **B, a Tank always passes a marching non-tank,** whatever the speed difference, so tanks really lead (Mortar-Brawler-Gunner becomes Brawler in front). Other roles keep the 8-speed threshold.
+    - **C, Artillery with no shot fans out** behind a fighting friendly (like Line) instead of waiting. It still stops at its long range, so it stays at the back.
+    - **D, better fan-out side (bug fix):** pick the side from which the mech would actually have a target in range (counting its ±1 reach), then fewer friendlies, then toward the center.
+    - **E, side attack (step 3) next:** makes Brawler groups readable: Brawler 2 steps beside Brawler 1 and hits the same enemy from the side.
+  - **Recommendation:** A + B + D now; C yes (avoids idle artillery, the original "cowards" problem); then E as the next step before step 2.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
