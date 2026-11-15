@@ -7,6 +7,8 @@ All notable changes to Iron Defense. The newest version is at the top.
 
 Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev` suffix.
 
+## [Unreleased]: 0.4.0-dev
+
 ## [0.3.0]: 2026-11-15
 
 ### Gameplay
