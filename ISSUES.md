@@ -70,10 +70,10 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Proposal: add Line to Line's `passes`. Behind a fighting SE, the GU then passes it, walks on until it has a shot, and returns to its home lane in front of the SE. The column stays in one lane, ordered roughly by range (BR, GU, SE, MO).
   - Marching Line mechs still don't leapfrog: passing a marching friendly needs 8 speed difference (GU 44 vs SE 40).
   - A SE behind a fighting GU almost always has a shot already (380 vs 260 range) and simply stops.
-  - Two SEs (or two GUs): the second one passes, stops beside the first as soon as it's in range, and stays there: the same result as fanning out today.
+  - Two SEs (or two GUs): with the simple version, passing is checked before the fan-out rule (fix A), so the second one never fans out; it *passes*. It usually stops beside the first as soon as it's in range, which looks like a fan-out, but it counts as passing: once it moves on and gets clearly ahead, it returns to the home lane in front of the first one.
   - If the GU's target is within range before it's clearly past the SE, it stops in the passing lane and shoots from there. It returns home once it moves on.
   - Line still fans out behind a fighting Tank (it may not pass Tanks).
-  - Alternative: Line passes only a fighting friendly with *longer* range (one more role field).
+  - Alternative: Line passes only a fighting friendly with *longer* range (one more role field). Then GU behind SE.f passes, while two of the same type (and SE behind GU.f) fan out exactly as today.
 - **[gameplay] To discuss: passing side without a leader — avoid enemies or go for them?** (user, 2026-11-15, while testing F)
   - Now (F): a passing mech without a leader prefers a side with no enemy within ~250 ahead, then closer to home, then fewer friendlies, then the center.
   - User's concern: we also want to stop enemies before they reach our base, so steering away from them isn't always right.
