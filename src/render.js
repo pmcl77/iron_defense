@@ -290,7 +290,6 @@ export class Renderer {
         case 'surge': this.particles.push({ k: 'surge', life: 0.7, max: 0.7 }); sfx('surge'); break;
         case 'jet': this.particles.push({ k: 'jet', x: f.x, y: f.y, life: 1.6, max: 1.6 }); sfx('jet', f); break;
         case 'upgrade': sfx('upgrade'); break;
-        case 'mode': if (f.team === 0) sfx('click'); break;
         case 'sidestep': sfx('servo', f); break;
       }
     }

@@ -81,7 +81,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 
 ### 5.2 Movement: roles, types and traits
 
-*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section; until a step is built, the game still behaves the old way.*
+*Decided 2026-11-15 (replaces the Hold/Advance switch). Being built in 0.4.0-dev in the steps listed at the end of this section. **Step 1 is built**; until the later steps are built, lane changes still take a quick 0.5 s, Tanks only join a fight in a neighbouring lane if there's an enemy in that lane, and the Seeker still reaches every lane.*
 
 There is **no stance switch**. A mech's behavior comes from its type alone, and the same rules always apply:
 
@@ -132,7 +132,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 **Tuning values to start with** *(tune after play-testing)*: side attack reaches about 100 units into the neighbor lane; Support stays about 40 units behind the friendly it follows.
 
 **Build order** (each step followed by a play-test):
-1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special).
+1. Roles and their rules replace the Hold/Advance switch (the HUD button goes; its space goes to the energy bar, later maybe another special). **Built in 0.4.0-dev.**
 2. Walking lane changes and the detour around friendly turrets.
 3. Melee side attack.
 4. Traits (§5.5).
@@ -209,7 +209,7 @@ Attack types work as in Ironline, measured in 2D:
 
 Later units get a role the same way (the heavy tank: Tank if it leads and brawls, Charger if it goes for walls; a repair mech: Support).
 
-*Old rule, still in the game until step 1 is built:* a global Hold / Advance toggle per side (key F). Hold stopped mechs whenever a target was in range; Advance kept them walking while firing, stepping around turrets and overtaking friendlies.
+*Old rule, removed in 0.4.0-dev:* a global Hold / Advance toggle per side (key F). Hold stopped mechs whenever a target was in range; Advance kept them walking while firing, stepping around turrets and overtaking friendlies.
 
 ## 6. Turrets
 
@@ -281,7 +281,7 @@ The enemy works like Ironline's AI, adapted for lanes:
 - **Income:** the stage's regen value. It doubles over the first 7 minutes, and goes up by up to 40% when your mechs get close to its base. Enemy Reactor levels multiply this further (§7).
 - **Unit choice:** it prefers cheap units early and expensive ones later. Under pressure it often sends Brawlers. Sometimes it saves up to deploy a group of 2–3.
 - **Lane choice:** usually the lane where your defenses are weakest (fewest turret HP in range of that lane). Sometimes it picks a random lane, and it answers your pushes by sending units into the lane under the most pressure *(tune)*.
-- **Behavior:** its mechs follow the same roles as yours (§5.2). *(Until step 1 is built it still switches Hold/Advance: Advance after it destroys one of your turrets or your base drops below 50%, back to Hold when its own base drops below 30%.)*
+- **Behavior:** its mechs follow the same roles as yours (§5.2).
 - **Planned (step 5 of the movement build):** more varied deploys using roles: mixed groups from templates (tank first, ranged behind), varied lane choice and split attacks, a sensible defensive pick under pressure (ISSUES.md).
 - **Turrets:** fixed per stage. The enemy has no Constructor. It never builds new turrets, never repairs and never upgrades during a battle.
 
@@ -358,7 +358,6 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 | Pan camera | Drag the field vertically, or tap the minimap | W/S, arrow keys, mouse wheel |
 | Choose active lane | Tap one of the 5 lane buttons in the HUD | Shift+1–5 |
 | Deploy a mech | Tap its card | 1–5 |
-| Hold / Advance *(until the roles are built)* | Toggle button next to the specials | F |
 | Order turrets | TURRETS tab → card → tap one or more free cells | T, 1–3, then click cells |
 | Cancel an order / sell a turret | Tap the planned cell / tap your turret → Sell | Click |
 | Specials | Round buttons (tap the target for Bombing) | Q / E / R |

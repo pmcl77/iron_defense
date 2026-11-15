@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE,
+  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon } from './render.js';
@@ -87,7 +87,6 @@ function demoTick(dt) {
   if (game.demoTimer <= 0) {
     w.setLane(Math.floor(Math.random() * LANES));
     w.deploy(MECH_TYPES[Math.floor(Math.random() * MECH_TYPES.length)]);
-    if (Math.random() < 0.3) w.setMode(w.mode[0] === 'hold' ? 'advance' : 'hold');
     game.demoTimer = 1.2 + Math.random() * 1.8;
   }
   renderer.camY = 700 + Math.sin(w.time * 0.04) * 600;
@@ -281,12 +280,13 @@ function showHelp() {
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
     ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 5) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
     ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers, turrets and bases reach every lane.'],
-    ['Hold / Advance', 'HOLD: mechs stop and fight anything in range, and march as a convoy behind slower mechs. ADVANCE: mechs keep walking while firing, step around turrets through gaps, and overtake slower mechs. Only a full turret wall stops them.'],
+    ['Roles', 'Every mech has a role that decides how it moves. Pick what you deploy and where:'],
+    ...Object.entries(ROLES).map(([k, r]) => [r.name, `${r.desc} ${MECH_TYPES.filter((t) => MECHS[t].role === k).map((t) => MECHS[t].name).join(', ')}.`]),
     ['Turrets', 'Open TURRETS, pick a turret, then tap free cells to queue orders (paid now). Your Constructor drives out and builds them. Tap a planned cell to cancel. Tap your turret to sell it.'],
     ['Constructor', 'Each trip costs 20 energy, refunded when it gets home safely. If it is destroyed, a new one leaves after 3 s.'],
     ['Specials', 'Bombing (tap a target), EMP (stuns enemies) and Energy Surge (+100 energy). They recharge over time.'],
     ['Upgrades', 'The wrench opens upgrades for this battle. The game pauses while it is open.'],
-    ['Controls', 'Drag the field or tap the minimap to look around. Keys: W/S pan, Shift+1–5 lane, 1–5 deploy, T turrets, F hold/advance, Q/E/R specials, U upgrades, Space pause.'],
+    ['Controls', 'Drag the field or tap the minimap to look around. Keys: W/S pan, Shift+1–5 lane, 1–5 deploy, T turrets, Q/E/R specials, U upgrades, Space pause.'],
   ];
   screen.innerHTML = `<div class="panel"><div class="head"><h2>How to play</h2><button class="btn small" data-a="back">Back</button></div>
     <div class="list">${items.map(([b, s]) => `<div class="item"><div class="info"><b>${b}</b><small>${s}</small></div></div>`).join('')}</div></div>`;
@@ -436,11 +436,6 @@ function useSpecial(k) {
     if (game.ui.targeting) toast('Tap the field to drop the bombs');
   } else { w.special(k); renderer.consume(w.fx, sfx); }
 }
-function toggleMode() {
-  const w = game.world;
-  w.setMode(w.mode[0] === 'hold' ? 'advance' : 'hold');
-  renderer.consume(w.fx, sfx);
-}
 const last = {};
 function setText(el, key, v) { if (last[key] !== v) { last[key] = v; el.textContent = v; } }
 function updateHud() {
@@ -452,8 +447,6 @@ function updateHud() {
   $('#energy-fill').style.width = `calc(${(100 * w.energy / w.maxEnergy).toFixed(1)}% - 2px)`;
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   setText($('#regen'), 'rg', `+${w.regen}/s`);
-  setText($('#ai-mode'), 'ai', w.mode[1] === 'advance' && !w.result ? 'HOSTILES ADVANCING' : '');
-  hud.querySelectorAll('#mode button').forEach((b) => b.classList.toggle('on', b.dataset.mode === w.mode[0]));
   laneEls.forEach((b, i) => b.classList.toggle('on', i === w.activeLane));
   for (const c of cardEls) {
     const def = c.mech ? MECHS[c.t] : TURRETS[c.t];
@@ -530,7 +523,6 @@ $('#btn-speed').addEventListener('click', () => {
   save.settings.speed = game.speed; writeSave(save);
   $('#btn-speed').textContent = game.speed + '×';
 });
-hud.querySelectorAll('#mode button').forEach((b) => b.addEventListener('click', () => { initAudio(); game.world.setMode(b.dataset.mode); renderer.consume(game.world.fx, sfx); }));
 hud.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { initAudio(); setTab(b.dataset.tab); }));
 
 // ---------- input on the field ----------
@@ -615,7 +607,6 @@ window.addEventListener('keydown', (e) => {
   if (sp && w.unlocked.specials.includes(sp)) useSpecial(sp);
   if (k === 'backspace' && w.queue.length) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
   if (k === 'u') showUpgrades();
-  if (k === 'f') toggleMode();
   if (k === 't' || k === 'tab') { e.preventDefault(); setTab(game.ui.tab === 'mechs' ? 'turrets' : 'mechs'); }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));

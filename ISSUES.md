@@ -19,7 +19,8 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Traits** (each changes one role rule): Seeker prefers mechs + long reach (± 2 lanes); Lancer prefers structures.
   - **This replaces** the earlier movement topics: the rule matrix, the Hold/Advance meaning, the melee sidestep bug (Tanks never go around enemies), the convoy stall A–D (fan-out once the friendly ahead fights), the lane change speed (option C: walk over, with honest occupancy and a reservation) and the ranged-mechs-at-the-base decision B (ranged units stop at about 95% of their range in front of what stops them).
   - **Build order**, each step followed by a play-test:
-    1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar)
+    1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar) **(built in 0.4.0-dev, 2026-11-15; to play-test)**
+       - Balance bot, 4 runs per cell, old rules vs. roles: almost the same. Win rates equal in most cells; battles often 10–30% shorter (stages 4–8); a few cells shift by one run (stage 4 none 75% → 100%, stage 9 split 25% → 50%, stage 10 mid/mixed 25% → 0%, stage 12 max 100% → 50%). The bot no longer has an Advance switch to push with.
     2. walking lane changes and the detour around friendly turrets
     3. melee side attack (about 100 units into the neighbor lane)
     4. traits

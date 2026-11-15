@@ -9,6 +9,18 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.4.0-dev
 
+### Gameplay
+- **Roles instead of the Hold/Advance switch** (step 1 of the new movement model, gameplay.md §5.2). Every mech now follows the rules of its role, always, for you and the enemy:
+  - **Tank** (Brawler): leads, keeps walking and hitting until something blocks it, fights whatever blocks it. Behind a friendly that's fighting it steps into a neighbouring lane to join, if there's an enemy there.
+  - **Line** (Gunner, Seeker): stops at 95% of its range and shoots; stays behind a marching Tank for cover. Behind a fighting friendly it fans out one lane, but only if it has no shot.
+  - **Support** (Aegis): follows the fight and stays about 40 units behind the nearest fighting friendly in its own or a neighbouring lane.
+  - **Artillery** (Mortar, Lancer): stops at range and shoots, never passes anyone.
+  - **Charger** (Scout, Breacher): heads for the first enemy structure in its path (stepping one lane over toward a turret next door), slips past enemy mechs and goes around fights, shooting on the move; it stops at a turret or the base.
+  - Who may pass whom depends on the role. No mech moves more than one lane away from where it was deployed.
+  - An enemy that physically blocks a mech always becomes its target.
+  - The HOLD/ADVANCE button (and key F) is gone; the energy bar takes its place. The enemy no longer switches modes either.
+  - The help screen lists the roles and which mechs belong to each.
+
 ## [0.3.0]: 2026-11-15
 
 ### Gameplay

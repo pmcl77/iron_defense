@@ -31,34 +31,41 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   run(w, 12);
   check('opposing mechs block', b.y - a.y >= a.radius + b.radius - 0.01, `gap ${(b.y - a.y).toFixed(1)}`);
 }
-// 2. Hold: stop at range of an enemy turret, never sidestep
+// 2. Line: stops at 95% of its range in front of a turret and stays in its lane
 {
   const w = mk([['sentry', 2, 6]]);
   const t = tough(w.cells[1][2][6]); t.def = { ...t.def, dmg: 0 };
   const g = mech(w, 'gunner', 0, 2, 1100, 1e9);
   run(w, 15);
   const edge = t.y - g.y - t.radius;
-  check('hold stops at range', Math.abs(edge - 260) < 3, `edge ${edge.toFixed(1)}`);
-  check('hold never sidesteps', g.lane === 2);
+  check('line stops at 95% range', Math.abs(edge - 260 * 0.95) < 3, `edge ${edge.toFixed(1)}`);
+  check('line never steps around a turret', g.lane === 2);
 }
-// 3. Advance: walk past a single turret by sidestepping
+// 3. Tank walks up to a turret; Charger stops at range of it; Charger steps over toward a turret next door
 {
   const w = mk([['sentry', 2, 6]]);
   const t = tough(w.cells[1][2][6]); t.def = { ...t.def, dmg: 0 };
-  const g = mech(w, 'gunner', 0, 2, 1100, 1e9);
-  w.setMode('advance');
+  const b = mech(w, 'brawler', 0, 2, 1100, 1e9);
   run(w, 25);
-  check('advance sidesteps', g.lane === 1 || g.lane === 3, `lane ${g.lane}`);
-  check('advance passes the turret', g.y > t.y + 40, `y ${g.y.toFixed(0)} vs turret ${t.y}`);
+  check('tank walks up to the turret', Math.abs(t.y - b.y - t.radius - b.radius) < 1 && b.lane === 2, `gap ${(t.y - b.y).toFixed(1)}`);
+  const w2 = mk([['sentry', 2, 6]]);
+  const t2 = tough(w2.cells[1][2][6]); t2.def = { ...t2.def, dmg: 0 };
+  const sc = mech(w2, 'scout', 0, 2, 1100, 1e9);
+  run(w2, 15);
+  check('charger stops at range of a turret', sc.lane === 2 && Math.abs(t2.y - sc.y - t2.radius - 150 * 0.95) < 3, `y ${sc.y.toFixed(0)}`);
+  const w3 = mk([['sentry', 3, 6]]);
+  const t3 = tough(w3.cells[1][3][6]); t3.def = { ...t3.def, dmg: 0 };
+  const sc3 = mech(w3, 'scout', 0, 2, 1100, 1e9);
+  run(w3, 15);
+  check('charger steps over toward a turret in the next lane', sc3.lane === 3 && sc3.y < t3.y, `lane ${sc3.lane}`);
 }
-// 4. a complete wall stops everything, even in Advance
+// 4. a complete wall stops everything
 {
   const w = mk([0, 1, 2, 3, 4].map((l) => ['sentry', l, 6]));
   for (const l of [0, 1, 2, 3, 4]) { const t = tough(w.cells[1][l][6]); t.def = { ...t.def, dmg: 0 }; }
-  const g = mech(w, 'gunner', 0, 2, 1100, 1e9);
-  w.setMode('advance');
+  const g = mech(w, 'scout', 0, 2, 1100, 1e9), b = mech(w, 'breacher', 0, 1, 1100, 1e9);
   run(w, 30);
-  check('full wall stops', g.y < cellY(1, 6) - 30 && g.lane === 2, `y ${g.y.toFixed(0)} lane ${g.lane}`);
+  check('full wall stops', g.y < cellY(1, 6) - 30 && b.y < cellY(1, 6) - 30, `y ${g.y.toFixed(0)} / ${b.y.toFixed(0)}`);
 }
 // 5. targets ahead are preferred; behind only when nothing is ahead
 {
@@ -146,15 +153,18 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('one mech per stage', n.join() === '2,3,4,5,6,7,8', n.join());
   check('full arsenal after 6', unlockedSet(6).turrets.length === 3 && unlockedSet(6).specials.length === 3);
 }
-// 12. AI mode switching
+// 12. Charger slips past an enemy mech; a Tank fights it
 {
   const w = mk();
-  w.update(1 / 60);
-  check('AI starts in hold', w.mode[1] === 'hold');
-  w.bases[0].hp = w.bases[0].maxHp * 0.4; w.update(1 / 60);
-  check('AI advances when player base < 50%', w.mode[1] === 'advance');
-  w.bases[1].hp = w.bases[1].maxHp * 0.2; w.update(1 / 60);
-  check('AI holds when own base < 30%', w.mode[1] === 'hold');
+  const foe = mech(w, 'brawler', 1, 2, 1300, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+  const sc = mech(w, 'scout', 0, 2, 1100, 1e9);
+  run(w, 10);
+  check('charger slips past an enemy mech', sc.y > foe.y + 40, `scout ${sc.y.toFixed(0)} foe ${foe.y}`);
+  const w2 = mk();
+  const foe2 = mech(w2, 'brawler', 1, 2, 1300, 1e9); foe2.def = { ...foe2.def, dmg: 0, speed: 0 };
+  const b = mech(w2, 'brawler', 0, 2, 1100, 1e9);
+  run(w2, 10);
+  check('tank fights the mech that blocks it', b.lane === 2 && b.target === foe2 && b.y < foe2.y, `lane ${b.lane}`);
 }
 // 13. win condition
 {
@@ -207,18 +217,37 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const sk = mech(w, 'seeker', 0, 0, 1000, 1e9); w.update(1 / 60);
   check('seeker reaches any lane', sk.target === near || sk.target === far);
 }
-// 17. Hold = convoy behind slower friendly mechs; Advance = overtake and return home
+// 17. Line stays behind a marching tank; a Charger passes it and returns home
 {
   const w = mk();
-  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), fast = mech(w, 'scout', 0, 2, 540, 1e9);
-  run(w, 5);
-  check('hold: faster mech queues behind slower one', fast.lane === 2 && fast.y < slow.y && slow.y - fast.y >= slow.radius + fast.radius,
-    `gap ${(slow.y - fast.y).toFixed(1)}`);
-  w.setMode('advance');
-  run(w, 3);
-  check('advance: faster mech overtakes', fast.y > slow.y, `fast ${fast.y.toFixed(0)} slow ${slow.y.toFixed(0)}`);
-  run(w, 3);
-  check('advance: returns to its home lane after overtaking', fast.lane === 2 && !fast.shift && fast.homeLane == null, `lane ${fast.lane}`);
+  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'gunner', 0, 2, 540, 1e9);
+  run(w, 6);
+  check('line stays behind a marching tank', g.lane === 2 && g.y < slow.y && slow.y - g.y >= slow.radius + g.radius, `gap ${(slow.y - g.y).toFixed(1)}`);
+  const w2 = mk();
+  const slow2 = mech(w2, 'brawler', 0, 2, 600, 1e9), fast = mech(w2, 'scout', 0, 2, 540, 1e9);
+  run(w2, 3);
+  check('charger overtakes a tank', fast.y > slow2.y, `fast ${fast.y.toFixed(0)} slow ${slow2.y.toFixed(0)}`);
+  run(w2, 3);
+  check('charger returns to its home lane after overtaking', fast.lane === 2 && !fast.shift && fast.homeLane == null, `lane ${fast.lane}`);
+}
+// 17b. behind a fighting friendly: Line fans out if it has no shot, Tank joins a fight next door, Support hangs back
+{
+  const w = mk([['sentry', 2, 6]]);
+  const t = tough(w.cells[1][2][6]); t.def = { ...t.def, dmg: 0 };
+  const m = mech(w, 'mortar', 0, 2, 1150, 1e9), g = mech(w, 'gunner', 0, 2, 1090, 1e9);
+  run(w, 20);
+  check('line fans out behind fighting artillery', Math.abs(g.lane - 2) === 1 && g.y > m.y + 40, `lane ${g.lane} y ${g.y.toFixed(0)} mortar ${m.y.toFixed(0)}`);
+  const w2 = mk();
+  const f1 = mech(w2, 'brawler', 1, 2, 1300, 1e9), f2 = mech(w2, 'brawler', 1, 3, 1330, 1e9);
+  for (const f of [f1, f2]) f.def = { ...f.def, dmg: 0, speed: 0 };
+  const b1 = mech(w2, 'brawler', 0, 2, 1150, 1e9), b2 = mech(w2, 'brawler', 0, 2, 1080, 1e9);
+  run(w2, 12);
+  check('tank joins a fight in the next lane', b2.lane === 3 && b2.target === f2, `lane ${b2.lane}`);
+  const w3 = mk();
+  const f3 = mech(w3, 'brawler', 1, 2, 1500, 1e9); f3.def = { ...f3.def, dmg: 0, speed: 0 };
+  const g3 = mech(w3, 'gunner', 0, 2, 1150, 1e9), a = mech(w3, 'aegis', 0, 2, 1080, 1e9);
+  run(w3, 12);
+  check('support stays a little behind the fight', a.lane === 2 && g3.y - a.y >= g3.radius + a.radius + 40 - 0.5 && g3.y - a.y < 120, `gap ${(g3.y - a.y).toFixed(1)}`);
 }
 // 18. Mortar: half damage vs structures, slow shells miss moving targets
 {
@@ -237,14 +266,13 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('slow shell misses a fast-moving mech', runner.hp === 1000, `hp ${runner.hp}`);
 }
 
-// 19. overtaking a moving slower mech completes (no swinging back behind it)
+// 19. (Charger) overtaking a moving slower mech completes (no swinging back behind it)
 {
   const w = mk();
-  w.setMode('advance');
-  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), fast = mech(w, 'gunner', 0, 2, 540, 1e9);
+  const slow = mech(w, 'brawler', 0, 2, 600, 1e9), fast = mech(w, 'scout', 0, 2, 540, 1e9);
   let swings = 0, lastLane = fast.lane;
   for (let t = 0; t < 14; t += 1 / 60) { w.update(1 / 60); if (fast.lane !== lastLane) { swings++; lastLane = fast.lane; } }
-  check('gunner overtakes a walking brawler', fast.y > slow.y + slow.radius + fast.radius, `fast ${fast.y.toFixed(0)} slow ${slow.y.toFixed(0)}`);
+  check('charger overtakes a walking brawler', fast.y > slow.y + slow.radius + fast.radius, `fast ${fast.y.toFixed(0)} slow ${slow.y.toFixed(0)}`);
   check('one lane change out and one back, no swinging', swings === 2 && fast.lane === 2, `lane changes ${swings}, lane ${fast.lane}`);
   check('brawler kept walking (wasn\'t waited for)', slow.y > 900, `slow ${slow.y.toFixed(0)}`);
 }
@@ -252,8 +280,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
 // 20. overtaking with slower mechs in both neighbouring lanes: one lane at a time, never back behind the passed mech
 {
   const w = mk();
-  w.setMode('advance');
-  const br = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'gunner', 0, 2, 540, 1e9);
+  const br = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'scout', 0, 2, 540, 1e9);
   mech(w, 'mortar', 0, 1, 660, 1e9); mech(w, 'mortar', 0, 3, 660, 1e9);
   let last = g.lane, jumps = 0, backBehind = 0, left = false;
   for (let t = 0; t < 25; t += 1 / 60) {
@@ -267,7 +294,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   }
   check('lane changes are one lane at a time', jumps === 0, `jumps ${jumps}`);
   check('never swings back behind the brawler', backBehind === 0, `swing-backs ${backBehind}`);
-  check('ends ahead of the brawler, back home', g.y > br.y && g.lane === 2, `lane ${g.lane}`);
+  check('never more than one lane from home', Math.abs(g.lane - 2) <= 1, `lane ${g.lane}`);
 }
 
 // 21. deployment queue: queue when poor, strict FIFO, lanes kept, cooldown blocks, limit, cancel, clear

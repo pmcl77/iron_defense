@@ -21,7 +21,7 @@ function makeSave(variant) {
 }
 
 // strategies: 'mixed' (random loadout units), 'mortar' (Brawler in front, Mortars behind), 'split' (alternate waves on lanes 2 and 4)
-function play(i, seed, variant, strat = 'mixed') {
+export function play(i, seed, variant, strat = 'mixed', probe = null) {
   const u = unlockedSet(Math.min(i, 6));
   const pref = strat === 'mortar' ? ['mortar', 'brawler', 'gunner', 'aegis', 'seeker', 'lancer', 'breacher', 'scout'] : PREF;
   const loadout = pref.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
@@ -38,6 +38,7 @@ function play(i, seed, variant, strat = 'mixed') {
   const dt = 1 / 60;
   while (!w.result && w.time < MAX_T) {
     w.update(dt); w.fx.length = 0;
+    if (probe) probe(w);
     if ((think -= dt) > 0) continue;
     think = 0.5;
     const enemies = w.entities.filter((e) => !e.dead && e.team === 1 && e.kind === 'mech');
@@ -56,9 +57,6 @@ function play(i, seed, variant, strat = 'mixed') {
       for (const e of enemies) { const n = enemies.filter((f) => Math.hypot(f.x - e.x, f.y - e.y) < 110).length; if (n > bn) { bn = n; best = e; } }
       if (bn >= 3 || (best && best.y < 600)) w.special('bomb', best.x, best.y);
     }
-    // engagement mode: push with a group, hold while gathering
-    const front = mine.filter((e) => e.y > 1000).length;
-    w.setMode(strat !== 'mortar' && (front >= 4 || w.bases[1].hp / w.bases[1].maxHp < 0.35) ? 'advance' : 'hold');
     // defend threatened lanes at once; otherwise attack in waves down one lane
     const afford = () => loadout.filter((t) => w.canDeploy(t));
     if (threat.length && w.energy > 60) {
@@ -90,19 +88,22 @@ function play(i, seed, variant, strat = 'mixed') {
   return { win: w.result === 'win', time: w.time, hp: b.hp / b.maxHp, timeout: !w.result };
 }
 
-const runs = +(process.argv[2] || 6);
-const only = process.argv.slice(3).map((n) => +n - 1);
-const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['max', 'mortar']];
-console.log('win% / avg time per strategy. Workshop: none = no upgrades, mid = level 2 + perks 1, max = level 3 + perks 3');
-console.log('stage             | ' + COLS.map(([v, st]) => `${v}/${st}`.padEnd(13)).join('| '));
-const total = STAGES.length + 3;
-for (let i = 0; i < total; i++) {
-  if (only.length && !only.includes(i)) continue;
-  const cells = COLS.map(([v, st]) => {
-    const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, v, st));
-    const wins = res.filter((x) => x.win).length, t = res.reduce((s, x) => s + x.time, 0) / runs;
-    return `${String(Math.round((100 * wins) / runs)).padStart(4)}% ${String(Math.round(t)).padStart(4)}s${res.some((x) => x.timeout) ? 'T' : ' '} `;
-  });
-  const name = i < STAGES.length ? STAGES[i].name : `Endless ${i - STAGES.length + 1}`;
-  console.log(`${String(i + 1).padStart(2)} ${name.padEnd(14)} | ${cells.join('| ')}`);
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) main();
+function main() {
+  const runs = +(process.argv[2] || 6);
+  const only = process.argv.slice(3).map((n) => +n - 1);
+  const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['max', 'mortar']];
+  console.log('win% / avg time per strategy. Workshop: none = no upgrades, mid = level 2 + perks 1, max = level 3 + perks 3');
+  console.log('stage             | ' + COLS.map(([v, st]) => `${v}/${st}`.padEnd(13)).join('| '));
+  const total = STAGES.length + 3;
+  for (let i = 0; i < total; i++) {
+    if (only.length && !only.includes(i)) continue;
+    const cells = COLS.map(([v, st]) => {
+      const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, v, st));
+      const wins = res.filter((x) => x.win).length, t = res.reduce((s, x) => s + x.time, 0) / runs;
+      return `${String(Math.round((100 * wins) / runs)).padStart(4)}% ${String(Math.round(t)).padStart(4)}s${res.some((x) => x.timeout) ? 'T' : ' '} `;
+    });
+    const name = i < STAGES.length ? STAGES[i].name : `Endless ${i - STAGES.length + 1}`;
+    console.log(`${String(i + 1).padStart(2)} ${name.padEnd(14)} | ${cells.join('| ')}`);
+  }
 }

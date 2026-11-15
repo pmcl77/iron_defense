@@ -58,11 +58,6 @@ canvas#game { position: absolute; inset: 0; display: block; }
 #hp0 { background: linear-gradient(180deg, #8cc4ff, var(--you) 45%); }
 #hp1 { background: linear-gradient(180deg, #ff9a88, var(--foe) 45%); left: auto; right: 1px; }
 
-#ai-mode {
-  position: absolute; top: calc(48px + var(--safe-t)); left: 50%; transform: translateX(-50%); padding: 2px 8px; font-size: 10px; font-weight: 800;
-  letter-spacing: 0.08em; background: rgba(0,0,0,0.55); border: 1px solid rgba(227,83,63,0.5); color: var(--foe); pointer-events: none;
-}
-#ai-mode:empty { display: none; }
 #minimap { position: absolute; top: calc(50px + var(--safe-t)); right: 4px; width: 22px; height: min(180px, 26vh); border: 1px solid var(--edge); touch-action: none; }
 
 .bottom {
@@ -91,10 +86,6 @@ canvas#game { position: absolute; inset: 0; display: block; }
 #energy-fill { background: linear-gradient(180deg, #ffd780, var(--amber) 45%, #c98a1c); }
 #energy-text { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000; z-index: 1; }
 #regen { font-size: 10px; color: var(--dim); width: 34px; }
-.mode { display: flex; border: 1px solid var(--edge); background: var(--panel); height: 28px; padding: 2px; gap: 2px; }
-.mode button { border: none; background: transparent; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; color: var(--dim); padding: 0 8px; }
-.mode button.on { background: rgba(78,163,255,0.9); color: #08121e; }
-.mode button[data-mode="advance"].on { background: rgba(240,181,69,0.95); }
 #btn-upg { height: 28px; width: 36px; }
 
 .lanes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; height: 30px; }
