@@ -10,8 +10,8 @@ const TEAM = [
 const GLASS = '#22343b', CONCRETE = '#8f8c82', SAND = '#a99c75', HAZ = '#b39a3c', OUT = '#1e2119';
 
 let SHADOW = false;
-// how the Aegis shows whom its field protects (settings, for trying out): off | hit | always | subtle | shimmer
-export const AEGIS_LINK_MODES = ['hit', 'always', 'subtle', 'shimmer', 'off'];
+// how the Aegis shows whom its field protects (settings): hit | always (beams) | pulse | off
+export const AEGIS_LINK_MODES = ['hit', 'always', 'pulse', 'off'];
 let AEGIS_LINKS = 'hit';
 export function setAegisLinks(m) { AEGIS_LINKS = AEGIS_LINK_MODES.includes(m) ? m : 'hit'; }
 function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = Math.imul(s ^ (s >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296); }
@@ -561,26 +561,15 @@ export class Renderer {
   // permanent Aegis links, depending on the setting ('hit' is drawn as particles when a protected unit is hit)
   drawAegisLinks(c, w) {
     if (AEGIS_LINKS === 'off' || AEGIS_LINKS === 'hit') return;
-    const pairs = this.aegisPairs(w), s = this.scale;
+    const pairs = this.aegisPairs(w);
     if (AEGIS_LINKS === 'always') {
       for (const [a, f] of pairs) this.bolt(c, a, f, a.team ? '#ffb0a0' : '#9ff4ff', 0.55, 1.6, 10);
-    } else if (AEGIS_LINKS === 'subtle') {
+    } else if (AEGIS_LINKS === 'pulse') {
+      // the same beams, flashing in a rhythm: a bolt every PULSE s, visible for 0.3 s, offset per unit
+      const PULSE = 1.5, ON = 0.3;
       for (const [a, f] of pairs) {
-        const col = a.team ? '255,176,160' : '159,244,255', x0 = this.sx(a.x), y0 = this.sy(a.y), x1 = this.sx(f.x), y1 = this.sy(f.y);
-        c.strokeStyle = `rgba(${col},0.35)`; c.lineWidth = 1.4; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
-        const t = (this.time * 0.9 + (f.id % 7) / 7) % 1; // a spark travelling out to the unit
-        c.fillStyle = `rgba(${col},${0.9 * Math.sin(t * Math.PI)})`; c.beginPath(); c.arc(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 3, 0, 7); c.fill();
-      }
-    } else if (AEGIS_LINKS === 'shimmer') {
-      const seen = new Set();
-      for (const [a, f] of pairs) {
-        if (seen.has(f)) continue; seen.add(f);
-        const pulse = 0.5 + 0.5 * Math.sin(this.time * 4 + f.id);
-        c.strokeStyle = a.team ? `rgba(255,176,160,${0.35 + 0.35 * pulse})` : `rgba(159,244,255,${0.35 + 0.35 * pulse})`;
-        c.lineWidth = 1.5; c.beginPath();
-        const r = f.radius * s * (f.kind === 'turret' ? 1.25 : 1.35), x = this.sx(f.x), y = this.sy(f.y);
-        for (let i = 0; i <= 6; i++) { const ang = (i / 6) * Math.PI * 2 + Math.PI / 6; c.lineTo(x + Math.cos(ang) * r, y + Math.sin(ang) * r * this.squash); }
-        c.stroke();
+        const t = (this.time + ((f.id * 0.37) % 1) * 0.4) % PULSE;
+        if (t < ON) this.bolt(c, a, f, a.team ? '#ffb0a0' : '#9ff4ff', 0.85 * (1 - t / ON), 2, 12);
       }
     }
   }

@@ -76,7 +76,7 @@ export const MECHS = {
   },
   aegis: {
     role: 'support', name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 36, cd: 4,
-    proj: 'bullet', aura: 140, auraDR: 0.4, radius: 22, turn: TURN, desc: 'Field: allies nearby take 40% less damage.',
+    proj: 'bullet', aura: 170, auraDR: 0.4, radius: 22, turn: TURN, desc: 'Field: allies nearby take 40% less damage.',
   },
   seeker: {
     role: 'line', name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 40, cd: 4,

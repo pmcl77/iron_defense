@@ -294,7 +294,7 @@ function showHelp() {
   bind({ back: showMenu });
 }
 // Aegis link style (for trying out the four options; ISSUES.md)
-const AEGIS_NAMES = { hit: 'On hit', always: 'Beams', subtle: 'Subtle', shimmer: 'Shimmer', off: 'Off' };
+const AEGIS_NAMES = { hit: 'On hit', always: 'Beams', pulse: 'Pulse', off: 'Off' };
 function cycleAegis() {
   const i = AEGIS_LINK_MODES.indexOf(save.settings.aegis);
   save.settings.aegis = AEGIS_LINK_MODES[(i + 1) % AEGIS_LINK_MODES.length];
