@@ -315,5 +315,25 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('queued deploys in one lane are spaced', a && b && Math.abs(a.y - b.y) >= a.radius + b.radius - 6, a && b ? `dy ${Math.abs(a.y - b.y).toFixed(1)}` : 'missing');
 }
 
+// 22. shots leave from the weapons: Gunner alternates left/right, Seeker fires one missile per pod
+{
+  const w = mk();
+  const g = mech(w, 'gunner', 0, 2, 600), t = tough(mech(w, 'scout', 1, 2, 800));
+  g.aim = 0;
+  w.fire(g, t); w.fire(g, t);
+  const [a, b] = w.projectiles;
+  check('gunner shots alternate sides', a && b && Math.sign(a.x - g.x) !== Math.sign(b.x - g.x) && Math.abs(a.x - g.x) > 10, a && b ? `${(a.x - g.x).toFixed(1)} / ${(b.x - g.x).toFixed(1)}` : '');
+  check('gunner shots start ahead of the body', a.y > g.y + 20);
+  const w2 = mk(), sk = mech(w2, 'seeker', 0, 2, 600), t2 = tough(mech(w2, 'scout', 1, 2, 800));
+  sk.aim = 0; w2.fire(sk, t2);
+  const [m1, m2] = w2.projectiles;
+  check('seeker missiles leave from both pods at once', m1 && m2 && m1.x < sk.x - 10 && m2.x > sk.x + 10);
+  // rotated: aiming east, the left gun is north of the body
+  const w3 = mk(), g3 = mech(w3, 'gunner', 0, 2, 600), t3 = tough(mech(w3, 'scout', 1, 3, 600));
+  g3.aim = Math.PI / 2; w3.fire(g3, t3);
+  const p3 = w3.projectiles[0];
+  check('muzzle follows the aim', p3.x > g3.x + 20 && p3.y > g3.y + 10, `${(p3.x - g3.x).toFixed(1)}, ${(p3.y - g3.y).toFixed(1)}`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

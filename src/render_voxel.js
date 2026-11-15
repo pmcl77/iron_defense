@@ -24,7 +24,7 @@ export class VoxelRenderer extends Renderer {
   resize(w, h, dpr, top, bottom) {
     if (this.meta) this.squash = this.meta.A;
     super.resize(w, h, dpr, top, bottom);
-    this.lift = 15 * this.meta.B * this.scale; // gun height
+    this.lift = 20 * this.meta.B * this.scale; // gun height
   }
   buildGround() {}
 
@@ -35,10 +35,14 @@ export class VoxelRenderer extends Renderer {
     c.drawImage(this.img[sh.file], fr[0], fr[1], fr[2], fr[3], x + (fr[4] - sh.ax) * f, y + (fr[5] - sh.ay) * f, fr[2] * f, fr[3] * f);
   }
   dirIndex(a, n) { return ((Math.round((a / TAU) * n) % n) + n) % n; }
-  strideIndex(e) {
-    const st = e.moving ? Math.sin(e.phase) * 4 : 0, S = this.meta.STRIDES;
-    let best = 0; for (let k = 1; k < S.length; k++) if (Math.abs(S[k] - st) < Math.abs(S[best] - st)) best = k;
-    return best;
+  // Walk frame synced to the distance walked: one full cycle per `stride` world units, so the
+  // planted foot stays put on the ground. Baked foot positions are played as a triangle wave.
+  strideIndex(e, sh) {
+    const n = this.meta.STRIDE_POS.length;
+    if (!e.moving) return (n - 1) / 2;
+    const u = (((e.phase * e.radius * 0.9) / sh.stride) % 1 + 1) % 1;
+    const tri = u < 0.5 ? -1 + 4 * u : 3 - 4 * u;
+    return Math.round(((tri + 1) / 2) * (n - 1));
   }
 
   draw(w, dt, ui) {
@@ -99,7 +103,8 @@ export class VoxelRenderer extends Renderer {
     const parts = [];
     if (e.kind === 'mech') {
       const back = (e.recoil || 0) * 3 * this.scale;
-      parts.push([`mech_${e.type}_${e.team}_legs`, this.dirIndex(e.body, this.meta.N_HEAD) * this.meta.STRIDES.length + this.strideIndex(e), x, y]);
+      const legs = `mech_${e.type}_${e.team}_legs`, sh = this.meta.sheets[legs];
+      parts.push([legs, this.dirIndex(e.body, this.meta.N_HEAD) * this.meta.STRIDE_POS.length + this.strideIndex(e, sh), x, y]);
       parts.push([`mech_${e.type}_${e.team}_top`, this.dirIndex(e.aim, this.meta.N_AIM), x - Math.sin(e.aim) * back, y + Math.cos(e.aim) * back * this.squash]);
     } else if (e.kind === 'turret') {
       const back = (e.recoil || 0) * 4 * this.scale;

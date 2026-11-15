@@ -9,10 +9,14 @@ export const A = 0.78, B = 0.72, OX = -0.32;
 export const VIS = { mech: 1.3, turret: 1.1, con: 1.2 };
 const P = V * UB;
 const MECH_TYPES = Object.keys(LEGS);
-export const N_HEAD = 16, N_AIM = 32, STRIDES = [-3.5, 0, 3.5];
+export const N_HEAD = 16, N_AIM = 32;
+// walk cycle: each foot slides between -amp and +amp (model units); 5 baked positions, played as a triangle wave
+export const STRIDE_POS = [-1, -0.5, 0, 0.5, 1];
+const AMP = { scout: 2.7, gunner: 3.6, brawler: 4.8, mortar: 3.6, aegis: 3.3, seeker: 3.3, breacher: 4, lancer: 3.3 };
+const TYPE_SCALE = { brawler: 1.1 };
 
 // extent of a primitive list in model units: horizontal radius and top height
-function extent(prims) {
+export function extent(prims) {
   let r = 0, h = 0;
   for (const p of prims) {
     const e = Math.hypot(...p.ex);
@@ -22,14 +26,14 @@ function extent(prims) {
   return { r, h };
 }
 // Render primitive sets (each [prims, heading]) around the origin into a fixed-size cell.
-function cell(R, Hm) {
+export function cell(R, Hm) {
   const n = Math.ceil((2 * R) / V) + 2, nz = Math.ceil(Hm / V) + 1;
   const x0 = 2 - nz * OX * P, bot = 2 + (n * A + nz * B) * P;
   const W = Math.ceil(x0 + n * P + 2), H = Math.ceil(bot + 2);
   const org = (R + V) / V; // voxel coordinate of the model origin
   return { n, nz, x0, bot, W, H, ax: x0 + org * P, ay: bot - org * A * P, R };
 }
-function renderSet(c, sets, s) {
+export function renderSet(c, sets, s) {
   const G = new Grid(c.n, c.n, c.nz, V, -c.R - V, -c.R - V);
   for (const [prims, th] of sets) G.add(prims, 0, 0, 0, th, s);
   return { px: render(G, c.W, c.H, { p: P, a: A, b: B, ox: OX, x0: c.x0, bot: c.bot }, null), G };
@@ -95,19 +99,20 @@ async function toDataURL(cv, type = 'image/png', q) {
 }
 
 export async function bakeAll(log = () => {}, only = null) {
-  const meta = { UB, V, A, B, OX, VIS, N_HEAD, N_AIM, STRIDES, sheets: {} }, files = {};
+  const meta = { UB, V, A, B, OX, VIS, N_HEAD, N_AIM, STRIDE_POS, sheets: {} }, files = {};
   const save = async (name, sheet) => { sheet.finish(); meta.sheets[name] = sheet.meta; files[sheet.meta.file] = await toDataURL(sheet.cv); };
   const want = (k) => !only || only.includes(k);
 
   // mechs: legs (16 headings x 3 stride frames), upper body (32 aims), shadow (16 headings)
   for (const type of MECH_TYPES) {
     if (!want(type)) continue;
-    const s = VIS.mech, all = [...LEGS[type](TEAM[0], 0), ...TOP[type](TEAM[0])], ex = extent(all);
-    const c = cell(ex.r * s, ex.h * s), sc = shadowCell(ex.r * s, ex.h * s);
-    const meta0 = { ax: c.ax, ay: c.ay, top: MECH_TOP[type] * s };
+    const s = VIS.mech * (TYPE_SCALE[type] || 1), all = [...LEGS[type](TEAM[0], 0), ...TOP[type](TEAM[0])], ex = extent(all);
+    const c = cell(ex.r * s, ex.h * s), sc = shadowCell(ex.r * s, ex.h * s), strides = STRIDE_POS.map((k) => k * AMP[type]);
+    // stride: world distance per full walk cycle (each planted foot travels 2 amp per half cycle)
+    const meta0 = { ax: c.ax, ay: c.ay, top: MECH_TOP[type] * s, stride: 4 * AMP[type] * s };
     for (const team of [0, 1]) {
-      const legs = new Sheet(`mech_${type}_${team}_legs`, c.W, c.H, N_HEAD * STRIDES.length, meta0);
-      for (let h = 0; h < N_HEAD; h++) STRIDES.forEach((st, k) => legs.put(h * STRIDES.length + k, renderSet(c, [[LEGS[type](TEAM[team], st), (h / N_HEAD) * Math.PI * 2]], s).px));
+      const legs = new Sheet(`mech_${type}_${team}_legs`, c.W, c.H, N_HEAD * strides.length, meta0);
+      for (let h = 0; h < N_HEAD; h++) strides.forEach((st, k) => legs.put(h * strides.length + k, renderSet(c, [[LEGS[type](TEAM[team], st), (h / N_HEAD) * Math.PI * 2]], s).px));
       await save(`mech_${type}_${team}_legs`, legs);
       const top = new Sheet(`mech_${type}_${team}_top`, c.W, c.H, N_AIM, meta0);
       for (let a = 0; a < N_AIM; a++) top.put(a, renderSet(c, [[TOP[type](TEAM[team]), (a / N_AIM) * Math.PI * 2]], s).px);

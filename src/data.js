@@ -75,6 +75,14 @@ export const TURRETS = {
 };
 export const TURRET_TYPES = Object.keys(TURRETS);
 
+// Weapon positions in world units ([right, forward] from the unit's center), matching the voxel models.
+// Guns alternate shot by shot; a missile salvo fires one missile from each position.
+const MUZZLES = {
+  scout: [[10, 20]], gunner: [[-16, 27], [16, 27]], mortar: [[-15, 4], [15, 4]], aegis: [[12, 22]],
+  seeker: [[-16, 9], [16, 9]], lancer: [[0, 38]], sentry: [[-4, 28], [4, 28]], howitzer: [[0, 50]],
+};
+for (const [k, m] of Object.entries(MUZZLES)) (MECHS[k] || TURRETS[k]).muzzles = m;
+
 export const CONSTRUCTOR = {
   name: 'Constructor', cost: 0, hp: 200, speed: 80, radius: 20, fee: 20, buildTime: 2, respawn: 3,
   desc: 'Drives out and builds your queued turrets.',

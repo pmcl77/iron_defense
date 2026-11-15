@@ -430,10 +430,16 @@ export class World {
     return true;
   }
 
-  muzzle(e) {
+  // where a shot leaves the unit: its weapon positions (alternating), or i for a given one
+  muzzle(e, i = null) {
     if (e.kind === 'base') {
       const gx = BASE.guns.reduce((a, b) => (Math.abs(b - (e.target?.x ?? 300)) < Math.abs(a - (e.target?.x ?? 300)) ? b : a));
       return { x: gx, y: e.y - FWD[e.team] * 20 };
+    }
+    const M = e.def.muzzles;
+    if (M) {
+      const k = i ?? (e.gun = ((e.gun ?? -1) + 1) % M.length), [lx, ly] = M[k % M.length], ca = Math.cos(e.aim), sa = Math.sin(e.aim);
+      return { x: e.x + lx * ca + ly * sa, y: e.y - lx * sa + ly * ca };
     }
     const r = e.radius * (e.kind === 'turret' ? 0.95 : 0.9);
     return { x: e.x + Math.sin(e.aim) * r, y: e.y + Math.cos(e.aim) * r };
@@ -458,9 +464,10 @@ export class World {
       this.fx.push({ t: 'cannon', x: m.x, y: m.y, team: e.team, type: e.type, ang: e.aim });
     } else if (kind === 'missile') {
       for (let i = 0; i < e.def.salvo; i++) {
-        this.projectiles.push({ kind, x: m.x, y: m.y, ang: e.aim + (i % 2 ? 0.6 : -0.6), target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, splash: e.def.splash, speed: 520, life: 3, trail: [] });
+        const mi = this.muzzle(e, i);
+        this.projectiles.push({ kind, x: mi.x, y: mi.y, ang: e.aim + (i % 2 ? 0.6 : -0.6), target: t, tx: tp.x, ty: tp.y, dmg, team: e.team, src: e, splash: e.def.splash, speed: 520, life: 3, trail: [] });
       }
-      this.fx.push({ t: 'missile', x: m.x, y: m.y, team: e.team });
+      for (let i = 0; i < Math.min(2, e.def.salvo); i++) { const mi = this.muzzle(e, i); this.fx.push({ t: 'missile', x: mi.x, y: mi.y, team: e.team, quiet: i > 0 }); }
     } else if (kind === 'zap') {
       const pts = [{ x: m.x, y: m.y }], hit = new Set();
       let cur = t, d = dmg;

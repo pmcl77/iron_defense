@@ -81,14 +81,21 @@ function legs(P, lx, fw, fl, hip, st) {
   o.push(B(0, 0, hip - 1.5, lx * 2, fw * 0.7, 3, P.metal));
   return o;
 }
+// mortar tube along y, tilted up by rx; lighter gunmetal so it reads against the ground
+const TUBE = col(0x5c6266), TUBE_RING = col(0x3f4447);
+function tube(x, y, z, r, len, rx, P) {
+  const dy = Math.cos(rx) * len / 2, dz = Math.sin(rx) * len / 2;
+  return [C(x, y, z, r, len, TUBE, { ax: 'y', rx }), C(x, y - dy * 0.5, z - dz * 0.5, r + 0.6, 1.6, TUBE_RING, { ax: 'y', rx }),
+    C(x, y + dy, z + dz, r - 0.9, 1.4, BLACK, { ax: 'y', rx })];
+}
 export const LEGS = {
   scout: (P, st) => legs(P, 6, 5, 9, 11, st),
   gunner: (P, st) => legs(P, 9, 7, 12, 15, st),
-  brawler: (P, st) => legs(P, 13, 10, 15, 15, st),
+  brawler: (P, st) => legs(P, 15, 12, 16, 15, st),
   mortar: (P, st) => legs(P, 10, 7, 12, 13, st),
   aegis: (P, st) => legs(P, 9, 7, 11, 13, st),
   seeker: (P, st) => legs(P, 9, 7, 11, 13, st),
-  breacher: (P, st) => [...[[-1, 1], [1, 1], [-1, -1], [1, -1]].flatMap(([sx, sy]) => [B(sx * 16, sy * 11 + (st ? sy : -sy) * 1.5, 0, 9, 11, 3, P.dark), B(sx * 14, sy * 9.5, 3, 5, 6, 9, P.metal, { rx: sy * 0.3 })])],
+  breacher: (P, st) => [...[[-1, 1], [1, 1], [-1, -1], [1, -1]].flatMap(([sx, sy]) => [B(sx * 16, sy * 11 + st * sx * sy * 0.5, 0, 9, 11, 3, P.dark), B(sx * 14, sy * 9.5, 3, 5, 6, 9, P.metal, { rx: sy * 0.3 })])],
   lancer: (P, st) => legs(P, 8, 6, 11, 14, st),
 };
 export const TOP = {
@@ -99,13 +106,22 @@ export const TOP = {
     B(0, 7.8, 19.5, 9, 1.2, 2.2, GLASS), B(0, -8.5, 16, 12, 4, 8, P.dark), C(-3.5, -10.5, 22, 1.3, 4, P.gun), C(3.5, -10.5, 22, 1.3, 4, P.gun),
     ...[-1, 1].flatMap((s) => [B(s * 12, 0, 17, 6, 10, 7, P.base), B(s * 12, -2, 24, 6, 3, 0.8, P.acc), B(s * 12, 5, 17, 4.5, 7, 4.5, P.metal),
       C(s * 12, 13, 19.2, 1.4, 13, P.gun, { ax: 'y' }), C(s * 12, 19.5, 19.2, 1.9, 2, P.metal, { ax: 'y' })])],
-  brawler: (P) => [B(0, 0, 15, 26, 18, 11, P.base), B(0, 9, 15.5, 24, 4, 10, P.base, { rx: -0.35 }), B(0, -1, 26, 22, 14, 1.5, P.light),
-    B(0, 4, 26, 9, 7, 4, P.base), B(0, 7.7, 27.5, 7, 0.8, 1.6, GLASS), B(0, -9.5, 18, 16, 2, 8, P.dark),
-    ...[-1, 1].flatMap((s) => [B(s * 17, 0, 20, 9, 13, 10, P.base), B(s * 17, -3, 30, 9, 4, 0.8, P.acc), B(s * 17, 7, 16, 7, 8, 7, P.metal),
-      B(s * 17, 13, 12, 10, 9, 9, P.dark), B(s * 17, 17.8, 13, 9, 1.5, 7, P.metal)])],
-  mortar: (P) => [B(0, 0, 13, 20, 16, 8, P.base), B(0, 0, 21, 18, 14, 1.2, P.light), B(0, 7.5, 13.5, 12, 3, 7, P.base, { rx: -0.4 }), B(0, 9, 17, 8, 1, 2, GLASS),
-    C(0, -2, 28, 5, 16, P.dark, { ax: 'y', rx: 1.1 }), C(0, -2, 28, 5.7, 2.2, P.metal, { ax: 'y', rx: 1.1 }), C(0, 1.4, 34.5, 3.3, 3, BLACK, { ax: 'y', rx: 1.1 }),
-    ...[-1, 1].flatMap((s) => [B(s * 12, -2, 14, 4, 12, 8, P.metal), B(s * 12, -6, 22, 4, 3, 0.8, P.acc), C(s * 12, 1, 22.5, 1.1, 6, BRASS, { ax: 'y' })])],
+  brawler: (P) => [ // "Bulwark": wide body, overhanging shoulder plates, fists raised in a guard, front bumper
+    B(0, 0, 15, 30, 20, 12, P.base), B(0, 10, 15.5, 28, 4, 11, P.base, { rx: -0.35 }), B(0, -1, 27, 25, 15, 1.5, P.light),
+    B(0, 5, 27, 10, 7, 4, P.base), B(0, 8.7, 28.5, 7, 0.8, 1.6, GLASS), B(0, -10.5, 17, 18, 2, 9, P.dark),
+    C(-6, -11, 26, 1.6, 7, P.gun), C(6, -11, 26, 1.6, 7, P.gun),
+    B(0, 13, 9, 30, 3, 4, P.metal), B(-9, 11.5, 9, 3, 3, 7, P.dark), B(9, 11.5, 9, 3, 3, 7, P.dark),
+    ...[-1, 1].flatMap((s) => [
+      B(s * 20, 0, 22, 13, 17, 9, P.base), B(s * 20, -1, 31, 12, 15, 1.2, P.light), B(s * 26.5, 0, 19, 2, 17, 9, P.dark),
+      B(s * 20, -5, 31.5, 9, 3, 0.8, P.acc),
+      B(s * 21, 3, 22, 8, 10, 8, P.metal),
+      B(s * 21, 10, 15, 13, 13, 12, P.dark), B(s * 21, 16.8, 16, 12, 1.5, 9, P.metal),
+    ])],
+  mortar: (P) => [ // twin short mortar tubes on shoulder mounts, ammo box on the back
+    B(0, 0, 13, 20, 16, 8, P.base), B(0, 0, 21, 18, 14, 1.2, P.light), B(0, 7.5, 13.5, 12, 3, 7, P.base, { rx: -0.4 }), B(0, 9, 17, 8, 1, 2, GLASS),
+    B(0, -5, 21, 10, 6, 5, P.dark), ...[-3, 0, 3].map((x) => C(x, -5, 26.2, 1.1, 2.4, BRASS)), B(0, -8.2, 22, 8, 0.6, 3, P.acc),
+    ...[-1, 1].flatMap((s) => [B(s * 11.5, -1, 18, 7, 11, 6, P.metal), B(s * 11.5, -1, 24, 6, 6, 2, P.base), ...tube(s * 11.5, 0, 28.5, 3.4, 12, 1.1, P),
+      B(s * 11.5, -6.5, 22, 4, 3, 0.8, P.acc)])],
   aegis: (P) => [C(0, 0, 13, 11, 8, P.base), C(0, 0, 21, 10, 1.2, P.light), C(0, -1, 22, 7, 2, P.metal), C(0, -1, 24, 5, 1, P.light), S(0, -1, 25.5, 3.2, CYAN),
     B(0, 10.4, 15.5, 8, 1.4, 2.6, GLASS), B(-12, 0, 15, 2, 10, 8, P.acc), B(12, 0, 15, 2, 10, 8, P.acc), C(9, 12, 17, 1, 10, P.gun, { ax: 'y' })],
   seeker: (P) => [B(0, 0, 13, 14, 13, 8, P.base), B(0, 6.2, 13.5, 12, 3, 6, P.base, { rx: -0.45 }), B(0, 7.4, 17, 8, 1.2, 2.4, GLASS), B(0, -1, 21, 12, 9, 1.2, P.light),
@@ -119,7 +135,7 @@ export const TOP = {
     B(0, 10, 21, 5, 34, 4, P.gun), B(0, 10, 25, 1.4, 32, 0.8, P.metal), ...[0, 7, 14, 21].flatMap((y) => [B(0, y, 20.5, 7, 2, 5, P.metal), B(0, y, 25.4, 3, 1, 0.5, P.glow)]),
     B(0, 27.5, 20.5, 7, 2, 5, P.metal), B(5, -3, 22.3, 3, 6, 0.6, P.acc)],
 };
-export const MECH_TOP = { scout: 18, gunner: 25, brawler: 31, mortar: 36, aegis: 29, seeker: 26, breacher: 25, lancer: 26 };
+export const MECH_TOP = { scout: 18, gunner: 25, brawler: 32, mortar: 34, aegis: 29, seeker: 26, breacher: 25, lancer: 26 };
 
 export function constructorModel(P) {
   const tread = (x, y) => (Math.floor(y / 2.2) % 2 ? RUBBER : col(0x3a3a35));
@@ -241,7 +257,6 @@ export function groundAlbedo(wx, wy) {
   let r = 146 + (n - 0.5) * 22, g = 139 + (n - 0.5) * 18, b = 92 + (n - 0.5) * 14;        // dry grass
   const dry = smooth(0.45, 0.7, fbm(wx / 60 + 40, wy / 60, 2, 3)); r += 18 * dry; g += 12 * dry; b += 6 * dry;
   r += (172 - r) * dirt * 0.85; g += (159 - g) * dirt * 0.85; b += (124 - b) * dirt * 0.85;  // dirt track
-  for (const lc of LANE_X) for (const off of [-12, 12]) if (Math.abs(wx - (lc + off)) < 2.6 && dirt > 0.6) { r *= 0.9; g *= 0.9; b *= 0.9; }
   const k = (m - 0.5) * 8; r += k; g += k; b += k;
   for (const c of CRATERS) {
     const d = Math.hypot(wx - c.x, wy - c.y) / c.r;
@@ -391,3 +406,6 @@ export function render(G, W, H, proj, groundFn) {
   return out;
 }
 
+
+// building blocks for previews and new designs
+export { B, C, S, legs, hazard, GLASS, BLACK, BRASS };
