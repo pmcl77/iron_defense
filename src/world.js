@@ -347,12 +347,11 @@ export class World {
     const R = e.def.rules; // role + traits
     const speed = this.stat(e, 'speed');
     if (e.bx == null) e.bx = e.x;
+    const px = e.bx + (e.detour || 0), py = e.y; // to face where it actually walks (lane change and detour; not the lean)
     // a lane change is walked: sideways at LANE_CHANGE.side × its speed (forward below at LANE_CHANGE.fwd ×).
     // It occupies both lanes until it arrives; its lane for targeting and reach switches at the halfway point.
-    let side = 0;
     if (e.shift) {
       const s = e.shift, d = s.x1 - e.bx, step = speed * LANE_CHANGE.side * dt;
-      side = Math.sign(d);
       e.bx += Math.max(-step, Math.min(step, d));
       if (e.lane !== s.to && Math.abs(s.x1 - e.bx) <= Math.abs(e.bx - s.x0)) e.lane = s.to;
       e.phase += Math.min(step, Math.abs(d)) / (e.radius * 0.9);
@@ -363,9 +362,9 @@ export class World {
     this.lean(e, dt, t, R);
     this.detour(e, dt, speed);
     e.x = e.bx + (e.lean || 0) + (e.detour || 0);
-    let fwd = 0;
-    const done = () => { // body faces where it walks: diagonal while changing lanes, sideways if blocked in front
-      e.body = turnTo(e.body, side ? Math.atan2(side * LANE_CHANGE.side, dir * fwd * LANE_CHANGE.fwd) : home, BODY_TURN * dt);
+    const done = () => { // legs face where it walks: diagonal while changing lanes or walking around a turret, sideways if blocked in front
+      const vx = e.bx + (e.detour || 0) - px, vy = e.y - py;
+      e.body = turnTo(e.body, Math.abs(vx) > 1e-4 ? Math.atan2(vx, vy) : home, BODY_TURN * dt);
     };
     if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; done(); return; }
     const sp = speed * (e.shift ? LANE_CHANGE.fwd : 1);
@@ -402,7 +401,6 @@ export class World {
     if ((ny - e.y) * dir < 0) ny = e.y; // never pushed backward
     const moved = Math.abs(ny - e.y);
     e.y = ny;
-    fwd = moved > 1e-6 ? 1 : 0;
     done();
     e.moving = moved > 1e-6 || !!e.shift;
     e.phase += moved / (e.radius * 0.9);

@@ -491,14 +491,16 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const w = mk(), g = mech(w, 'gunner', 0, 1, 150, 1e9);
   w.placeTurret(0, 'sentry', 1, 1);
   const tur = w.cells[0][1][1] && w.entities.find((f) => f.kind === 'turret' && f.team === 0 && f.lane === 1);
-  let maxOff = 0, minDist = Infinity, laneOk = true;
+  let maxOff = 0, minDist = Infinity, laneOk = true, maxBody = 0;
   const y0 = g.y;
   for (let i = 0; i < 12 * 60; i++) {
     w.update(1 / 60);
+    maxBody = Math.max(maxBody, Math.abs(g.body));
     maxOff = Math.max(maxOff, Math.abs(g.x - laneX(1)));
     minDist = Math.min(minDist, Math.hypot(g.x - tur.x, g.y - tur.y));
     if (g.lane !== 1) laneOk = false;
   }
+  check('legs turn diagonally around the turret and back', maxBody > 0.4 && Math.abs(g.body) < 0.02, `max ${maxBody.toFixed(2)} end ${g.body.toFixed(2)}`);
   check('own mech walks around its own turret', minDist >= 31 + g.radius, `closest ${minDist.toFixed(0)}, max drift ${maxOff.toFixed(0)}`);
   check('detour keeps lane and full speed, and ends back in the lane', laneOk && g.y - y0 > 12 * MECHS.gunner.speed * 0.97 && Math.abs(g.x - laneX(1)) < 1, `lane ok ${laneOk}, walked ${(g.y - y0).toFixed(0)}, x off ${(g.x - laneX(1)).toFixed(1)}`);
   // side: toward an empty neighbour cell; with both neighbours built, the middle of the gap
