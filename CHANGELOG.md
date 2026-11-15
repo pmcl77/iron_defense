@@ -7,7 +7,7 @@ All notable changes to Iron Defense. The newest version is at the top.
 
 Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev` suffix.
 
-## [Unreleased]: 0.3.0-dev
+## [0.3.0]: 2026-11-15
 
 ### Gameplay
 - **All mechs walk 20% slower,** so they feel big and heavy rather than scurrying: Scout 76, Gunner 44, Seeker 40, Aegis 36, Brawler 32, Lancer 32, Breacher 30, Mortar 28. The overtake threshold scales with it (8 instead of 10 faster).
