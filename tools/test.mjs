@@ -264,6 +264,13 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   for (let i = 0; i < 25 * 60; i++) { wl.update(1 / 60); wl.fx.length = 0; if (bSide == null && bl.lane !== 2) bSide = bl.lane; if (gSide == null && gl.lane !== 2) gSide = gl.lane; }
   check('gunner passes on the same side as its brawler', bSide != null && gSide === bSide, `brawler ${bSide} gunner ${gSide}`);
   check('the brawler stays in front of the gunner', bl.y > gl.y && gl.y > ml.y, `mortar ${ml.y.toFixed(0)} brawler ${bl.y.toFixed(0)} gunner ${gl.y.toFixed(0)}`);
+  // ...also on a long march after the pass: the faster Gunner must not walk past the Brawler in the passing lane
+  const wq = mk();
+  const fq = mech(wq, 'brawler', 1, 3, 1600, 1e9); fq.def = { ...fq.def, dmg: 0, speed: 0 };
+  const mq = mech(wq, 'mortar', 0, 2, 1120, 1e9), bq = mech(wq, 'brawler', 0, 2, 700, 1e9), gq = mech(wq, 'gunner', 0, 2, 640, 1e9);
+  let gAhead = 0;
+  for (let i = 0; i < 30 * 60; i++) { wq.update(1 / 60); wq.fx.length = 0; if (gq.y > bq.y + 1) gAhead++; }
+  check('gunner never gets ahead of its brawler after passing', gAhead === 0 && gq.lane === 2 && bq.lane === 2, `ticks ahead ${gAhead}, lanes B${bq.lane} G${gq.lane}`);
   const wm = mk();
   const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
   run(wm, 40);

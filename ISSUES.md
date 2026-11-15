@@ -63,6 +63,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Proposal: 3 + 4.** Leaning closes most of the gap and reads as "stepping into the fight"; the punch lunge sells the hit. Rules are unchanged; only position and art.
     - **Built: lean-in (3)** in 0.4.0-dev (`sideLean: 35` on the Tank role). The punch lunge (4) isn't built. To play-test.
     - Later, not now (user): a redesigned Brawler with a thicker body would close the gap further.
+- **[bug, fixed in 0.4.0-dev] Gunner passes the Brawler after the Brawler has returned home** (user, play-test 2026-11-15, many Mortar-Brawler-Gunner trains). Verified in a simulation: the Brawler returned to lane 2 first; the Gunner, still in lane 1 and faster (44 vs 32), had nothing blocking it there, walked past the Brawler and returned in front. Fix: while in the passing lane, a mech never gets ahead of a friendly in its home lane that it may not pass; it falls in behind it. Test added.
 - **[gameplay] To discuss: passing side without a leader — avoid enemies or go for them?** (user, 2026-11-15, while testing F)
   - Now (F): a passing mech without a leader prefers a side with no enemy within ~250 ahead, then closer to home, then fewer friendlies, then the center.
   - User's concern: we also want to stop enemies before they reach our base, so steering away from them isn't always right.
