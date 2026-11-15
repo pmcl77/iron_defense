@@ -365,10 +365,13 @@ export class World {
       if (f.team === e.team) {
         if (f.kind !== 'mech') continue;
         if (f.lane === e.lane) s = f.y - dir * (f.radius + e.radius + GAP); // keep a gap behind friendly mechs
-        // while passing in another lane, never get ahead of a friendly in the home lane it may not pass;
-        // hang back far enough that the home lane counts as free behind it (laneFree: radii + 10)
-        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !this.canPass(R, f)) s = f.y - dir * (f.radius + e.radius + 12);
-        else continue;
+        // while passing in another lane, never get ahead of a *marching* friendly in the home lane it may not
+        // pass; hang back far enough that the home lane counts as free behind it (laneFree: radii + 10).
+        // If that friendly has stopped to fight, the pass becomes a fan-out: stay in this lane and walk on.
+        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !this.canPass(R, f) && (f.y - e.y) * dir > 0) {
+          if (this.fighting(f)) { e.homeLane = null; e.passing = null; continue; }
+          s = f.y - dir * (f.radius + e.radius + 12);
+        } else continue;
         // Support stays a little behind a fighting friendly in its own or a neighbouring lane
         if (R.follow && f.target && f.def.role !== 'support') s -= dir * R.follow;
       } else if ((f.kind === 'mech' || f.kind === 'turret') && f.lane === e.lane) s = f.y - dir * (f.radius + e.radius);

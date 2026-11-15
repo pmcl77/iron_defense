@@ -271,6 +271,12 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   let gAhead = 0;
   for (let i = 0; i < 30 * 60; i++) { wq.update(1 / 60); wq.fx.length = 0; if (gq.y > bq.y + 1) gAhead++; }
   check('gunner never gets ahead of its brawler after passing', gAhead === 0 && gq.lane === 2 && bq.lane === 2, `ticks ahead ${gAhead}, lanes B${bq.lane} G${gq.lane}`);
+  // MO.f-SE-GU: the SE passes the Mortar, returns home and stops to fight; the GU beside the Mortar must not stand there idle
+  const wr = mk();
+  const fr = mech(wr, 'brawler', 1, 2, 1340, 1e9); fr.def = { ...fr.def, dmg: 0, speed: 0 };
+  const mr = mech(wr, 'mortar', 0, 2, 900, 1e9), sr = mech(wr, 'seeker', 0, 2, 600, 1e9), gr = mech(wr, 'gunner', 0, 2, 550, 1e9);
+  run(wr, 30);
+  check('gunner walks on beside a fighting seeker (pass becomes fan-out)', gr.y > sr.y && gr.lane !== 2 && gr.homeLane == null, `SE ${sr.y.toFixed(0)} GU L${gr.lane} ${gr.y.toFixed(0)} home ${gr.homeLane}`);
   const wm = mk();
   const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
   run(wm, 40);
