@@ -10,6 +10,10 @@ const TEAM = [
 const GLASS = '#22343b', CONCRETE = '#8f8c82', SAND = '#a99c75', HAZ = '#b39a3c', OUT = '#1e2119';
 
 let SHADOW = false;
+// how the Aegis shows whom its field protects (settings, for trying out): off | hit | always | subtle | shimmer
+export const AEGIS_LINK_MODES = ['hit', 'always', 'subtle', 'shimmer', 'off'];
+let AEGIS_LINKS = 'hit';
+export function setAegisLinks(m) { AEGIS_LINKS = AEGIS_LINK_MODES.includes(m) ? m : 'hit'; }
 function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = Math.imul(s ^ (s >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296); }
 
 // ---------- primitive parts (local units, forward = -y) ----------
@@ -271,6 +275,10 @@ export class Renderer {
         case 'hit': this.sparks(f.x, f.y, f.kind === 'slug' ? 8 : 3, '#ffd890', 60, 12); sfx(f.kind === 'slug' ? 'slughit' : 'hit', f); break;
         case 'punch': this.sparks(f.x, f.y, 10, '#ffe0a0', 90, 14); this.flash(f.x, f.y, 14, undefined, 14); sfx('punch', f); break;
         case 'zap': this.particles.push({ k: 'zap', pts: f.pts, life: 0.18, max: 0.18 }); sfx('zap', f.pts[0]); break;
+        case 'shield': // a protected unit was hit: a short arc from the Aegis (one per pair at a time)
+          if (AEGIS_LINKS === 'hit' && !this.particles.some((p) => p.k === 'shield' && p.src === f.src && p.dst === f.dst && p.life > 0.1))
+            this.particles.push({ k: 'shield', src: f.src, dst: f.dst, life: 0.22, max: 0.22 });
+          break;
         case 'boom': this.explosion(f.x, f.y, f.size || 1); sfx(f.size > 1.2 ? 'bigboom' : f.size < 0.7 ? 'smallboom' : 'boom', f); break;
         case 'die':
           this.explosion(f.x, f.y, f.kind === 'turret' ? 1.6 : (f.r || 20) / 20);
@@ -351,6 +359,7 @@ export class Renderer {
     const order = (e) => (e.kind === 'base' ? 0 : e.kind === 'turret' ? 1 : 2);
     ents.sort((a, b) => order(a) - order(b) || b.y - a.y);
     for (const e of ents) this.drawEntity(c, e, w, 0, 0);
+    this.drawAegisLinks(c, w);
     this.drawProjectiles(c, w);
     this.drawParticles(c);
     this.drawBars(c, ents);
@@ -493,6 +502,12 @@ export class Renderer {
           c.fill();
         }
         c.globalAlpha = 1;
+      } else if (p.k === 'shield') {
+        if (!p.src.dead && !p.dst.dead) {
+          this.bolt(c, p.src, p.dst, p.src.team ? '#ffb0a0' : '#9ff4ff', k, 2.5, 14);
+          c.fillStyle = p.src.team ? '#ffd2c8' : '#d8fbff'; c.globalAlpha = k * 0.8; c.beginPath();
+          this.gArc(c, this.sx(p.dst.x), this.sy(p.dst.y), p.dst.radius * this.scale * 0.6 * (1.3 - k * 0.3)); c.fill(); c.globalAlpha = 1;
+        }
       } else if (p.k === 'zap') {
         c.strokeStyle = '#9ff4ff'; c.globalAlpha = k; c.lineWidth = 3; c.lineJoin = 'round'; c.beginPath();
         p.pts.forEach((q, i) => {
@@ -520,6 +535,55 @@ export class Renderer {
     }
   }
 
+  // a jagged lightning line between two units (re-randomised every frame, so it flickers)
+  bolt(c, a, b, col, alpha, width, jag) {
+    const x0 = this.sx(a.x), y0 = this.sy(a.y), x1 = this.sx(b.x), y1 = this.sy(b.y), n = 6;
+    const nx = -(y1 - y0), ny = x1 - x0, l = Math.hypot(nx, ny) || 1;
+    c.strokeStyle = col; c.globalAlpha = alpha; c.lineWidth = width; c.lineJoin = 'round'; c.beginPath(); c.moveTo(x0, y0);
+    for (let j = 1; j <= n; j++) {
+      const t = j / n, o = j < n ? (Math.random() - 0.5) * jag : 0;
+      c.lineTo(x0 + (x1 - x0) * t + (nx / l) * o, y0 + (y1 - y0) * t + (ny / l) * o);
+    }
+    c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = Math.max(0.6, width * 0.35); c.stroke(); c.globalAlpha = 1;
+  }
+  // units inside an active Aegis field: [aegis, unit] pairs (the field covers mechs, turrets and the base, not the Aegis itself)
+  aegisPairs(w) {
+    const out = [];
+    for (const a of w.entities) {
+      if (a.dead || a.type !== 'aegis' || a.stun > 0) continue;
+      for (const f of w.entities) {
+        if (f.dead || f === a || f.team !== a.team || (f.kind !== 'mech' && f.kind !== 'turret')) continue;
+        if (Math.hypot(f.x - a.x, f.y - a.y) <= a.def.aura) out.push([a, f]);
+      }
+    }
+    return out;
+  }
+  // permanent Aegis links, depending on the setting ('hit' is drawn as particles when a protected unit is hit)
+  drawAegisLinks(c, w) {
+    if (AEGIS_LINKS === 'off' || AEGIS_LINKS === 'hit') return;
+    const pairs = this.aegisPairs(w), s = this.scale;
+    if (AEGIS_LINKS === 'always') {
+      for (const [a, f] of pairs) this.bolt(c, a, f, a.team ? '#ffb0a0' : '#9ff4ff', 0.55, 1.6, 10);
+    } else if (AEGIS_LINKS === 'subtle') {
+      for (const [a, f] of pairs) {
+        const col = a.team ? '255,176,160' : '159,244,255', x0 = this.sx(a.x), y0 = this.sy(a.y), x1 = this.sx(f.x), y1 = this.sy(f.y);
+        c.strokeStyle = `rgba(${col},0.35)`; c.lineWidth = 1.4; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        const t = (this.time * 0.9 + (f.id % 7) / 7) % 1; // a spark travelling out to the unit
+        c.fillStyle = `rgba(${col},${0.9 * Math.sin(t * Math.PI)})`; c.beginPath(); c.arc(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 3, 0, 7); c.fill();
+      }
+    } else if (AEGIS_LINKS === 'shimmer') {
+      const seen = new Set();
+      for (const [a, f] of pairs) {
+        if (seen.has(f)) continue; seen.add(f);
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 4 + f.id);
+        c.strokeStyle = a.team ? `rgba(255,176,160,${0.35 + 0.35 * pulse})` : `rgba(159,244,255,${0.35 + 0.35 * pulse})`;
+        c.lineWidth = 1.5; c.beginPath();
+        const r = f.radius * s * (f.kind === 'turret' ? 1.25 : 1.35), x = this.sx(f.x), y = this.sy(f.y);
+        for (let i = 0; i <= 6; i++) { const ang = (i / 6) * Math.PI * 2 + Math.PI / 6; c.lineTo(x + Math.cos(ang) * r, y + Math.sin(ang) * r * this.squash); }
+        c.stroke();
+      }
+    }
+  }
   drawScreenFx(c, w) {
     for (const p of this.particles) {
       const k = p.life / p.max;

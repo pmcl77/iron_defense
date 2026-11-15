@@ -141,7 +141,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **C, shimmer on the protected unit:** a faint blue glint or hex outline on protected units instead of lines.
     - **D, A but subtle:** faint, mostly still lines with an occasional spark travelling along them.
   - **Recommendation: B, plus D as an option.** B reads as "the shield absorbed that" and stays readable in big fights. A settings toggle "Aegis links: off / on hit / always" covers both; default "on hit". Cheap to draw (a few lines), no gameplay effect.
-  - Status: idea, to decide.
+  - **Built for trying out (user: "Can we somehow test all 4 options?", 2026-11-15):** Settings and the pause menu have "Aegis links: On hit / Beams / Subtle / Shimmer / Off" (default On hit). Decide which to keep; the others can then be removed.
 - **[balance/art] All mechs move too fast: they look like insects, not massive machines** (user, play-test 0.3.0-dev; started as "big melee mechs too fast")
   - **User (2026-11-15):** with the legs now synced, the fast stepping looks like insects scurrying. Slow all mechs down a bit, combined with bigger steps, but not so much that the game becomes sluggish.
   - **Today:** steps per second (2 footfalls per walk cycle):

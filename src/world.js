@@ -758,7 +758,7 @@ export class World {
     for (const s of this.entities) {
       if (s.dead || s.team !== f.team || s.type !== 'aegis' || s === f || s.stun > 0) continue;
       const d = f.kind === 'base' ? Math.abs(s.y - f.y) : Math.hypot(s.x - f.x, s.y - f.y);
-      if (d <= s.def.aura) { amount *= 1 - s.def.auraDR; break; }
+      if (d <= s.def.aura) { amount *= 1 - s.def.auraDR; if (f.kind !== 'base') this.fx.push({ t: 'shield', src: s, dst: f }); break; }
     }
     f.hp -= amount;
     f.hurt = 0.12;

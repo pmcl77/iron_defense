@@ -98,6 +98,7 @@ export class VoxelRenderer extends Renderer {
     const key = (e) => (e.kind === 'base' ? BASE_FACE[e.team] : e.y);
     ents.sort((a, b) => key(b) - key(a));
     for (const e of ents) this.drawEntity(c, e, w);
+    this.drawAegisLinks(c, w);
     this.drawProjectiles(c, w);
     this.drawParticles(c);
     this.drawBars(c, ents);

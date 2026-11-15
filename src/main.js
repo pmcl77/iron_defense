@@ -3,7 +3,7 @@ import {
   LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
-import { Renderer, renderIcon } from './render.js';
+import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
 import { VoxelRenderer } from './render_voxel.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
 import { loadSave, writeSave, resetSave, defaultSave } from './save.js';
@@ -293,6 +293,13 @@ function showHelp() {
     <div class="list">${items.map(([b, s]) => `<div class="item"><div class="info"><b>${b}</b><small>${s}</small></div></div>`).join('')}</div></div>`;
   bind({ back: showMenu });
 }
+// Aegis link style (for trying out the four options; ISSUES.md)
+const AEGIS_NAMES = { hit: 'On hit', always: 'Beams', subtle: 'Subtle', shimmer: 'Shimmer', off: 'Off' };
+function cycleAegis() {
+  const i = AEGIS_LINK_MODES.indexOf(save.settings.aegis);
+  save.settings.aegis = AEGIS_LINK_MODES[(i + 1) % AEGIS_LINK_MODES.length];
+  setAegisLinks(save.settings.aegis); writeSave(save);
+}
 function showSettings() {
   screen.className = '';
   screen.innerHTML = `
@@ -300,6 +307,7 @@ function showSettings() {
       <div class="head"><h2>Settings</h2><button class="btn small" data-a="back">Back</button></div>
       <div class="toggle"><span>Sound</span><button class="btn small" data-a="sound">${save.settings.sound ? 'On' : 'Off'}</button></div>
       <div class="toggle"><span>Graphics</span><button class="btn small" data-a="gfx">${save.settings.graphics === 'simple' ? 'Simple' : 'Voxel'}</button></div>
+      <div class="toggle"><span>Aegis links</span><button class="btn small" data-a="aegis">${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
       <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
@@ -308,6 +316,7 @@ function showSettings() {
     back: showMenu,
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showSettings(); },
     fs: () => { if (document.fullscreenElement) document.exitFullscreen(); else tryFullscreen(true); },
+    aegis: () => { cycleAegis(); showSettings(); },
     gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
     reset: (el) => { if (el.dataset.confirm) { save = resetSave(); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
   });
@@ -321,11 +330,13 @@ function showPause() {
         <button class="btn primary" data-a="resume">Resume</button>
         <button class="btn" data-a="restart">Restart</button>
         <button class="btn" data-a="sound">Sound: ${save.settings.sound ? 'On' : 'Off'}</button>
+        <button class="btn" data-a="aegis">Aegis links: ${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button>
         <button class="btn" data-a="quit">Quit to stages</button>
       </div></div>`;
   bind({
     resume, restart: () => startStage(game.stageIndex),
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showPause(); },
+    aegis: () => { cycleAegis(); showPause(); },
     quit: () => quitToMenu('stages'),
   });
 }
@@ -675,6 +686,7 @@ function frame(now) {
 
 // ---------- boot ----------
 resize();
+setAegisLinks(save.settings.aegis);
 applyGraphics();
 startDemo();
 showMenu();
