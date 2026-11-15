@@ -65,6 +65,15 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - Later, not now (user): a redesigned Brawler with a thicker body would close the gap further.
 - **[bug, fixed in 0.4.0-dev] Gunner passes the Brawler after the Brawler has returned home** (user, play-test 2026-11-15, many Mortar-Brawler-Gunner trains). Verified in a simulation: the Brawler returned to lane 2 first; the Gunner, still in lane 1 and faster (44 vs 32), had nothing blocking it there, walked past the Brawler and returned in front. Fix: while in the passing lane, a mech never gets ahead of a friendly in its home lane that it may not pass; it falls in behind it. Test added.
   - Follow-up (user, MO-BR-SE-GU-SE-GU trains): the GU stood idle in the passing lane next to the MO after the SE returned home and started shooting. Cause: the hold-back above also applied to a *fighting* SE. Fixed: behind a fighting friendly it may not pass, the pass becomes a fan-out (Line behind a fighting Line fans out anyway), so the GU walks on. A search over 432 train layouts found 60 such stalls before, none after. Test added.
+- **[gameplay] To discuss: should Line pass a fighting Line mech?** (user, 2026-11-15: "Why can a GU not pass a SE?")
+  - Now: Line passes only Support and Artillery. Behind a fighting SE, a GU fans out: it moves to the next lane for good and walks on until it's in range.
+  - Proposal: add Line to Line's `passes`. Behind a fighting SE, the GU then passes it, walks on until it has a shot, and returns to its home lane in front of the SE. The column stays in one lane, ordered roughly by range (BR, GU, SE, MO).
+  - Marching Line mechs still don't leapfrog: passing a marching friendly needs 8 speed difference (GU 44 vs SE 40).
+  - A SE behind a fighting GU almost always has a shot already (380 vs 260 range) and simply stops.
+  - Two SEs (or two GUs): the second one passes, stops beside the first as soon as it's in range, and stays there: the same result as fanning out today.
+  - If the GU's target is within range before it's clearly past the SE, it stops in the passing lane and shoots from there. It returns home once it moves on.
+  - Line still fans out behind a fighting Tank (it may not pass Tanks).
+  - Alternative: Line passes only a fighting friendly with *longer* range (one more role field).
 - **[gameplay] To discuss: passing side without a leader — avoid enemies or go for them?** (user, 2026-11-15, while testing F)
   - Now (F): a passing mech without a leader prefers a side with no enemy within ~250 ahead, then closer to home, then fewer friendlies, then the center.
   - User's concern: we also want to stop enemies before they reach our base, so steering away from them isn't always right.
