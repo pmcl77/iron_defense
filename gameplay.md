@@ -110,7 +110,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 | Enemy mech in range | keeps walking (firing if ranged) until blocked | stops at range, shoots | stops just behind the frontmost fighting friendly nearby; shoots if in range | stops at range, shoots | keeps moving, shoots on the move |
 | Enemy turret or base ahead | walks up and fights it | stops at range | as above | stops at maximum range | stops at it and fights it (ranged: at range) |
 | Enemy mech blocks its lane | fights it, melee also from the neighbor lane (side attack) | fights it | fights it | fights it | slips past through a free neighbor lane; fights it only if every side is blocked |
-| Friendly ahead, marching | passes non-tanks | stays behind tanks; passes Support and Artillery | stays behind; passes only Artillery | stays behind | passes anyone |
+| Friendly ahead, marching | passes non-tanks | stays behind tanks; passes Support and Artillery | stays about 40 behind; passes only Artillery | stays behind | passes anyone |
 | Friendly ahead, stopped and fighting (one it may pass is simply passed) | behind a Tank: steps beside it into a free neighbor lane and joins the fight | shoots from behind if it has a shot; passes a fighting friendly with a longer range (it can't reach that fight from behind); otherwise fans out ±1 lane | stays behind it (its spot) | shoots from behind if it has a shot, otherwise fans out ±1 lane | goes around it |
 | Default target | whatever blocks it, otherwise nearest | nearest | nearest | nearest | nearest |
 
@@ -157,14 +157,16 @@ The first five are copied from Ironline; the last three are new *(tune)*:
 
 | Mech | Cost | HP | Damage | Reload (s) | Range | Speed | Card cooldown | Attack |
 |---|---|---|---|---|---|---|---|---|
-| Scout | 40 | 90 | 8 | 0.35 | 150 | 95 | 1.2 s | Bullet |
-| Gunner | 80 | 230 | 18 | 0.6 | 260 | 55 | 2 s | Bullet |
-| Brawler | 140 | 700 | 48 | 1.0 | 60 | 40 | 3.5 s | Melee |
-| Mortar | 170 | 180 | 60 (×0.5 vs turrets and bases) | 3.2 | 520 | 35 | 4.5 s | Slow shell, splash 70 |
-| Aegis | 120 | 340 | 6 | 0.8 | 180 | 45 | 4 s | Bullet, 40% damage-reduction field within 200 (was 140 until 0.4.0-dev) |
-| **Seeker** | 150 | 260 | 2 × 35 | 2.4 | 380 | 50 | 4 s | Missile salvo, splash 30, prefers mechs |
-| **Breacher** | 190 | 950 | 30 (×4 vs turrets and bases) | 1.2 | 60 | 38 | 5 s | Melee; each hit stuns a turret for 0.3 s |
-| **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 460 | 40 | 5 s | Siege slug, prefers turrets and bases |
+| Scout | 40 | 90 | 8 | 0.35 | 150 | 76 | 1.2 s | Bullet |
+| Gunner | 80 | 230 | 18 | 0.6 | 260 | 44 | 2 s | Bullet |
+| Brawler | 140 | 700 | 48 | 1.0 | 60 | 32 | 3.5 s | Melee |
+| Mortar | 170 | 180 | 60 (×0.5 vs turrets and bases) | 3.2 | 520 | 28 | 4.5 s | Slow shell, splash 70 |
+| Aegis | 120 | 340 | 6 | 0.8 | 180 | 46 | 4 s | Bullet, 40% damage-reduction field within 200 (was 140 until 0.4.0-dev) |
+| **Seeker** | 150 | 260 | 2 × 35 | 2.4 | 380 | 40 | 4 s | Missile salvo, splash 30, prefers mechs |
+| **Breacher** | 190 | 950 | 30 (×4 vs turrets and bases) | 1.2 | 60 | 30 | 5 s | Melee; each hit stuns a turret for 0.3 s |
+| **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 460 | 32 | 5 s | Siege slug, prefers turrets and bases |
+
+Speeds are in field units per second, after the 20% slowdown of 0.3.0-dev. The Aegis is a little faster than the Line mechs (46 vs Gunner 44, Seeker 40), so it can catch up with the fight it follows (0.4.0-dev, user).
 
 The three new mechs fill roles a lane game needs *(tune)*:
 - **Seeker** (homing missiles): fires a salvo of 2 missiles that curve onto their target up to two lanes away and explode with a small splash. It gives burst damage against mechs and punishes groups bunched in a gap.

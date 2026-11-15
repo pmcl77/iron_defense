@@ -30,7 +30,7 @@ export const rowOf = (team, y) => {
 //   alwaysPass   passes a marching friendly it may pass even if that one is barely slower
 //   noPassFighting  never passes a friendly that is fighting
 //   passLonger   also passes a fighting friendly with a longer range than its own (it can't reach that fight from behind)
-//   follow       stays a little behind the nearest fighting friendly (own lane ± 1)
+//   follow       stays this far behind the friendly ahead in its lane (marching or fighting) and behind fighting friendlies in the next lanes
 //   sideLean     while fighting an enemy in the next lane, slide this far toward it (stays in its lane)
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
 export const ROLES = {
@@ -75,7 +75,7 @@ export const MECHS = {
     desc: 'Long-range splash. Slow shells: best vs units that stand still.',
   },
   aegis: {
-    role: 'support', name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 36, cd: 4,
+    role: 'support', name: 'Aegis', cost: 120, hp: 340, dmg: 6, reload: 0.8, range: 180, speed: 46, cd: 4,
     proj: 'bullet', aura: 200, auraDR: 0.4, radius: 22, turn: TURN, desc: 'Field: allies nearby take 40% less damage.',
   },
   seeker: {

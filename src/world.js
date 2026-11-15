@@ -382,8 +382,9 @@ export class World {
           if (this.fighting(f)) { e.homeLane = null; e.passing = null; continue; }
           s = f.y - dir * (f.radius + e.radius + 12);
         } else continue;
-        // Support stays a little behind a fighting friendly in its own or a neighbouring lane
-        if (R.follow && f.target && f.def.role !== 'support') s -= dir * R.follow;
+        // Support stays a little behind the friendly ahead in its lane, marching or fighting, so it's already in
+        // its spot when that one stops (it's faster than Line mechs); neighbouring lanes: see below
+        if (R.follow && f.def.role !== 'support' && this.shareLane(e, f)) s -= dir * R.follow;
       } else if ((f.kind === 'mech' || f.kind === 'turret') && this.shareLane(e, f)) s = f.y - dir * (f.radius + e.radius);
       else if (f.kind === 'base') s = f.y - dir * e.radius;
       else continue;
