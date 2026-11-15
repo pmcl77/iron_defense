@@ -12,78 +12,21 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - *(The minimap readability issue was fixed in 0.2.0-dev: a mix of variants B and D (narrow strip, dark background, big outlined triangles and squares). Variant D's wider 40 × 160 strip was tried first. The user is judging it on the phone; in the narrow strip, units in neighboring lanes can overlap.)*
 
 ### Gameplay / movement
-- **[discussion prep] Movement rules as one consistent matrix** (user, 2026-11-14, for the 2026-11-15 discussion)
-  - **Dimensions to compare:**
-    - Hold vs. Advance
-    - obstacle friendly vs. enemy
-    - obstacle mech vs. turret (plus the base)
-    - mover and obstacle ranged vs. melee
-  - **Observed (Advance):** the first Brawler attacks the enemy in front of it; the second Brawler, right behind, changes lanes and walks on. This follows today's rules (the first Brawler has stopped to fight, so to the second one it is a stopped friendly, and in Advance any stopped friendly is overtaken), but it feels inconsistent: a melee mech walks *away* from a fight it could join.
-  - **Today's behavior:**
-
-    | Mover meets … | Hold | Advance |
-    |---|---|---|
-    | friendly mech, walking | follows (convoy) | overtakes if ≥8 faster and a neighbor lane is free |
-    | friendly mech, stopped/fighting | waits behind it (convoy) | overtakes through a free neighbor lane |
-    | enemy mech | stops at own range (melee: at contact) and fights | fights on the move; stopped by contact; never changes lane for it |
-    | enemy turret, gap next to it | stops at own range | steps around it (**melee too**, the logged bug) |
-    | enemy turret, no gap / full wall | stops at own range | walks up to contact, then fights (ranged too) |
-    | enemy base | stops at own range | walks up to contact (ranged too) |
-
-  - **Already decided or proposed:**
-    - Ranged mechs in Advance stop at their range in front of anything they can't pass (decided, B).
-    - Melee mechs never step around enemies (proposed).
-    - Hold convoy rule A/B/C/D (open).
-    - Lane change speed C (proposed).
-  - **Open cell to settle tomorrow:** "friendly mech stopped and fighting", per mover type and mode. One candidate rule:
-    - A **melee** mover overtakes a fighting friendly only to *join the fight* (moves up beside it into a free neighbor lane, if an enemy is within reach there), not to walk past it.
-    - A **ranged** mover never needs to: it already has the target in range and stops (Hold), or stops at range (Advance, rule B).
-  - **Goal:** one table where every cell has a rule we can explain in one sentence, and the help screen can show it.
-  - **Another dimension (user): what do Hold and Advance actually mean?** Each mode bundles two separate behaviors:
-    - **Firing:** stop to fire vs. fire on the move.
-    - **Pathing:** stay in lane vs. go around obstacles (overtake friendlies, step around turrets).
-
-    | | stays in lane | goes around obstacles |
-    |---|---|---|
-    | **stops to fire** | Hold today | the user's convoy rule B ("hold to fight, otherwise overtake") |
-    | **fires on the move** | (a column push, not used) | Advance today |
-
-  - **Proposal: define the modes by intent, not as two switches.**
-    - **Hold = "fight from where you are; move only when you have nothing to shoot."** While it moves (nothing in range), it goes around friendlies that are in the way, so nobody idles in a queue. It never needs to step around an enemy turret: an enemy turret ahead is in range sooner or later, and then the mech stops and fires.
-    - **Advance = "keep pushing toward the enemy base, firing on the way."** It goes around whatever it can: slower or stopped friendlies, and turrets with a gap. It stops only where the path really ends: a wall or the base (ranged at their range, rule B), and an enemy mech in contact.
-    - **Melee mechs** in both modes: they never go around enemies; they go around friendlies only to reach a fight.
-  - With this definition, evading isn't a third setting. It follows from whether the mech wants to move right now, and Hold vs. Advance only decides *when* a mech wants to move: only when idle, or always.
-- *(The overtake swing-back bug was fixed in 0.2.0-dev; see CHANGELOG.)*
-- **[bug] In Advance, the Brawler steps around enemies instead of attacking** (play-test v0.2.0-dev)
-  - Cause: in Advance, *every* mech steps around an enemy turret if the neighboring cell is free, melee mechs included. The Breacher has the same problem, which defeats its purpose.
-  - Proposal: melee mechs (Brawler, Breacher) never step around enemies. They attack what blocks them and only change lanes to overtake slower friendlies. Ranged mechs keep stepping around turrets in Advance.
-  - Asked the user: was it enemy turrets, or also enemy mechs? (Mechs should never cause a lane change; that would be a separate bug.)
-- **[balance] Convoys in Hold stall** (play-test v0.2.0-dev)
-  - Units queue behind slower friendlies and sit idle; switching to Advance is the only way to break the queue.
-  - Worst case: a Mortar or Lancer in front stops at its long range, so the whole column waits far from the fight. Deep queues of melee or short-range units also idle.
-  - Proposal: convoy while marching, spread out when the front stops.
-    - While the friendly ahead is moving, follow it (keeps the "Gunner takes cover behind the Brawler" effect).
-    - Once the friendly ahead stands still, a mech with no target in range steps into a free neighboring lane and moves up until something is in range, then stops (Hold).
-    - It returns to its home lane when that lane is clear.
-    - Advance stays as is: keep walking and overtake anything slower.
-  - **Follow-up (user, 2026-11-14):** should Brawlers in Hold overtake when the unit in front is fighting? The user proposes a general rule:
-    - **Hold = "hold to fight, otherwise overtake":** a mech with a target in range stops and fights; a mech without one overtakes any friendly blocking it.
-    - **Advance = "always advance and overtake."**
-  - **Options to compare:**
-    - **A, convoy while marching, spread out when the front stops** (my earlier proposal): keeps the "Gunner takes cover behind the Brawler" effect while marching; idle units only move up once the front is fighting.
-    - **B, the user's rule:** simplest and easiest to predict; nobody ever idles. Downside: no cover while marching, since fast units always pass slow ones even when nothing is happening.
-    - **C, B plus roles:** like B, but ranged mechs don't overtake a melee mech (Brawler, Breacher) that's still marching, so tanks lead the column. Melee mechs overtake anything, so Brawlers push to the front of a fight.
-  - **Recommendation:** B as the base rule. If cover is missed in play-testing, add C's role rule on top.
-  - **Thought from the user: deploy order as tactics.**
-    - Deploying Brawler → Mortar → Seeker → Gunner in Hold causes exactly this queue: the Mortar stops early to shoot (range 520) while the units behind it are still out of range.
-    - Brawler (shield) → Gunner → Seeker → Mortar stacks neatly by range: each unit stops behind the one in front, at its own range.
-    - So with the current rules, deploy order is a real skill. The rule we choose decides how much that skill matters.
-  - **Option D, range-sorted convoy (follows from the user's thought):** in Hold, a mech may overtake a friendly ahead if that friendly is standing still, **or** has a longer range than itself (and will stop earlier anyway). The column then sorts itself by range automatically: short range in front, artillery at the back.
-    - **Pro:** no idle queues even with a "wrong" deploy order; formations look sensible.
-    - **Con:** it takes away the deploy-order skill the user just described.
-  - **Trade-off to decide:** keep deploy order as a skill (rule A, or today's rule) vs. automatic sorting for convenience (rules B, C or D).
-  - Decide together with the melee sidestep bug above and the lane change speed below, since all three change the same movement code. Slower lane changes (option C there) make overtaking more costly, which shifts the convoy trade-off.
-
+- **[feature] Movement model: roles, types and traits, no stance switch** (decided with the user, 2026-11-15)
+  - The full design is in gameplay.md §5.2 (roles and their rules) and §5.5 (allocation, traits, card texts).
+  - **Why:** the Hold/Advance switch meant two rule sets for every unit (too much to keep in mind), only some types actually reacted to it, and in play-testing Hold was used about 98% of the time.
+  - **Roles:** Tank (Brawler), Line (Gunner, Seeker), Support (Aegis), Artillery (Mortar, Lancer), Charger (Scout, Breacher).
+  - **Traits** (each changes one role rule): Seeker prefers mechs + long reach (every lane, as today); Lancer prefers structures.
+  - **This replaces** the earlier movement topics: the rule matrix, the Hold/Advance meaning, the melee sidestep bug (Tanks never go around enemies), the convoy stall A–D (fan-out once the friendly ahead fights), the lane change speed (option C: walk over, with honest occupancy and a reservation) and the ranged-mechs-at-the-base decision B (ranged units stop at about 95% of their range in front of what stops them).
+  - **Build order**, each step followed by a play-test:
+    1. roles and their rules replace the switch (the HUD button goes, its space goes to the energy bar)
+    2. walking lane changes and the detour around friendly turrets
+    3. melee side attack (about 100 units into the neighbor lane)
+    4. traits
+    5. enemy AI deploy variety, using roles (see Enemy AI)
+    6. balance pass with the bot; expect clear changes in difficulty
+  - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
+  - **Code:** data-driven. `ROLES` and `TRAITS` in data.js, each mech type gets `role` and `traits`; world.js asks for the effective rules (role merged with traits) and never checks type names.
 - **[ui/gameplay] Own mechs walk straight through friendly turrets** (user, 2026-11-15)
   - **Rejected:** moving turrets between the lanes. They would no longer block enemies as a wall, and the build grid and lane reach assume turrets stand in a lane.
   - **User's idea:** mechs walk around their own turrets but stay assigned to their lane.
@@ -96,40 +39,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - side: the one with an empty neighboring cell, otherwise toward the field center
     - even a full turret row leaves a ~50-unit corridor between pads (a Brawler brushes them slightly)
     - the Constructor and the enemy behave the same around their own turrets
-  - Fits into step 2 of the movement build (smooth sideways movement); independent of the lane-change rules.
-- **[ui/gameplay] Lane changes are far too fast: mechs "fly" sideways** (user, 2026-11-14)
-  - **Today:** every lane change (overtake, return home, stepping around a turret) takes a fixed 0.5 s for the 120-unit lane width, for every mech. That's 240 units/s sideways, while mechs walk forward at 30–95 (a Brawler moves sideways 6× faster than it walks). The body only tilts up to 34° and eases back. The mech also counts as being in the new lane from the very first moment, for blocking and targeting.
-  - **Options:**
-    - **A, longer fixed time:** e.g. 1.5 s for everyone. Simplest, but the Scout and the Brawler would still change lanes at the same pace.
-    - **B, purely visual:** keep 0.5 s but turn the body fully and animate the legs. It doesn't fix the core problem, which is the speed itself.
-    - **C, walk over at the mech's own speed (realistic):**
-      - The mech turns toward the new lane at its turn rate and walks diagonally: sideways at about 0.8× its walk speed, forward at about 0.6×.
-      - If it's blocked in front (a turret, a stopped unit), it doesn't move forward and only steps sideways.
-      - It then turns back to face forward. The legs animate the whole time.
-      - Resulting times: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s (and a heavy tank ≈ 5 s).
-    - **Add-on for C, honest lane occupancy:** while changing lanes, the mech blocks *both* lanes, so nobody walks through it. Its lane for targeting and lane reach switches at the halfway point.
-  - **Gameplay effects of C:**
-    - overtaking and stepping around turrets take longer, and the mech is exposed while doing it
-    - heavy mechs commit to their lane, while light mechs stay nimble
-    - fewer, more deliberate lane changes overall
-    - this interacts with the convoy/overtake rules above (overtaking becomes more costly), and tests #19/#20 need new timings
-  - **Recommendation: C with honest lane occupancy.** It looks like walking, gives each mech its own feel, and matches the plan for heavier units. It's best decided and built together with the convoy rule and the melee sidestep bug, since all three change the same movement code.
-
-- **[gameplay] Ranged mechs walk right up to the enemy base in Advance** (user, 2026-11-14)
-  - **Today:** in Advance, a mech keeps walking while firing until something physically blocks it. Ranged mechs (Mortar 520, Lancer 460, Seeker 380 …) end up pressed against the enemy base, inside its guns' range (340) and in the middle of the melee, although they could shoot from much further back. In Hold they already stop at their own range.
-  - **User's proposal:** ranged mechs only go as close to the base as needed to have it in range, even in Advance.
-  - **Should turrets count too? Options:**
-    - **A, base only** (the proposal as stated).
-    - **B, base plus anything that can't be passed:** a ranged mech stops at its range in front of the enemy base, a full turret wall, or a turret in its lane with no free gap to step around. Turrets it *can* get around don't stop it: it keeps shooting on the move and walks past, which is what Advance is for.
-    - **C, base plus every turret:** a ranged mech stops at its range in front of any turret. Advance would then behave like Hold against defenses, and stepping around turrets would almost never happen.
-  - **Details for B (and A):**
-    - **Where to stop:** at about 95% of its range, so small movements don't take it out of range.
-    - **Melee mechs** (Brawler, Breacher) still walk up and hit.
-    - **If the obstacle disappears** (turret destroyed, gap opens), the mech walks on.
-    - **The enemy AI** uses the same rule.
-  - **Decided (user, 2026-11-14): B.** To be built together with the other movement topics (discussion planned for 2026-11-15).
-  - **Recommendation: B.** It keeps what Advance means (push past turrets you can get around) and fixes the pointless walk into point-blank range wherever the path really ends. C would remove the difference between Hold and Advance at defenses.
-  - Fits together with the other movement topics (convoy, melee sidestep, lane change speed), since it changes the same code.
+  - **Decided (user, 2026-11-15): B.** Built in step 2 of the movement build.
 
 ### Enemy AI
 - **[balance] The enemy AI deploys one-sided, in same-type groups** (play-test v0.2.0-dev): e.g. 3 Brawlers at once in the same lane.
@@ -152,6 +62,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **C, a sensible defensive pick:** under pressure it picks from a defensive set (Brawler, Gunner, Seeker, Aegis) instead of always a Brawler. Real counter-picking against your army belongs to the agreed "counter AI" feature later.
     - **D, stage personalities (later):** e.g. "swarm" (many light units), "siege" (Lancer, Mortar, Breacher), "armored" (Brawler, Aegis), for variety between stages.
   - **Recommendation: A + B + C now, D later.** It makes the AI feel smarter and less predictable without the full counter AI. The difficulty will shift, so stages 1–12 need a rebalance with the bot afterwards.
+  - **Timing (proposed 2026-11-15): after the movement steps 1–4,** as step 5. The group templates can then use roles (tank first, Line and Artillery behind it), play-tests of the movement rules aren't mixed up with AI changes, and one balance pass covers both. Until then the AI's triple-Brawler groups are a good test for the side attack.
 
 ### Under discussion
 - **[balance/art] All mechs move too fast: they look like insects, not massive machines** (user, play-test 0.3.0-dev; started as "big melee mechs too fast")
@@ -194,6 +105,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **C, extended reach (±2 lanes):** a middle ground. From lane 3 it covers every lane, from the edge lanes only three, so placement still matters.
     - **D, normal reach, but missiles keep tracking:** it picks targets only within ±1 lane, but a missile that's already flying follows a target that changes lanes (as today). Mostly the same as B, just stated explicitly.
   - **Recommendation: C (±2 lanes).** It keeps the Seeker special (the only mech that can cover the whole field, but only from the middle lane), and the edge lanes no longer reach across the map. If it's still too strong, fall back to B.
+  - **Decided (user, 2026-11-15): A, keep every lane,** as the Seeker's "Long reach" trait. With ±2 it would have to be deployed in lane 3 to cover everything, without a tank in front there; with every lane it can stay behind any tank. Revisit only if play-testing shows it's too strong.
 - **[balance] Kill bounty helps the winning side snowball** (user, 2026-11-14)
   - **Current rule:** the player gets 25% of the destroyed unit's cost for every kill, mechs and turrets alike. The enemy AI gets no bounty (it has its own income, which grows when your mechs push close to its base).
   - **Problem:** whoever is ahead gets richer and pulls further ahead. But energy for killing *attackers* near your own base is good: it helps a defender recover.
@@ -246,8 +158,8 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - pauses briefly to fire (like the Lancer)
     - the shell flies fast (about 700/s), so it almost always hits
   - **Gameplay notes:**
-    - In Hold, it stops at range 320, so it fits naturally right behind the Brawler in the range-sorted convoy idea.
-    - Because it's the slowest, faster mechs would overtake it in Advance. That also makes the convoy rule decision more important.
+    - It stops at range 320, so it fits naturally right behind the Brawler.
+    - Role: Tank if it leads and brawls, Charger if it goes for walls (decide when it's designed).
   - **Unlock:** after the Sapper, so stage 9 or so, with the Sapper at 8. The enemy gets it a bit later, from around stage 10.
   - **Roster size:** 10 mechs with a loadout of 5 is still manageable, and more choice makes the loadout matter. I'd stop there, though: every further mech should fill a clear gap.
   - **Sound and look:** a deep cannon boom (the new cannon sound, heavier, with recoil), a visible recoil step, and a bright, short tracer for the shell, the opposite of the Lancer's long streak.
@@ -256,7 +168,8 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
 - **[feature] Enemy AI that counters your army,** e.g. flanking massed artillery with fast units. Agreed for later.
-- **[feature] A separate Hold/Advance switch per mech type.** A future idea, not for the next versions.
+- *(The per-type Hold/Advance switch idea is obsolete: the switch is replaced by roles, see Gameplay / movement.)*
+- **[idea] "Charge" special** (2026-11-15): for a few seconds every mech pushes forward and fires on the move. Parked; only if the decision the old Advance mode gave is missed in play-testing. The space of the old Hold/Advance button could hold it, or another special.
 - **[feature] Loadout of all 8 (or 9) mechs instead of 5:** maybe, decide after play-testing.
 
 ### Sound / polish
@@ -281,6 +194,6 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 ## To check during play-testing (v0.2.0-dev)
 - Lane reach: do lanes 2 + 4 become the only sensible setup?
 - Is the Mortar still useful with slow shells?
-- Do convoy and overtaking behave as expected?
+- Do the roles behave as described (cover behind tanks, fan-out, Chargers slipping past)?
 - Difficulty of stages 7–12 and the first Endless waves.
 - Is the sound realistic enough, or are CC0 samples needed?
