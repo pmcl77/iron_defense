@@ -26,7 +26,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     3. melee side attack (about 100 units into the neighbor lane) **(built in 0.4.0-dev, moved ahead of step 2)**
     4. traits **(built in 0.4.0-dev, 2026-11-15; to play-test)**
        - Balance bot, 4 runs per cell: no clear change from step 2, all within noise (stage 9 max 75% → 100%, stage 13 max 50% → 75%, stage 6 mid/mortar 100% → 75%). The Aegis radius change (140 → 170) came after this run.
-    5. enemy AI deploy variety, using roles (see Enemy AI)
+    5. enemy AI deploy variety, using roles **(built in 0.4.0-dev, 2026-11-15; to play-test)**. User decisions: group rate unchanged (25% → 45%), split attacks rare (~15%), rare Brawler packs (side attack makes them interesting).
     6. balance pass with the bot; expect clear changes in difficulty
   - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
   - **Code:** data-driven. `ROLES` and `TRAITS` in data.js, each mech type gets `role` and `traits`; world.js asks for the effective rules (role merged with traits) and never checks type names.
@@ -110,27 +110,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Decided (user, 2026-11-15): B.** **Built** in step 2 (0.4.0-dev); to play-test. Tuning in `DETOUR` (data.js).
 
 ### Enemy AI
-- **[balance] The enemy AI deploys one-sided, in same-type groups** (play-test v0.2.0-dev): e.g. 3 Brawlers at once in the same lane.
-  - **Causes in the code:**
-    - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group of 2–3, always of *one* type and always in one lane.
-    - **Brawler preference:** when your mechs push toward its base, it picks a Brawler half the time, regardless of what's attacking. So groups of 3 Brawlers come up often.
-    - **One-sided lanes:** 60% of the time it picks the lane with the least turret coverage. Once your turrets stand, that lane barely changes, so it keeps hitting the same lane. Otherwise it picks a random lane 20% of the time, and the lane your mechs push in 20% of the time.
-  - **Options:**
-    - **A, mixed groups from templates:** groups are compositions, not copies. Examples:
-      - Brawler in front + Gunner behind
-      - Brawler + Mortar
-      - Aegis + 2 Gunners
-      - Breacher + Lancer for sieges
-
-      Only cheap units (Scouts) come as same-type packs. Group members deploy in a sensible order: tank first, ranged behind.
-    - **B, varied lane choice:**
-      - lanes are weighted by weakness instead of always taking the weakest, with a penalty for lanes it used recently
-      - sometimes a split attack: two small groups in two lanes at the same time
-      - it still answers your pushes in their lane
-    - **C, a sensible defensive pick:** under pressure it picks from a defensive set (Brawler, Gunner, Seeker, Aegis) instead of always a Brawler. Real counter-picking against your army belongs to the agreed "counter AI" feature later.
-    - **D, stage personalities (later):** e.g. "swarm" (many light units), "siege" (Lancer, Mortar, Breacher), "armored" (Brawler, Aegis), for variety between stages.
-  - **Recommendation: A + B + C now, D later.** It makes the AI feel smarter and less predictable without the full counter AI. The difficulty will shift, so stages 1–12 need a rebalance with the bot afterwards.
-  - **Timing (proposed 2026-11-15): after the movement steps 1–4,** as step 5. The group templates can then use roles (tank first, Line and Artillery behind it), play-tests of the movement rules aren't mixed up with AI changes, and one balance pass covers both. Until then the AI's triple-Brawler groups are a good test for the side attack.
+- **[feature] Enemy AI later:** D, stage personalities (e.g. "swarm": many light units; "siege": Lancer, Mortar, Breacher; "armored": Brawler, Aegis) for variety between stages; and the agreed "counter AI" (real counter-picking against your army). *(A + B + C built in step 5, see CHANGELOG.)*
 
 ### Under discussion
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")

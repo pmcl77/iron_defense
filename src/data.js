@@ -94,6 +94,27 @@ export const MECHS = {
   },
 };
 export const MECH_TYPES = Object.keys(MECHS);
+// Enemy AI group templates (gameplay.md §10), by role, deployed front to back in the listed order.
+// A template is used only if the stage roster has a type for every role; per role it picks a random type
+// (not the cheap Scout if the role has another type). pack: same-type groups ('cheap' = cost ≤ 50, 2–3 of them;
+// 'tank' = 2 Tanks, rare, they spread out with the side attack).
+export const AI_GROUPS = [
+  { roles: ['tank', 'line'], w: 3 },
+  { roles: ['tank', 'artillery'], w: 2 },
+  { roles: ['line', 'artillery'], w: 2 },
+  { roles: ['line', 'line'], w: 1 },
+  { roles: ['line', 'line', 'support'], w: 2 },
+  { roles: ['tank', 'line', 'support'], w: 1 },
+  { roles: ['charger', 'artillery'], w: 1 }, // siege: Breacher + Mortar/Lancer
+  { pack: 'cheap', w: 2 },
+  { pack: 'tank', w: 1 },
+];
+export const AI = {
+  groupChance: [0.25, 0.45], // share of orders that are groups: early, after about 2.5 minutes
+  splitChance: 0.15,          // share of group orders that are a split attack: two small groups in two lanes
+  defensive: ['brawler', 'gunner', 'seeker', 'aegis'], // picks under pressure (half the time)
+  recent: 4, recentPenalty: 0.5, // lanes used in the last 4 orders get this weight factor per use
+};
 // Traits (gameplay.md §5.5): each changes exactly one rule of the mech's role.
 //   pref   targeting: 'mech' or 'structure' first (role default: nearest, no preference)
 //   reach  lanes to each side it can target (role default: 1)

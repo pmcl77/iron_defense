@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, QUEUE, ROLES, STOP_AT, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -82,7 +82,7 @@ export class World {
     this.con = null;
     this.conWait = 0;
 
-    this.ai = { energy: 40, next: null, killedTurret: false };
+    this.ai = { energy: 40, next: null, recent: [] };
   }
 
   // ---------- entities ----------
@@ -794,7 +794,6 @@ export class World {
     }
     if (f.kind === 'turret') {
       if (this.cells[f.team][f.lane][f.row] === f) this.cells[f.team][f.lane][f.row] = null;
-      if (f.team === 0 && team === 1) this.ai.killedTurret = true;
     }
     if (f.team === 0 && f.kind === 'mech') this.stats.lost++;
     if (team === 0 && f.team === 1) {
@@ -878,43 +877,87 @@ export class World {
     if (pressure > 0) regen *= 1 + Math.min(0.4, pressure / 1500);
     ai.energy += regen * dt;
 
-    if (!ai.next) {
-      const roster = st.roster, late = Math.min(1, this.time / 150);
-      let pick;
-      if (pressure > 300 && this.rnd() < 0.5) {
-        pick = roster.includes('brawler') ? 'brawler' : roster[roster.length - 1];
-      } else {
-        const w = roster.map((t) => 1 / Math.pow(MECHS[t].cost, 1 - late * 0.8));
-        let r = this.rnd() * w.reduce((a, b) => a + b, 0);
-        pick = roster[0];
-        for (let i = 0; i < roster.length; i++) { r -= w[i]; if (r <= 0) { pick = roster[i]; break; } }
-      }
-      ai.next = { type: pick, count: this.rnd() < 0.25 + late * 0.2 ? 2 + Math.floor(this.rnd() * 2) : 1 };
-    }
-    const cost = MECHS[ai.next.type].cost * ai.next.count;
+    if (!ai.next) ai.next = this.aiOrder(pressure);
+    const cost = ai.next.groups.flat().reduce((c, t) => c + MECHS[t].cost, 0);
     if (ai.energy >= cost) {
       ai.energy -= cost;
-      const lane = this.aiLane(pressure, laneP);
-      for (let i = 0; i < ai.next.count; i++) {
-        const jitter = (this.rnd() * 2 - 1) * 20;
-        const e = this.spawn({ kind: 'mech', type: ai.next.type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24 + i * 34, jitter });
-        this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
+      let first = -1;
+      for (const g of ai.next.groups) {
+        const lane = this.aiLane(pressure, laneP, first);
+        if (first < 0) first = lane;
+        ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
+        g.forEach((type, i) => { // front to back: the first one deploys furthest forward
+          const jitter = (this.rnd() * 2 - 1) * 20;
+          const e = this.spawn({ kind: 'mech', type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24 + i * 34, jitter });
+          this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
+        });
       }
       ai.next = null;
     }
   }
-  aiLane(pressure, laneP) {
+  // the next enemy order: { groups: [[types front to back], …] }
+  aiOrder(pressure) {
+    const roster = this.stage.roster, late = Math.min(1, this.time / 150);
+    // under pressure: half the time a single unit from the defensive set
+    if (pressure > 300 && this.rnd() < 0.5) {
+      const def = AI.defensive.filter((t) => roster.includes(t));
+      return { groups: [[def.length ? def[Math.floor(this.rnd() * def.length)] : roster[roster.length - 1]]] };
+    }
+    const [g0, g1] = AI.groupChance;
+    if (this.rnd() < g0 + late * (g1 - g0)) {
+      const g = this.aiGroup();
+      if (g) {
+        if (this.rnd() < AI.splitChance) { // split attack: two small groups in two lanes at once
+          const a = this.aiGroup(2), b = this.aiGroup(2);
+          if (a && b) return { groups: [a, b] };
+        }
+        return { groups: [g] };
+      }
+    }
+    // single unit: cheap ones early, more even later
+    const wts = roster.map((t) => 1 / Math.pow(MECHS[t].cost, 1 - late * 0.8));
+    let r = this.rnd() * wts.reduce((x, y) => x + y, 0), pick = roster[0];
+    for (let i = 0; i < roster.length; i++) { r -= wts[i]; if (r <= 0) { pick = roster[i]; break; } }
+    return { groups: [[pick]] };
+  }
+  // a group from the templates the roster allows (maxSize: only groups up to that size); null if none fits
+  aiGroup(maxSize = 3) {
+    const roster = this.stage.roster;
+    const ofRole = (role) => {
+      const all = roster.filter((t) => MECHS[t].role === role), heavy = all.filter((t) => MECHS[t].cost > 50);
+      return heavy.length ? heavy : all;
+    };
+    const cheap = roster.filter((t) => MECHS[t].cost <= 50), tanks = ofRole('tank');
+    const fits = AI_GROUPS.filter((g) => (g.pack === 'cheap' ? cheap.length > 0 : g.pack === 'tank' ? tanks.length > 0 && maxSize >= 2 : g.roles.length <= maxSize && g.roles.every((r) => ofRole(r).length)));
+    if (!fits.length) return null;
+    let r = this.rnd() * fits.reduce((x, g) => x + g.w, 0), tpl = fits[0];
+    for (const g of fits) { r -= g.w; if (r <= 0) { tpl = g; break; } }
+    const any = (list) => list[Math.floor(this.rnd() * list.length)];
+    if (tpl.pack === 'cheap') { const t = any(cheap); return Array(Math.min(maxSize, 2 + Math.floor(this.rnd() * 2))).fill(t); }
+    if (tpl.pack === 'tank') { const t = any(tanks); return [t, t]; }
+    return tpl.roles.map((role) => any(ofRole(role)));
+  }
+  // lane for an enemy group: sometimes random, sometimes the lane you push in, otherwise weighted toward weakly
+  // defended lanes, with a penalty for lanes it used recently. exclude: a lane already used by this order (split).
+  aiLane(pressure, laneP, exclude = -1) {
+    const lanes = [...Array(LANES).keys()].filter((l) => l !== exclude);
     const r = this.rnd();
-    if (r < 0.2) return Math.floor(this.rnd() * LANES);
-    if (pressure > 0 && r < 0.4) return laneP.indexOf(Math.max(...laneP));
-    // weakest defended lane: least player turret HP that can cover it
+    if (r < 0.2) return lanes[Math.floor(this.rnd() * lanes.length)];
+    if (pressure > 0 && r < 0.4) {
+      const best = lanes.reduce((a, b) => (laneP[b] > laneP[a] ? b : a));
+      if (laneP[best] > 0) return best;
+    }
+    // defence per lane: player turret HP that can cover it
     const cover = Array(LANES).fill(0);
     for (const t of this.entities) {
       if (t.dead || t.team !== 0 || t.kind !== 'turret') continue;
       const rng = this.stat(t, 'range');
       for (let l = 0; l < LANES; l++) if (Math.abs(t.x - laneX(l)) <= rng) cover[l] += t.hp;
     }
-    const min = Math.min(...cover), opts = cover.map((c, i) => (c === min ? i : -1)).filter((i) => i >= 0);
-    return opts[Math.floor(this.rnd() * opts.length)];
+    const min = Math.min(...lanes.map((l) => cover[l]));
+    const wts = lanes.map((l) => (1 / (1 + (cover[l] - min) / 800)) * Math.pow(AI.recentPenalty, this.ai.recent.filter((x) => x === l).length));
+    let k = this.rnd() * wts.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < lanes.length; i++) { k -= wts[i]; if (k <= 0) return lanes[i]; }
+    return lanes[lanes.length - 1];
   }
 }

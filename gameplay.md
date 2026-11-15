@@ -137,7 +137,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 2. Walking lane changes and the detour around friendly turrets. **Built in 0.4.0-dev.**
 3. Melee side attack: a melee Tank hits enemies in a neighbouring lane up to about 100 units (edge distance) and stops beside them to fight, so a group of Brawlers attacks one enemy from three sides. **Built in 0.4.0-dev.**
 4. Traits (§5.5). **Built in 0.4.0-dev.** In code: `TRAITS` in data.js; each mech type's effective rules (`MECHS[type].rules`) are its role's rules with its traits on top, and world.js reads only those.
-5. Enemy AI deploy variety, using roles (§10).
+5. Enemy AI deploy variety, using roles (§10). **Built in 0.4.0-dev.**
 6. Balance pass with the bot.
 
 ### 5.3 Targeting
@@ -282,10 +282,14 @@ Specials don't cost energy; they only have cooldowns. Each one starts a battle a
 The enemy works like Ironline's AI, adapted for lanes:
 
 - **Income:** the stage's regen value. It doubles over the first 7 minutes, and goes up by up to 40% when your mechs get close to its base. Enemy Reactor levels multiply this further (§7).
-- **Unit choice:** it prefers cheap units early and expensive ones later. Under pressure it often sends Brawlers. Sometimes it saves up to deploy a group of 2–3.
-- **Lane choice:** usually the lane where your defenses are weakest (fewest turret HP in range of that lane). Sometimes it picks a random lane, and it answers your pushes by sending units into the lane under the most pressure *(tune)*.
+- **Unit choice** *(step 5 of the movement build, 0.4.0-dev; tuning in `AI_GROUPS` and `AI` in data.js)*:
+  - **Singles:** it prefers cheap units early and expensive ones later.
+  - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group. A group is a small formation from role templates, deployed front to back: Tank + Line, Tank + Artillery, Line + Artillery, two Line, two Line + Support, Tank + Line + Support, siege (Charger + Artillery; the Breacher rather than the Scout). Same-type packs only for cheap units (2–3 Scouts) and, rarely, two Brawlers (they spread out with the side attack). A template is used only if the stage roster has a type for each role.
+  - **Split attacks:** about 15% of group orders are two small groups (up to 2 units each) sent into two different lanes at once.
+  - **Under pressure** (your mechs near its base): half the time a single unit from a defensive set (Brawler, Gunner, Seeker, Aegis) instead of always a Brawler.
+- **Lane choice:** 20% a random lane; under pressure 20% the lane you push in; otherwise weighted toward the weakest-defended lanes (fewest turret HP in range), not always the weakest, and a lane used in its last 4 orders is less likely each time (×0.5 per use) *(tune)*.
 - **Behavior:** its mechs follow the same roles as yours (§5.2).
-- **Planned (step 5 of the movement build):** more varied deploys using roles: mixed groups from templates (tank first, ranged behind), varied lane choice and split attacks, a sensible defensive pick under pressure (ISSUES.md).
+- **Later:** stage personalities (e.g. "siege", "swarm"); real counter-picking against your army (the "counter AI" feature).
 - **Turrets:** fixed per stage. The enemy has no Constructor. It never builds new turrets, never repairs and never upgrades during a battle.
 
 ## 11. Battle end, rewards and progression

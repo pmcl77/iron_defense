@@ -535,5 +535,41 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('constructor still builds behind them', !!w4.cells[0][2][3], '');
 }
 
+// step 5: enemy AI deploys role-aware mixed groups, varies its lanes, defends with a mixed set
+{
+  const roster = ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'];
+  const st = { name: 'AI', index: 11, baseHp: 1e6, lvl: 0, regen: 0, roster, turrets: [], base: {} };
+  const w = new World(st, defaultSave(), ALL, { seed: 11 });
+  w.time = 300;
+  const orders = Array.from({ length: 2000 }, () => w.aiOrder(0));
+  const groups = orders.flatMap((o) => o.groups).filter((g) => g.length > 1);
+  const share = orders.filter((o) => o.groups.flat().length > 1).length / orders.length;
+  check('late group share about 45%', share > 0.38 && share < 0.52, `share ${(share * 100).toFixed(0)}%`);
+  const mixed = groups.filter((g) => new Set(g).size > 1).length / groups.length;
+  check('most groups are mixed', mixed > 0.6, `mixed ${(mixed * 100).toFixed(0)}%`);
+  const roleOrder = { tank: 0, charger: 0, line: 1, artillery: 2, support: 3 };
+  const tankFirst = groups.every((g) => g.every((t, i) => !i || MECHS[t].role === MECHS[g[i - 1]].role || roleOrder[MECHS[g[i - 1]].role] <= roleOrder[MECHS[t].role] || (MECHS[t].role === 'artillery' && MECHS[g[i - 1]].role === 'line') || (MECHS[t].role === 'support' && MECHS[g[i - 1]].role === 'line')));
+  check('groups deploy front to back (tank first, support last)', tankFirst);
+  check('same-type groups are Scouts, a Brawler pair or two Line mechs', groups.filter((g) => new Set(g).size === 1).every((g) => g[0] === 'scout' || (g[0] === 'brawler' && g.length === 2) || (MECHS[g[0]].role === 'line' && g.length === 2)), groups.filter((g) => new Set(g).size === 1).map((g) => g.join('+')).filter((x, i, a) => a.indexOf(x) === i).join(' '));
+  const brawlerPacks = groups.filter((g) => g.length === 2 && g[0] === 'brawler' && g[1] === 'brawler').length / groups.length;
+  check('Brawler packs happen but rarely', brawlerPacks > 0.02 && brawlerPacks < 0.15, `${(brawlerPacks * 100).toFixed(1)}%`);
+  const splits = orders.filter((o) => o.groups.length === 2).length / orders.filter((o) => o.groups.flat().length > 1).length;
+  check('split attacks are rare (about 15% of groups)', splits > 0.08 && splits < 0.22, `${(splits * 100).toFixed(0)}%`);
+  // under pressure: half the orders are single defensive picks, not always a Brawler
+  const press = Array.from({ length: 1000 }, () => w.aiOrder(1000)).filter((o) => o.groups.flat().length === 1).map((o) => o.groups[0][0]);
+  check('defensive picks are varied', new Set(press).size >= 4 && press.filter((t) => t === 'brawler').length < press.length * 0.6, [...new Set(press)].join(','));
+  // early stages: only templates the roster allows
+  const w2 = new World({ ...st, roster: ['scout', 'gunner'] }, defaultSave(), ALL, { seed: 3 });
+  const o2 = Array.from({ length: 500 }, () => w2.aiOrder(0)).flatMap((o) => o.groups.flat());
+  check('groups use only the stage roster', o2.every((t) => t === 'scout' || t === 'gunner'));
+  // lanes: varied even with one weak lane, and split groups go to two different lanes
+  const w3 = new World(st, defaultSave(), ALL, { seed: 5 });
+  for (const l of [0, 1, 3, 4]) w3.placeTurret(0, 'sentry', l, 2);
+  const lanes = Array.from({ length: 400 }, () => { const l = w3.aiLane(0, [0, 0, 0, 0, 0]); w3.ai.recent.push(l); if (w3.ai.recent.length > 4) w3.ai.recent.shift(); return l; });
+  const top = Math.max(...[0, 1, 2, 3, 4].map((l) => lanes.filter((x) => x === l).length)) / lanes.length;
+  check('lane choice varies (no lane above 60%)', top < 0.6 && new Set(lanes).size === 5, `top ${(top * 100).toFixed(0)}%`);
+  check('a split attack never uses the same lane twice', Array.from({ length: 200 }, () => { const a = w3.aiLane(0, [0, 0, 0, 0, 0]); return w3.aiLane(0, [0, 0, 0, 0, 0], a) !== a; }).every(Boolean));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
