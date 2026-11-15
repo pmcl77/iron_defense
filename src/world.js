@@ -525,16 +525,36 @@ export class World {
   tryOvertake(e, blocker, force = false) {
     // not worth it if the mech ahead is walking at almost the same speed
     if (!force && blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 8) return false;
-    // never swing back into the home lane before the mech being passed is behind us
-    const opts = [e.lane - 1, e.lane + 1].filter((l) => this.laneAllowed(e, l) && this.laneFree(e, l) && !(l === e.homeLane && !this.passed(e)));
-    if (!opts.length) return false;
+    const dir = FWD[e.team], R = ROLES[e.def.role];
     const home = e.homeLane ?? e.lane;
-    // prefer the side closer to home, then the side with fewer friendlies ahead
-    const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * FWD[e.team] > 0 && Math.abs(f.y - e.y) < 200).length;
-    opts.sort((a, b) => Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b));
+    // never swing back into the home lane before the mech being passed is behind us
+    const ok = (l) => this.laneAllowed(e, l) && !(l === e.homeLane && !this.passed(e));
+    // follow the leader: a friendly from the same lane that this mech may not pass and that has just
+    // stepped out ahead of it to pass. Take its side, and wait while that lane is still taken beside us.
+    let leader = null;
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || Math.abs(f.lane - e.lane) !== 1) continue;
+      if (f.homeLane !== home || this.canPass(R, f)) continue;
+      const d = (f.y - e.y) * dir;
+      if (d > -(f.radius + e.radius) && d < 200 && (!leader || d < (leader.y - e.y) * dir)) leader = f;
+    }
+    if (leader && ok(leader.lane)) {
+      if (!this.laneFree(e, leader.lane)) return false;
+      return this.startPass(e, blocker, home, leader.lane);
+    }
+    const opts = [e.lane - 1, e.lane + 1].filter((l) => ok(l) && this.laneFree(e, l));
+    if (!opts.length) return false;
+    // otherwise: prefer a side without an enemy close ahead (passing is about getting by, not starting
+    // a fight), then the side closer to home, then fewer friendlies ahead, then toward the center
+    const foe = (l) => this.entities.some((f) => !f.dead && f.team !== e.team && (f.kind === 'mech' || f.kind === 'turret') && f.lane === l && (f.y - e.y) * dir > 0 && (f.y - e.y) * dir < 250) ? 1 : 0;
+    const ahead = (l) => this.entities.filter((f) => !f.dead && f.team === e.team && f.kind === 'mech' && f.lane === l && (f.y - e.y) * dir > 0 && Math.abs(f.y - e.y) < 200).length;
+    opts.sort((a, b) => foe(a) - foe(b) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
+    return this.startPass(e, blocker, home, opts[0]);
+  }
+  startPass(e, blocker, home, lane) {
     e.homeLane = home;
     if (blocker) e.passing = blocker;
-    this.shiftTo(e, opts[0]);
+    this.shiftTo(e, lane);
     return true;
   }
 

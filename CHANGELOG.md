@@ -26,6 +26,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - Artillery with no shot steps one lane over behind a fighting friendly instead of waiting
   - fanning out picks the side from which the mech can actually reach an enemy soonest
 - **Side attack** (step 3): a Brawler also hits enemies in the neighbouring lane (up to about 100 units) and stops beside them to fight. Behind a fighting Brawler, the next one steps beside it, so a group of three attacks one enemy from three sides. While fighting from the side it leans about 35 units toward the enemy (still in its own lane) and moves back afterwards, so there's no gap between the two mechs.
+- **Follow the leader when passing** (to try out): a mech that passes takes the same side as the mech leading it (one it may not pass), so a train like Mortar-Brawler-Gunner stays in order. Without a leader, it prefers a side with no enemy close ahead, then toward the center (before: simply the left).
 
 ## [0.3.0]: 2026-11-15
 

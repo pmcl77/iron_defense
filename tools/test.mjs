@@ -256,6 +256,14 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const mt = mech(wt, 'mortar', 0, 2, 1150, 1e9), bt = mech(wt, 'brawler', 0, 2, 1090, 1e9);
   run(wt, 25);
   check('tank passes a fighting mortar', bt.y > mt.y + 40, `brawler ${bt.y.toFixed(0)} mortar ${mt.y.toFixed(0)}`);
+  // follow the leader: Mortar.f-Brawler-Gunner, the Gunner takes the Brawler's side and stays behind it
+  const wl = mk([['sentry', 2, 6]]);
+  const tl = tough(wl.cells[1][2][6]); tl.def = { ...tl.def, dmg: 0 };
+  const ml = mech(wl, 'mortar', 0, 2, 1150, 1e9), bl = mech(wl, 'brawler', 0, 2, 1090, 1e9), gl = mech(wl, 'gunner', 0, 2, 1040, 1e9);
+  let gSide = null, bSide = null;
+  for (let i = 0; i < 25 * 60; i++) { wl.update(1 / 60); wl.fx.length = 0; if (bSide == null && bl.lane !== 2) bSide = bl.lane; if (gSide == null && gl.lane !== 2) gSide = gl.lane; }
+  check('gunner passes on the same side as its brawler', bSide != null && gSide === bSide, `brawler ${bSide} gunner ${gSide}`);
+  check('the brawler stays in front of the gunner', bl.y > gl.y && gl.y > ml.y, `mortar ${ml.y.toFixed(0)} brawler ${bl.y.toFixed(0)} gunner ${gl.y.toFixed(0)}`);
   const wm = mk();
   const mm = mech(wm, 'mortar', 0, 2, 600, 1e9), bm = mech(wm, 'brawler', 0, 2, 540, 1e9), gm = mech(wm, 'gunner', 0, 2, 480, 1e9);
   run(wm, 40);
