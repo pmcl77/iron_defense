@@ -168,6 +168,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **F. Limit on mechs per side.** For example at most 25 mechs on the field per side. Stops the endless 400-mech exchange, makes each unit count, and makes energy pile up for big pushes. *Size:* small. *Risk:* feels restrictive; needs a "field full" hint.
     - **G. Exposed base.** When all of a side's turrets are destroyed, its base loses its armor (or takes more damage); for the player until a turret is rebuilt, for the enemy (which doesn't build) for the rest of the battle. Clearing the defense pays off right away. *Size:* small.
     - Recorded earlier and not repeated here: air drop / forward base, air units, faster vehicles, group deploy action, "Charge" special.
+    - **H. Unit variety (user, 2026-11-16).** Big and complex, not a quick test. In Clash Royale an 8-card deck out of many cards makes room for different strategies: you don't know what the opponent plays, you may hold the right counters or the wrong ones, and some games go to the end of overtime. Iron Defense has 8 units and the user found only 2–3 viable strategies (e.g. the train), nothing like a fast cheap cycle deck ("hog cycle"). Missing archetype: a **cheap, fast unit that goes only for structures** (a raider, maybe a vehicle) that ends battles if it isn't answered. Ties in with air units and vehicles (recorded above).
+  - **User's first judgment (2026-11-16, not decided):**
+    - 4a shorter field: wait (big), "afraid we won't get around this eventually".
+    - 4c forward deployment: shortlisted; variant to be pondered.
+    - A, B: doubts. Numbers that favour the player don't feel like an accomplishment.
+    - C bigger kill bounty: shortlisted.
+    - F limit on mechs: interesting, but a risk of passive play (waiting to deploy).
+    - G exposed base: the player starts with no turrets, so its base would be exposed from the start; it would need to apply only after turrets were lost, or only to the enemy.
   - **More ideas from the user (2026-11-16), for later:**
     - **Deployment location** adds variety (in Clash Royale troops can be placed anywhere, but that's "magic"; this game leans realistic). Realistic forms: deploy at a held forward position (4c) or an air drop with cooldown that can be shot down.
     - **Air units** (helicopters/VTOL): ignore turret walls and lane blocking, only some turrets can hit them; counter-play, but new targeting rules, turret types and art.
