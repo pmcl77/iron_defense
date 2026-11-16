@@ -11,7 +11,7 @@ export function defaultSave() {
     perks: { energy: 0, armor: 0, charge: 0, regen: 0 },
     loadout: ['scout', 'gunner'],
     seen: null,                 // enemy mech types fought at least once (enemy intel shows '?' for the rest); null = not set up yet
-    settings: { sound: true, speed: 1, graphics: 'voxel', aegis: 'hit', stats: true, name: '' },
+    settings: { sound: true, speed: 1, graphics: 'voxel', aegis: 'hit', stats: true, name: '', exp: 'off' },
   };
 }
 

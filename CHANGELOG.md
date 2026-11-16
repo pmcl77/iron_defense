@@ -9,6 +9,13 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.4.0-dev
 
+### Dev experiments (dev build only)
+- **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
+  - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
+  - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
+  - **Overtime from 8 / 15 min:** from then on both sides get +15 energy/s (HUD shows "+N+15/s").
+- Branch previews (`<branch>.iron-defense.pages.dev`) now count as dev builds.
+
 ### Gameplay
 - **Roles instead of the Hold/Advance switch** (step 1 of the new movement model, gameplay.md §5.2). Every mech now follows the rules of its role, always, for you and the enemy:
   - **Tank** (Brawler): leads, keeps walking and hitting until something blocks it, fights whatever blocks it. Behind a friendly that's fighting it steps into a neighbouring lane to join, if there's an enemy there.

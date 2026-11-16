@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { EXPERIMENTS, OVERTIME_BONUS, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -10,9 +10,9 @@ function check(name, cond, info = '') {
 }
 // A quiet test world: no enemy income, no player regen, plenty of energy.
 // march: the march pace (MARCH.pace by default); 0 = off, for tests of the rules at combat pace
-function mk(turrets = [], march) {
+function mk(turrets = [], march, exp) {
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets, base: {} };
-  const w = new World(st, defaultSave(), ALL, { seed: 7, march });
+  const w = new World(st, defaultSave(), ALL, { seed: 7, march, exp });
   w.ai.energy = -1e9; w.regen = 0; w.energy = 5000; w.maxEnergy = 5000;
   return w;
 }
@@ -655,6 +655,45 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('event: deaths with lane, progress and killer', deaths.length > 20 && deaths.filter((e) => e[3] !== 'sentry' && e[3] !== 'arc' && e[3] !== 'howitzer').every((e) => Number.isInteger(e[4]) && e[5] >= 0 && e[5] <= 100 && typeof e[6] === 'string'));
   check('10-minute battle log under 32 KB', size < 32000, `${size} bytes, ${E.length} events`);
   console.log(`  (10-minute test battle: ${E.length} events, ${(size / 1024).toFixed(1)} KB)`);
+}
+
+// ---- dev experiments (EXPERIMENTS in data.js)
+{
+  const bountyGain = (exp) => {
+    const w = mk([], 0, exp); w.energy = 0;
+    const e = mech(w, 'brawler', 1, 2, 1500);
+    w.damage(e, 1e6, null, 0);
+    return w.energy;
+  };
+  check('normal kill bounty', Math.abs(bountyGain() - MECHS.brawler.cost * ENERGY.bounty) < 1e-6);
+  check('experiment: kill bounty 40%', Math.abs(bountyGain('bounty40') - MECHS.brawler.cost * 0.4) < 1e-6);
+  check('experiment: kill bounty 60%', Math.abs(bountyGain('bounty60') - MECHS.brawler.cost * 0.6) < 1e-6);
+  check('unknown experiment = off', new World(stageDef(0), defaultSave(), ALL, { exp: 'nope' }).expKey === 'off');
+
+  // enemy income after 7 minutes: doubles normally, ×1.5 or flat with the ramp experiments
+  const income = (exp) => {
+    const w = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp });
+    w.time = 600; w.ai.energy = -1e9; // never affords anything: only the income counts
+    w.updateAI(1);
+    return w.ai.energy + 1e9;
+  };
+  const r = stageDef(0).regen;
+  check('enemy income doubles by 7 min', Math.abs(income() - 2 * r) < 1e-6, income());
+  check('experiment: enemy ramp ×1.5', Math.abs(income('ramp15') - 1.5 * r) < 1e-6, income('ramp15'));
+  check('experiment: no enemy ramp', Math.abs(income('noramp') - r) < 1e-6, income('noramp'));
+
+  // overtime: +OVERTIME_BONUS for both from the set minute, logged once
+  const w = mk([], 0, 'ot8'); w.energy = 0; w.maxEnergy = 1e6;
+  w.time = 479; w.update(0.5);
+  check('no overtime before 8 min', !w.overtime && w.energy < 1);
+  w.time = 480; const e0 = w.energy; w.update(1);
+  check('overtime from 8 min: player +15/s', w.overtime && Math.abs(w.energy - e0 - OVERTIME_BONUS) < 1e-6, w.energy - e0);
+  w.update(1);
+  check('overtime logged once', w.log.events.filter((e) => e[1] === 'overtime').length === 1);
+  const w2 = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp: 'ot8' });
+  w2.time = 600; w2.overtime = true; w2.ai.energy = -1e9; const a0 = w2.ai.energy; w2.updateAI(1);
+  check('overtime: enemy +15/s', Math.abs(w2.ai.energy - a0 - (2 * r + OVERTIME_BONUS)) < 1e-6, w2.ai.energy - a0);
+  check('every experiment has a name', Object.values(EXPERIMENTS).every((x) => x.name));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

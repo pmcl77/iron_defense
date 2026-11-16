@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, EXPERIMENTS, OVERTIME_BONUS, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -26,8 +26,9 @@ async function applyGraphics() {
 }
 const mctx = minimap.getContext('2d');
 
-// Development builds (dev.iron-defense.pages.dev, localhost, LAN) are marked so they're never mistaken for the release.
-const IS_DEV = /^dev\.|^localhost$|^127\.|^192\.168\.|^10\./.test(location.hostname);
+// Development builds (dev.iron-defense.pages.dev and other branch previews <name>.iron-defense.pages.dev, localhost,
+// LAN) are marked so they're never mistaken for the release (iron-defense.pages.dev).
+const IS_DEV = /^localhost$|^127\.|^192\.168\.|^10\.|\.iron-defense\.pages\.dev$/.test(location.hostname);
 if (IS_DEV) {
   document.title = 'Iron Defense (dev)';
   document.querySelector('link[rel=manifest]')?.setAttribute('href', 'manifest-dev.webmanifest');
@@ -38,6 +39,13 @@ if (IS_DEV) {
 
 let save = loadSave();
 setSound(save.settings.sound);
+// dev experiment (EXPERIMENTS in data.js): only on dev builds; the tag reads "DEV: <experiment>" while one is chosen
+const expKey = () => (IS_DEV && EXPERIMENTS[save.settings.exp] ? save.settings.exp : 'off');
+function updateDevTag() {
+  const tag = document.getElementById('dev-tag');
+  if (tag) tag.textContent = expKey() === 'off' ? 'DEV' : `DEV: ${EXPERIMENTS[expKey()].name}`;
+}
+updateDevTag();
 
 const SPECIAL_ICONS = {
   bomb: '<svg viewBox="0 0 24 24"><path d="M10 2h4v3l2 2v9a4 4 0 0 1-8 0V7l2-2z"/><path d="M8 20l-2 2h12l-2-2z"/></svg>',
@@ -139,7 +147,7 @@ function launch(i) {
   const u = unlocked();
   game.stageIndex = i;
   game.mode = 'play';
-  game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials });
+  game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { exp: expKey() });
   game.world.battleId = randomHex(8);
   game.paused = false;
   game.resultShown = false;
@@ -176,7 +184,7 @@ function summary(result, stars = 0) {
     id: w.battleId, device: deviceId(), ...(save.settings.name ? { name: save.settings.name } : {}),
     // fmt 3: stage, lanes, rows and groups count from 1; in events side 1 = player, 0 = enemy; per-side data is named.
     // (fmt 2: player/enemy as [player, enemy] lists and event side 0 = player; fmt 1, the first dev battles: also 0-based.)
-    fmt: 3, v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
+    fmt: 3, ...(w.expKey !== 'off' ? { exp: w.expKey } : {}), v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
@@ -446,6 +454,7 @@ function showSettings() {
       <div class="toggle"><span>Aegis links</span><button class="btn small" data-a="aegis">${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button></div>
       <div class="toggle"><span>Send battle stats</span><button class="btn small" data-a="stats">${save.settings.stats ? 'On' : 'Off'}</button></div>
       <div class="toggle"><span>Player name <small class="sub">(stats, optional) · device #${deviceId().slice(0, 4)}</small></span><input id="pname" class="name-input" maxlength="20" placeholder="none" autocomplete="off" spellcheck="false"></div>
+      ${IS_DEV ? `<div class="toggle"><span>Experiment <small class="sub">(dev only, one at a time)</small></span><select id="exp" class="name-input">${Object.entries(EXPERIMENTS).map(([k, x]) => `<option value="${k}"${k === expKey() ? ' selected' : ''}>${x.name}</option>`).join('')}</select></div>` : ''}
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
       <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
@@ -459,6 +468,7 @@ function showSettings() {
     gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
     reset: (el) => { if (el.dataset.confirm) { const name = save.settings.name; save = resetSave(); save.settings.name = name; writeSave(save); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
   });
+  $('#exp')?.addEventListener('change', (e) => { save.settings.exp = e.target.value; writeSave(save); updateDevTag(); });
   const nameIn = $('#pname');
   nameIn.value = save.settings.name || '';
   nameIn.addEventListener('change', () => { save.settings.name = nameIn.value.trim().slice(0, 20); writeSave(save); });
@@ -601,7 +611,8 @@ function updateHud() {
   setText($('#hp1t'), 'hp1', String(Math.ceil(b1.hp)));
   $('#energy-fill').style.width = `calc(${(100 * w.energy / w.maxEnergy).toFixed(1)}% - 2px)`;
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
-  setText($('#regen'), 'rg', `+${w.regen}/s`);
+  setText($('#regen'), 'rg', w.overtime ? `+${w.regen}+${OVERTIME_BONUS}/s` : `+${w.regen}/s`);
+  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; toast(`OVERTIME: +${OVERTIME_BONUS} energy/s for both sides`); }
   laneEls.forEach((b, i) => b.classList.toggle('on', i === w.activeLane));
   for (const c of cardEls) {
     const def = c.mech ? MECHS[c.t] : TURRETS[c.t];
