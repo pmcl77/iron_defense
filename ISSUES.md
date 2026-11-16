@@ -187,6 +187,12 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **A Enemy income ramp:** ×2 over 7 min (today) / ×1.5 / none.
     - **B End phase:** off / from 6 min / from 10 min: both sides' income ×2 and an "OVERTIME" label in the HUD. Small (a timer and the label). Base armor stays (could be added later).
     - **Test order:** 4c alone first, then C, then combinations; A and B as needed.
+    - **User feedback (2026-11-16):** same lane only, player only (an enemy would have to build its turrets like the player): agreed. C and A values: agreed. Automatic forward deploy: no, it would break formations across lanes (e.g. a train alternating L2/L4 when only L2 has a turret); maybe select the turret instead of the lane button? Queue: base and forward orders in one FIFO. B: 6 min is probably too early; a number box (0 = off, 1–15 min) or a list 6/8/10/15?
+    - **Revised proposal:**
+      - Forward is chosen, never automatic: tap a lane button = that lane at the base (as today); tap the selected lane button again = forward (button marked FWD, only when the lane has a turret); tap again = back to base. Lane buttons are always on screen (a far turret may be off-screen) and it works the same on the keyboard (press the lane key twice). Tapping an own turret on the field could later be a shortcut (a "Deploy here" button next to Sell).
+      - Queue: one FIFO; each order remembers base or forward. If the turret is gone when the order's turn comes, it uses the next turret back in that lane, else the base.
+      - B: a list Off / 8 / 10 / 12 / 15 min instead of a free number (quicker on a phone, fewer distinct values so battles are comparable in the stats).
+      - Deploy events in the stats get a forward mark.
   - **More ideas from the user (2026-11-16), for later:**
     - **Deployment location** adds variety (in Clash Royale troops can be placed anywhere, but that's "magic"; this game leans realistic). Realistic forms: deploy at a held forward position (4c) or an air drop with cooldown that can be shot down.
     - **Air units** (helicopters/VTOL): ignore turret walls and lane blocking, only some turrets can hit them; counter-play, but new targeting rules, turret types and art.
