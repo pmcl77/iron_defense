@@ -23,11 +23,14 @@ function makeSave(variant) {
 // strategies: 'mixed' (random loadout units), 'mortar' (Brawler in front, Mortars behind), 'split' (alternate waves on lanes 2 and 4),
 // 'train' (the user's style: saves energy, then sends a train ordered by range, Brawler first, e.g. BW-GU-SE-MO or a
 // 3-unit variation (BW-SE-MO, BW-GU-SE, BW-GU-MO), alternating lanes 2 and 4)
+// 'horde' (the user's horde): saves up, then one mech in every lane at once, BW-SE-SE-SE-BW from lane 1 to 5
+// (a Gunner stands in for a Seeker that isn't unlocked or is on cooldown)
+const HORDE = ['brawler', 'seeker', 'seeker', 'seeker', 'brawler'];
 const TRAINS = [['brawler', 'gunner', 'seeker', 'mortar'], ['brawler', 'seeker', 'mortar'], ['brawler', 'gunner', 'seeker'], ['brawler', 'gunner', 'mortar']];
 export function play(i, seed, variant, strat = 'mixed', probe = null) {
   const u = unlockedSet(Math.min(i, 6));
   const pref = strat === 'mortar' ? ['mortar', 'brawler', 'gunner', 'aegis', 'seeker', 'lancer', 'breacher', 'scout']
-    : strat === 'train' ? ['brawler', 'gunner', 'seeker', 'mortar', 'aegis', 'scout', 'lancer', 'breacher'] : PREF;
+    : strat === 'train' || strat === 'horde' ? ['brawler', 'gunner', 'seeker', 'mortar', 'aegis', 'scout', 'lancer', 'breacher'] : PREF;
   const loadout = pref.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
   const w = new World(stageDef(i), makeSave(variant), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed });
   // wall plan: row 2 sentries center-out, then support turrets
@@ -36,7 +39,7 @@ export function play(i, seed, variant, strat = 'mixed', probe = null) {
   plan.push([0, 2, 'sentry'], [4, 2, 'sentry']);
   if (u.turrets.includes('arc')) plan.push([2, 3, 'arc']);
   if (u.turrets.includes('howitzer')) plan.push([0, 0, 'howitzer'], [4, 0, 'howitzer']);
-  let waving = 0, waveLane = 2, waveNo = 0, train = [];
+  let waving = 0, waveLane = 2, waveNo = 0, train = [], horde = [], hordeT = 0;
   let think = 0, r = seed * 9301 + 49297;
   const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
   const dt = 1 / 60;
@@ -51,7 +54,7 @@ export function play(i, seed, variant, strat = 'mixed', probe = null) {
     // turrets: keep the plan built (turret count grows with time)
     const want = Math.min(plan.length, 2 + Math.floor(w.time / 45));
     for (const [l, row, t] of plan.slice(0, want)) {
-      if (!w.cells[0][l][row] && !w.orderAt(l, row) && w.energy >= TURRETS[t].cost + 30) w.order(l, row, t);
+      if (!horde.length && !train.length && !w.cells[0][l][row] && !w.orderAt(l, row) && w.energy >= TURRETS[t].cost + 30) w.order(l, row, t);
     }
     // specials
     if (w.canSpecial('emp') && (threat.length >= 3 || (mine.filter((e) => e.y > 1700).length >= 3))) w.special('emp');
@@ -63,9 +66,21 @@ export function play(i, seed, variant, strat = 'mixed', probe = null) {
     }
     // defend threatened lanes at once; otherwise attack in waves down one lane
     const afford = () => loadout.filter((t) => w.canDeploy(t));
-    if (threat.length && w.energy > 60) {
+    if (threat.length && w.energy > 60 && !horde.length && !train.length) { // (a horde or train being deployed is finished first)
       w.setLane(Math.max(0, threat.reduce((a, b) => (a.y < b.y ? a : b)).lane));
       const a = afford(); if (a.length) w.deploy(a[Math.floor(rnd() * a.length)]);
+    } else if (strat === 'horde') {
+      if (!horde.length) {
+        const line = HORDE.map((t, l) => [loadout.includes(t) ? t : 'gunner', l]).filter(([t]) => loadout.includes(t));
+        const cost = line.reduce((c, [t]) => c + MECHS[t].cost, 0);
+        if (line.length && w.energy >= Math.min(w.maxEnergy - 20, cost)) { horde = line; hordeT = w.time; }
+      }
+      if (horde.length) {
+        let [t, l] = horde[0];
+        if (!w.canDeploy(t) && t === 'seeker' && w.canDeploy('gunner')) t = 'gunner';
+        if (w.canDeploy(t)) { w.setLane(l); w.deploy(t); horde.shift(); }
+        else if (w.time - hordeT > 25) horde = []; // a line costs more than max energy: finish it as energy comes in, give up after 25 s
+      }
     } else if (strat === 'train') {
       if (!train.length) {
         const opts = TRAINS.map((t) => t.filter((x) => loadout.includes(x))).filter((t) => t.length >= 2);
@@ -108,7 +123,7 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
 function main() {
   const runs = +(process.argv[2] || 6);
   const only = process.argv.slice(3).map((n) => +n - 1);
-  const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['mid', 'train'], ['max', 'mortar'], ['max', 'train']];
+  const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['mid', 'train'], ['mid', 'horde'], ['max', 'mortar'], ['max', 'train'], ['max', 'horde']];
   console.log('win% / avg time per strategy. Workshop: none = no upgrades, mid = level 2 + perks 1, max = level 3 + perks 3');
   console.log('stage             | ' + COLS.map(([v, st]) => `${v}/${st}`.padEnd(13)).join('| '));
   const total = STAGES.length + 3;
