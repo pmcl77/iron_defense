@@ -27,6 +27,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     4. traits **(built in 0.4.0-dev, 2026-11-15; to play-test)**
        - Balance bot, 4 runs per cell: no clear change from step 2, all within noise (stage 9 max 75% → 100%, stage 13 max 50% → 75%, stage 6 mid/mortar 100% → 75%). The Aegis radius change (140 → 170) came after this run.
     5. enemy AI deploy variety, using roles **(built in 0.4.0-dev, 2026-11-15; to play-test)**. User decisions: group rate unchanged (25% → 45%), split attacks rare (~15%), rare Brawler packs (side attack makes them interesting).
+       - Balance bot, 4 runs per cell (also includes the Aegis changes: radius 200, speed 46, frontmost follow, for both sides): **clearly harder.** Without upgrades stage 2 75%, stages 3–5 0% (before 50–100%). Mid upgrades: stage 6 25–50% (before 75–100%), stage 8 0–75%, stages 9–12 0%. Max upgrades: stage 9 50%, stages 10–11 25%, stage 12 and Endless 1 0% (before 75%). Rebalance in step 6.
     6. balance pass with the bot; expect clear changes in difficulty
   - **Tests:** the rule tests are rewritten per role (one set of checks per role, not per type).
   - **Code:** data-driven. `ROLES` and `TRAITS` in data.js, each mech type gets `role` and `traits`; world.js asks for the effective rules (role merged with traits) and never checks type names.
