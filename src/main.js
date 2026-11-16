@@ -128,17 +128,20 @@ function launch(i) {
 // The server replaces an 'abandoned' row when the real result of the same battle id arrives.
 const CP_KEY = 'iron-defense-checkpoints';
 const MIN_TIME = 15; // shorter quits are noise
+const duo = (a) => ({ player: a[0], enemy: a[1] });
+// timeline entries: [time s, energy, player base HP %, enemy base HP %, player mechs, enemy mechs]
 function summary(result, stars = 0) {
   const w = game.world, i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
   const body = {
     id: w.battleId, device: deviceId(), ...(save.settings.name ? { name: save.settings.name } : {}),
-    // fmt 2: stage, lanes, rows and groups count from 1 (fmt 1, the first dev battles: from 0)
-    fmt: 2, v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
-    time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed, lost: w.stats.lost,
-    baseHp: [pct(w.bases[0]), pct(w.bases[1])], energyLeft: Math.round(w.energy),
+    // fmt 3: stage, lanes, rows and groups count from 1; in events side 1 = player, 0 = enemy; per-side data is named.
+    // (fmt 2: player/enemy as [player, enemy] lists and event side 0 = player; fmt 1, the first dev battles: also 0-based.)
+    fmt: 3, v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
+    time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
+    baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
-    enemy: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
-    mechs: w.log.mechs, turrets: w.log.turrets, lost: w.log.lost, specials: w.log.specials,
+    enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
+    mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
     upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
   };
   return body;

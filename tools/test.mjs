@@ -584,10 +584,10 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('timeline every 30 s', L.timeline.length === 3 && L.timeline[1][0] === 30 && L.timeline[0].length === 6, JSON.stringify(L.timeline));
   check('battle log is small', JSON.stringify(L).length < 6000, JSON.stringify(L).length + ' bytes');
   const E = (k) => L.events.filter((e) => e[1] === k);
-  check('event: own deploy with level and lane (lanes from 1)', E('deploy').some((e) => e[2] === 0 && e[3] === 'gunner' && e[4] === 0 && e[5] === 2 && e[0] === 0));
-  check('event: turret with lane and row (from 1)', E('turret').some((e) => e[2] === 0 && e[3] === 'sentry' && e[5] === 1 && e[6] === 2));
+  check('event: own deploy with level and lane (lanes from 1)', E('deploy').some((e) => e[2] === 1 && e[3] === 'gunner' && e[4] === 0 && e[5] === 2 && e[0] === 0));
+  check('event: turret with lane and row (from 1)', E('turret').some((e) => e[2] === 1 && e[3] === 'sentry' && e[5] === 1 && e[6] === 2));
   check('event: special and upgrade', E('special')[0]?.[2] === 'surge' && E('upgrade')[0]?.[2] === 'gunner' && E('upgrade')[0]?.[3] === 1);
-  const ed = E('deploy').filter((e) => e[2] === 1);
+  const ed = E('deploy').filter((e) => e[2] === 0);
   check('event: enemy deploy has order and group (from 1), lane 1-5', ed.length > 0 && ed.every((e) => e[6] >= 1 && (e[7] === 1 || e[7] === 2) && e[5] >= 1 && e[5] <= 5));
   check('events in time order', L.events.every((e, i) => i === 0 || e[0] >= L.events[i - 1][0]));
 }
