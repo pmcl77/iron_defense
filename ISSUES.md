@@ -114,6 +114,12 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **[feature] Enemy AI later:** D, stage personalities (e.g. "swarm": many light units; "siege": Lancer, Mortar, Breacher; "armored": Brawler, Aegis) for variety between stages; and the agreed "counter AI" (real counter-picking against your army). *(A + B + C built in step 5, see CHANGELOG.)*
 
 ### Under discussion
+- **[balance/AI] Findings from the first battle with events** (Ash Ridge, stage 10, won 3★ in 753 s, 2026-11-16; one battle, so hints, not proof)
+  - **Seeker carries everything:** 138 of the player's 159 kills came from Seekers (42 deployed, up to level 5); Brawler 22 deployed → 3 kills, Gunner 5 → 0, Mortar 6 → 3. Kill credit goes to the last hit, which favours long-range missiles, but the gap is large. Candidate for step 6.
+  - **Two-lane setup:** the player deployed almost only in lanes 2 and 4 (57 of 75), Brawler + Seeker pairs. From there long reach covers the whole field. Matches the open question "do lanes 2 + 4 become the only sensible setup?".
+  - **Enemy AI deploys a lone Aegis:** 7 of 91 enemy orders were a single Aegis (the very first deploy at 6 s too); all 15 enemy Aegis died with nothing to protect. Cause: Aegis is in `AI.defensive` and in the single-unit pick. Option: never deploy a Support alone (send it with the next group, or only as part of a group).
+  - Enemy Brawlers did little (35 deployed → 5 kills, 26 killed by Seekers); enemy Seekers were their best unit (25 → 22 kills).
+  - Status: to discuss; collect more battles first.
 - **[tech/balance] Battle statistics for balancing** (user idea, 2026-11-16: "Is it possible for the game to record statistics on the cloudflare server that you could analyze?")
   - **What:** after each battle the game sends an anonymous summary (no personal data): version and build (dev/release), stage, result, stars, duration, base HP left, mechs/turrets deployed (counts), loadout, Workshop levels, enemy deploys, specials used.
   - **Options:**
