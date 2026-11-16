@@ -114,6 +114,16 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **[feature] Enemy AI later:** D, stage personalities (e.g. "swarm": many light units; "siege": Lancer, Mortar, Breacher; "armored": Brawler, Aegis) for variety between stages; and the agreed "counter AI" (real counter-picking against your army). *(A + B + C built in step 5, see CHANGELOG.)*
 
 ### Under discussion
+- **[tech/balance] Battle statistics for balancing** (user idea, 2026-11-16: "Is it possible for the game to record statistics on the cloudflare server that you could analyze?")
+  - **What:** after each battle the game sends an anonymous summary (no personal data): version and build (dev/release), stage, result, stars, duration, base HP left, mechs/turrets deployed (counts), loadout, Workshop levels, enemy deploys, specials used.
+  - **Options:**
+    - **A, Cloudflare D1 (recommended):** a Pages Function (`functions/api/stats.js`, deploys with every push) writes one row per battle into a D1 database (free tier is plenty). User's part: create the D1 database and bind it to the `iron-defense` Pages project in the dashboard. Claude has no Cloudflare access; reading the data either by (1) the user running one export/query command and pasting the result (safest), (2) a read-only API token scoped to that database, or (3) a key-protected endpoint returning aggregates only.
+    - **B, local only:** stats kept in the save on the device, plus an "Export statistics" button that copies them for pasting. No server setup, but only one device and the user has to remember to export.
+  - **Details to decide:** record dev and release (tagged by build and version); a Settings switch "Send battle statistics" (on by default).
+  - **Timing:** fits right before or during step 6 (balance), so tuning can use real play-tests on the phone, not only the bot.
+  - Effort: about an hour of code, plus a few clicks in the Cloudflare dashboard.
+  - Status: noted, to decide.
+
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
   - **Today:** the field (40% less damage taken, radius 140, doesn't stack, not on the Aegis itself; it also covers own turrets and the base) is shown only as a dashed rotating circle. You can't tell who is inside.
   - **Note:** it reduces damage taken; it doesn't add HP.
