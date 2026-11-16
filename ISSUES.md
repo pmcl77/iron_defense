@@ -268,6 +268,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 
 ### Tech / housekeeping
 - **[tech] Unpublish the old GitHub Pages site** (repo Settings → Pages). It still serves v0.1.0 at pmcl77.github.io/iron_defense. A task for the user.
+- **[idea] Save slots** (user, 2026-11-16; parked, not up for discussion yet): for play-testing, switch between e.g. a fresh save (no upgrades) and the current progress. Would be a save feature. Battle stats already record Workshop levels and perks, so battles from different saves can be told apart.
 - **[tech] Local Wi-Fi testing doesn't work:** the phone can't reach a server on the Mac (ping works, firewall off). Not needed anymore since the dev preview exists; left unsolved.
 
 ## To check during play-testing (v0.2.0-dev)
