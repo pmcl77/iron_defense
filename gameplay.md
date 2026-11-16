@@ -78,6 +78,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 - Tapping a mech card deploys that mech at your base, into the active lane.
 - Each card has a short cooldown after use, as in Ironline.
 - **Loadout:** you have up to 8 mech types, but the HUD holds 5 mech cards. Before each battle you pick a loadout of 5 unlocked mechs, which keeps hotkeys 1–5. The last loadout is remembered. *(Might later grow to allow all 8 mechs.)*
+- **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. A unit type you've never fought shows as "?" until you meet it. During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
 
 ### 5.2 Movement: roles, types and traits
 

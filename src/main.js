@@ -97,7 +97,42 @@ function demoTick(dt) {
 // ---------- stage flow ----------
 function startStage(i) {
   initAudio();
-  if (unlocked().mechs.length > LOADOUT_SIZE) showLoadout(i); else launch(i);
+  showLoadout(i); // always: it also shows the enemy intel (with 5 or fewer mechs unlocked, all are picked)
+}
+// ---------- enemy intel ----------
+// Enemy mech types the player has fought at least once; the rest show as '?' in the intel. A save from before the
+// intel counts the rosters of all cleared stages as seen.
+function seenSet() {
+  if (!Array.isArray(save.seen)) {
+    const s = new Set();
+    for (let k = 0; k < Math.min(save.cleared, STAGES.length); k++) for (const t of STAGES[k].roster) s.add(t);
+    save.seen = [...s]; writeSave(save);
+  }
+  return new Set(save.seen);
+}
+function noteSeen(w) {
+  const types = Object.keys(w.log.mechs[1]);
+  if (types.length === w.seenN) return;
+  w.seenN = types.length;
+  const s = seenSet(), before = s.size;
+  for (const t of types) s.add(t);
+  if (s.size !== before) { save.seen = [...s]; writeSave(save); }
+}
+function intelHtml(i) {
+  const st = stageDef(i), seen = seenSet();
+  const units = st.roster.map((t) => seen.has(t)
+    ? `<span class="iu"><canvas width="72" height="72" data-icon="mech:${t}:1"></canvas><small>${MECHS[t].name}</small></span>`
+    : '<span class="iu unknown"><i>?</i><small>Unknown</small></span>').join('');
+  const tc = {};
+  for (const [t] of st.turrets || []) tc[t] = (tc[t] || 0) + 1;
+  const turrets = Object.entries(tc).map(([t, n]) => `${n}× ${TURRETS[t].name}`).join(', ') || 'none';
+  const base = Object.keys(BASE_UPGRADES).map((k) => `<span class="ib">${BASE_UPGRADES[k].name}${pips((st.base || {})[k] || 0, BASE_UPGRADES[k].costs.length)}</span>`).join('');
+  return `<div class="intel">
+      <div class="section-t">INTEL · ENEMY <span class="lvl-tag">LEVEL ${st.lvl}</span></div>
+      <div class="intel-units">${units}</div>
+      <div class="intel-row"><span class="k">Turrets</span> ${turrets}</div>
+      <div class="intel-row"><span class="k">Base</span> ${base}</div>
+    </div>`;
 }
 function launch(i) {
   tryFullscreen();
@@ -118,6 +153,7 @@ function launch(i) {
   const st = stageDef(i);
   $('#stage-no').textContent = st.endless ? 'ENDLESS' : `STAGE ${String(i + 1).padStart(2, '0')}`;
   $('#stage-name').textContent = st.endless ? `WAVE ${i - STAGES.length + 1}` : st.name.toUpperCase();
+  $('#foe-lvl').textContent = `L${st.lvl} `;
   toast(`${st.name}: destroy the enemy base`);
 }
 // ---------- battle statistics (functions/api/stats.js, ISSUES.md) ----------
@@ -180,6 +216,7 @@ function deliver(id, body) {
 }
 function sendStats(result, stars = 0) {
   const w = game.world;
+  if (game.mode === 'play' && w && w.battleId) noteSeen(w);
   if (game.mode !== 'play' || !w || !w.battleId || w.statsSent) return;
   w.statsSent = true;
   const id = w.battleId;
@@ -258,7 +295,7 @@ function bind(actions) {
   }));
 }
 function drawIcons(root) {
-  root.querySelectorAll('canvas[data-icon]').forEach((c) => { const [k, t] = c.dataset.icon.split(':'); renderIcon(c, k, t); });
+  root.querySelectorAll('canvas[data-icon]').forEach((c) => { const [k, t, team] = c.dataset.icon.split(':'); renderIcon(c, k, t, +team || 0); });
 }
 const pips = (n, max) => `<span class="pips">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
 
@@ -306,13 +343,15 @@ function showLoadout(i) {
     screen.className = '';
     screen.innerHTML = `
       <div class="panel">
-        <div class="head"><div><h2>Loadout</h2><p class="sub">${stageDef(i).name}: pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE}).</p></div>
+        <div class="head"><div><h2>Loadout</h2><p class="sub">${stageDef(i).name}: ${u.length > LOADOUT_SIZE ? `pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE})` : 'your mechs'}.</p></div>
           <button class="btn small" data-a="back">Back</button></div>
+        ${intelHtml(i)}
+        <div class="section-t">YOUR MECHS</div>
         <div class="loadout">
           ${u.map((t) => { const n = pick.indexOf(t); return `<button class="lo ${n >= 0 ? 'on' : ''}" data-a="tog" data-t="${t}">${n >= 0 ? `<span class="slot">${n + 1}</span>` : ''}
             <canvas width="108" height="108" data-icon="mech:${t}"></canvas><b>${MECHS[t].name}</b><small>⚡${MECHS[t].cost}</small></button>`; }).join('')}
         </div>
-        <div class="btn-row"><button class="btn primary" data-a="go" ${pick.length === LOADOUT_SIZE ? '' : 'disabled'}>Deploy</button></div>
+        <div class="btn-row"><button class="btn primary" data-a="go" ${pick.length === Math.min(LOADOUT_SIZE, u.length) ? '' : 'disabled'}>Deploy</button></div>
       </div>`;
     drawIcons(screen);
     bind({
@@ -770,7 +809,7 @@ function frame(now) {
   }
   if (game.mode === 'play' && !game.paused) keyPan(dtReal);
   if (w) { renderer.consume(w.fx, sfx); renderer.draw(w, simDt, game.ui); }
-  if (game.mode === 'play') { updateHud(); checkResult(); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
+  if (game.mode === 'play') { updateHud(); checkResult(); noteSeen(w); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
   requestAnimationFrame(frame);
 }
 
@@ -797,5 +836,5 @@ window.__step = (seconds) => {
     renderer.updateParticles(STEP);
   }
   renderer.draw(w, 0, game.ui);
-  if (game.mode === 'play') { updateHud(); checkResult(); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
+  if (game.mode === 'play') { updateHud(); checkResult(); noteSeen(w); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
 };

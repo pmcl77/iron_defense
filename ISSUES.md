@@ -118,7 +118,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Today nothing about the enemy is shown: its level (one per stage, all units: e.g. Scrubline 0, Ash Ridge 2, Endless up to 5), roster, base upgrades, starting turrets.
   - **Proposal:** an "Intel" line **before the loadout pick** (stage list / loadout screen): enemy unit icons, "Level N", base upgrades as pips, number of starting turrets; makes the loadout a real counter-pick (and scouting is realistic). In battle: "L N" next to the enemy HP bar.
   - Optional surprise: a type never fought before shows as "?" until first met (discovery once per new enemy type in the campaign).
-  - Status: to decide after the test rounds.
+  - **Decided and built (user, 2026-11-16):** intel on the loadout screen (now shown before every battle), '?' for types never fought, "L N" next to the enemy HP bar.
 - **[gameplay/balance] Battles are too long** (user, 2026-11-16: "battles are too long … that is what I like about Clash Royale, as a battle is capped to 5 min maximum"; not to copy it)
   - **Data:** recorded wins 9:10, 12:33 and 22:13; the lost stage 12 win was long too. No time limit exists (only the bot stops at 10 min).
   - **Where the time goes:** the midfield stalemate, not the base. In Breakwater the enemy base stayed at 100% for about 20 minutes, then fell in about 100 s. Two rules stretch the stalemate: the enemy's income doubles over the first 7 minutes, and rises by up to 40% when the player's mechs are near its base (the harder you push, the more it deploys).

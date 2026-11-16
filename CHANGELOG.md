@@ -51,6 +51,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
   - **Upgrades add only damage and HP, +15% per level** (was +25%, plus range, speed and fire rate). Ranges and speeds never change with level, so formations and the range ladder behave the same in every battle.
   - **Seeker: normal reach** (own lane ± 1; the Long reach trait is removed from it).
 
+### UI
+- **Enemy intel** on the loadout screen, which now opens before every battle: the enemy's unit types, level, starting turrets and base upgrades, so you can pick your loadout against it. Unit types you've never fought show as "?" until you meet them (a save from before counts the units of all cleared stages as met). In battle the enemy level stands next to its HP bar.
+
 ### Tech
 - **Battle statistics:** after each battle (and when you quit or restart a battle after 15 s or more) the game sends a summary to the site: version, stage, result, stars, time, base HP, loadout, Workshop levels, mechs and turrets per type for both sides, losses, specials, upgrades and a 30 s timeline. Stored in Cloudflare D1 (`functions/api/stats.js`; release and dev in separate databases), readable only with the key. Switch: Settings → *Send battle stats* (on by default). Offline or on the local test server nothing is sent and nothing breaks.
   - **Device id and player name:** each battle carries a random id of the device (kept when you reset progress) and, if set, the player name from Settings (optional, up to 20 characters, just a label). Settings shows a short device code, e.g. `#3f9a`.
