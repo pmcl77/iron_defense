@@ -39,8 +39,8 @@ const data = await r.json();
 ok(data.rows.length === 2 && data.rows[0].stageName === 'Dust Belt' && data.rows[0].mechs[1].scout === 9, 'rows hold the full summary');
 ok(data.rows[1].duration === undefined && data.rows[1].time === 200.4, 'row data is the sent JSON');
 ok(data.summary.length === 2 && data.summary.every((s) => s.n === 1 && s.stage === 3), 'summary grouped by result');
-ok(data.next === data.rows[1].id, 'next = last id');
-const r2 = await (await get('?since=' + data.rows[0].id, { 'x-stats-key': 'secret-key' })).json();
+ok(data.next === data.rows[1].row && data.next === 2, 'next = last row number');
+const r2 = await (await get('?since=' + data.rows[0].row, { 'x-stats-key': 'secret-key' })).json();
 ok(r2.rows.length === 1 && r2.rows[0].result === 'lose', 'since + header key');
 
 // battle ids, abandoned rounds, device and name
@@ -67,6 +67,10 @@ await post({ ...battle, stage: 8, name: '   ' });
 ok(!('name' in (await rows()).find((r) => r.stage === 8)), 'empty name dropped');
 const sum = (await (await get('?key=secret-key')).json()).summary.find((s) => s.stage === 5 && s.result === 'win');
 ok(sum && sum.devices === 1, 'summary counts devices');
+const withId = (await rows()).find((r) => r.result === 'win' && r.stage === 5);
+ok(withId.id === ID && Number.isInteger(withId.row), 'battle id and row number both kept');
+const all = await (await get('?key=secret-key')).json();
+ok(Number.isInteger(all.next) && all.next === all.rows[all.rows.length - 1].row, 'next is a row number even when rows have battle ids');
 
 // a database made by the first version (no battle column) is upgraded in place
 const old = { STATS_DB: d1(`CREATE TABLE battles (id INTEGER PRIMARY KEY AUTOINCREMENT, created TEXT NOT NULL DEFAULT (datetime('now')),

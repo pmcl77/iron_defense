@@ -3,7 +3,8 @@
 //   STATS_DB  - D1 database binding (iron-defense-stats / iron-defense-stats-dev)
 //   STATS_KEY - secret needed to read the data
 // POST /api/stats         one battle summary from the game (main.js sendStats)
-// GET  /api/stats?key=…   { summary, rows, next }; optional since=<id> and limit=<n> (max 5000).
+// GET  /api/stats?key=…   { summary, rows, next }; optional since=<row> and limit=<n> (max 5000).
+//                         Each row is the sent summary (its `id` = battle id) plus `row` (database row number) and `created`.
 //                         The key can also be sent as header "x-stats-key".
 // Each battle has a random id. A battle left without a result arrives as 'abandoned' (main.js checkpoint); if the
 // real result of the same battle comes later, it replaces that row. A real result is never replaced.
@@ -86,6 +87,6 @@ export async function onRequestGet({ request, env }) {
     COUNT(DISTINCT json_extract(data, '$.device')) AS devices
     FROM battles GROUP BY version, build, stage, result ORDER BY version, stage, result`).all()).results;
   const rows = (await db.prepare('SELECT id, created, data FROM battles WHERE id > ? ORDER BY id LIMIT ?')
-    .bind(since, limit).all()).results.map((r) => ({ id: r.id, created: r.created, ...JSON.parse(r.data) }));
-  return json({ summary, rows, next: rows.length ? rows[rows.length - 1].id : since });
+    .bind(since, limit).all()).results.map((r) => ({ ...JSON.parse(r.data), row: r.id, created: r.created }));
+  return json({ summary, rows, next: rows.length ? rows[rows.length - 1].row : since });
 }
