@@ -53,6 +53,7 @@ export class World {
     this.exp = EXPERIMENTS[this.expKey];
     this.overtime = false;
     this.activeLane = 2;
+    this.fwd = Array(LANES).fill(false); // per lane: deploy forward (dev experiment 'forward')
 
     // unit levels per team
     this.lvl = [{}, {}];
@@ -101,6 +102,7 @@ export class World {
   // Numbers people read start at 1, as in the game: lane 1-5 (left to right, as the lane buttons), row 1-7 (1 = nearest
   // to that side's base), order and group from 1. Level counts upgrades (0 = none), as the "L2" on the cards.
   //   [t, 'deploy', team, type, level, lane]            + for the enemy: order number, group in that order (split attack = 2 groups)
+  //                                                     + for a player forward deploy (dev experiment): row of the turret
   //   [t, 'turret', team, type, level, lane, row]       turret finished (enemy start turrets at t = 0)
   //   [t, 'sold', type, lane, row]
   //   [t, 'death', team, type, lane, progress, killer]  killer = attacker type ('base', 'bomb' for Bombing)
@@ -174,25 +176,38 @@ export class World {
   canDeploy(type) {
     return !this.result && this.unlocked.mechs.includes(type) && this.energy >= MECHS[type].cost && !(this.deployCd[type] > 0);
   }
-  deploy(type, lane = this.activeLane) {
+  // Forward deploy (dev experiment): a lane's frontmost finished own turret is a deploy point for that lane only.
+  // New mechs appear just behind it (base side); if it's gone, the next one back, else the base.
+  forwardTurret(lane) {
+    if (!this.exp.forward) return null;
+    for (let r = ROWS - 1; r >= 0; r--) { const t = this.cells[0][lane][r]; if (t && !t.dead) return t; }
+    return null;
+  }
+  laneFwd(lane) { return !!this.exp.forward && this.fwd[lane]; }
+  spawnPoint(lane, fwd) {
+    const t = fwd ? this.forwardTurret(lane) : null;
+    return t ? { y: t.y - t.radius - 30, row: t.row } : { y: BASE_FACE[0] + 24, row: null };
+  }
+  deploy(type, lane = this.activeLane, fwd = this.laneFwd(lane)) {
     if (!this.canDeploy(type)) return false;
-    const d = MECHS[type];
+    const d = MECHS[type], at = this.spawnPoint(lane, fwd);
     this.energy -= d.cost;
     this.deployCd[type] = d.cd;
     const jitter = (this.rnd() * 2 - 1) * 20;
-    const e = this.spawn({ kind: 'mech', type, team: 0, lane, x: laneX(lane) + jitter, y: BASE_FACE[0] + 24, jitter });
+    const e = this.spawn({ kind: 'mech', type, team: 0, lane, x: laneX(lane) + jitter, y: at.y, jitter });
     this.stats.deployed++;
-    this.ev('deploy', 1, type, this.lvl[0][type], lane + 1);
+    if (at.row === null) this.ev('deploy', 1, type, this.lvl[0][type], lane + 1);
+    else this.ev('deploy', 1, type, this.lvl[0][type], lane + 1, at.row + 1);
     this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 0, type });
     return true;
   }
   // Tap on a mech card: deploy now if nothing is waiting and it's affordable, otherwise queue.
-  // Returns 'deployed' | 'queued' | 'full' | false.
-  request(type, lane = this.activeLane) {
+  // Each order remembers base or forward. Returns 'deployed' | 'queued' | 'full' | false.
+  request(type, lane = this.activeLane, fwd = this.laneFwd(lane)) {
     if (this.result || !this.unlocked.mechs.includes(type)) return false;
-    if (!this.queue.length && this.canDeploy(type) && this.spawnClear(lane)) return this.deploy(type, lane) ? 'deployed' : false;
+    if (!this.queue.length && this.canDeploy(type) && this.spawnClear(lane, fwd)) return this.deploy(type, lane, fwd) ? 'deployed' : false;
     if (this.queue.length >= QUEUE.max) return 'full';
-    this.queue.push({ type, lane });
+    this.queue.push({ type, lane, fwd });
     this.fx.push({ t: 'queue', type, lane });
     return 'queued';
   }
@@ -210,8 +225,8 @@ export class World {
     return true;
   }
   // no friendly mech overlapping the spawn point of this lane
-  spawnClear(lane) {
-    const y0 = BASE_FACE[0] + 24, x0 = laneX(lane);
+  spawnClear(lane, fwd = false) {
+    const y0 = this.spawnPoint(lane, fwd).y, x0 = laneX(lane);
     for (const e of this.entities)
       if (!e.dead && e.team === 0 && e.kind === 'mech' && Math.abs(e.x - x0) < 50 && Math.abs(e.y - y0) < e.radius + 26) return false;
     return true;
@@ -221,10 +236,21 @@ export class World {
     if (!q) return;
     if (!this.canDeploy(q.type)) { this.queueWait = 0; return; } // energy or cooldown: the whole queue waits
     this.queueWait += dt;
-    if (!this.spawnClear(q.lane) && this.queueWait < QUEUE.wait) return;
-    if (this.deploy(q.type, q.lane)) { this.queue.shift(); this.queueWait = 0; }
+    if (!this.spawnClear(q.lane, q.fwd) && this.queueWait < QUEUE.wait) return;
+    if (this.deploy(q.type, q.lane, q.fwd)) { this.queue.shift(); this.queueWait = 0; }
   }
-  setLane(l) { if (l >= 0 && l < LANES) this.activeLane = l; }
+  // Lane button: select a lane. With forward deploy, tapping the selected lane again switches it between base and
+  // forward (each lane remembers its choice). Returns 'fwd' | 'base' | 'noturret' (forward wanted, no turret) | 'lane'.
+  setLane(l, toggle = true) {
+    if (l < 0 || l >= LANES) return false;
+    if (toggle && this.exp.forward && l === this.activeLane) {
+      if (this.fwd[l]) { this.fwd[l] = false; return 'base'; }
+      if (!this.forwardTurret(l)) return 'noturret';
+      this.fwd[l] = true; return 'fwd';
+    }
+    this.activeLane = l;
+    return 'lane';
+  }
 
   orderAt(lane, row) { return this.orders.find((o) => o.lane === lane && o.row === row) || null; }
   canOrder(lane, row, type) {

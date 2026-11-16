@@ -96,6 +96,9 @@ canvas#game { position: absolute; inset: 0; display: block; }
 }
 .lanes button::after { content: ''; border: 5px solid transparent; border-bottom: 7px solid currentColor; border-top: none; }
 .lanes button.on { background: rgba(78,163,255,0.9); color: #08121e; }
+/* dev experiment "Forward deploy": the lane deploys at its frontmost turret (dimmed: that turret fell, base for now) */
+.lanes button.fwd::after { content: 'FWD'; border: none; font-size: 8px; font-weight: 800; line-height: 1; padding: 2px 3px; background: #ffb43a; color: #1a1000; }
+.lanes button.fwd-off::after { opacity: 0.4; text-decoration: line-through; }
 
 .row3 { display: flex; gap: 4px; height: 104px; }
 .tabs { display: flex; flex-direction: column; gap: 4px; width: 26px; flex: none; }
@@ -238,6 +241,7 @@ canvas#game { position: absolute; inset: 0; display: block; }
 .toggle { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--edge); }
 .toggle small { display: block; font-size: 11px; margin: 2px 0 0; }
 .name-input { width: 9.5em; min-width: 0; font: inherit; font-size: 16px; color: var(--ink); background: var(--panel-2); border: 1px solid var(--edge); border-radius: 6px; padding: 7px 9px; }
+select.name-input { width: 12em; padding-right: 4px; }
 
 @media (max-height: 700px) {
   .row3 { height: 88px; }

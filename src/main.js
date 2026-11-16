@@ -530,13 +530,20 @@ function showUpgrades() {
   });
 }
 
+// lane button or Shift+1-5: select a lane; with the forward-deploy experiment a second tap switches base/forward
+function pickLane(l) {
+  const r = game.world.setLane(l);
+  if (r === 'noturret') toast(`No turret in L${l + 1} to deploy from`);
+  else if (r === 'fwd') toast(`L${l + 1}: deploy forward`);
+  else if (r === 'base') toast(`L${l + 1}: deploy at base`);
+}
 // ---------- HUD ----------
 let cardEls = [], specialEls = [], laneEls = [];
 function buildHud() {
   const w = game.world;
   $('#lanes').innerHTML = Array.from({ length: LANES }, (_, i) => `<button data-l="${i}">L${i + 1}</button>`).join('');
   laneEls = [...$('#lanes').children];
-  laneEls.forEach((b) => b.addEventListener('click', () => { initAudio(); w.setLane(+b.dataset.l); playSfx('click'); }));
+  laneEls.forEach((b) => b.addEventListener('click', () => { initAudio(); pickLane(+b.dataset.l); playSfx('click'); }));
   hud.querySelector('.tabs [data-tab="turrets"]').hidden = !w.unlocked.turrets.length;
   hud.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === game.ui.tab));
   refreshCards();
@@ -613,7 +620,11 @@ function updateHud() {
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   setText($('#regen'), 'rg', w.overtime ? `+${w.regen}+${OVERTIME_BONUS}/s` : `+${w.regen}/s`);
   if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; toast(`OVERTIME: +${OVERTIME_BONUS} energy/s for both sides`); }
-  laneEls.forEach((b, i) => b.classList.toggle('on', i === w.activeLane));
+  laneEls.forEach((b, i) => {
+    b.classList.toggle('on', i === w.activeLane);
+    b.classList.toggle('fwd', w.laneFwd(i));
+    b.classList.toggle('fwd-off', w.laneFwd(i) && !w.forwardTurret(i)); // its turret fell: deploys at the base for now
+  });
   for (const c of cardEls) {
     const def = c.mech ? MECHS[c.t] : TURRETS[c.t];
     c.el.classList.toggle('poor', w.energy < def.cost);
@@ -637,12 +648,12 @@ function updateHud() {
 let queueSig = null;
 function updateQueue() {
   const w = game.world, q = w.queue, box = $('#queue');
-  const sig = q.map((o) => o.type + o.lane).join(',');
+  const sig = q.map((o) => o.type + o.lane + (o.fwd ? 'f' : '')).join(',');
   if (sig !== queueSig) {
     queueSig = sig;
     box.hidden = !q.length;
     const items = box.querySelector('.qitems');
-    items.innerHTML = q.map((o, i) => `<button class="q${i ? '' : ' head'}" data-i="${i}" aria-label="Cancel ${MECHS[o.type].name}"><canvas width="80" height="68" data-icon="mech:${o.type}"></canvas>${i ? '' : '<i class="fill"></i>'}<span class="ln">${o.lane + 1}</span><span class="x">✕</span></button>`).join('')
+    items.innerHTML = q.map((o, i) => `<button class="q${i ? '' : ' head'}" data-i="${i}" aria-label="Cancel ${MECHS[o.type].name}"><canvas width="80" height="68" data-icon="mech:${o.type}"></canvas>${i ? '' : '<i class="fill"></i>'}<span class="ln">${o.lane + 1}${o.fwd ? '▲' : ''}</span><span class="x">✕</span></button>`).join('')
       + '<div class="q slot"></div>'.repeat(QUEUE.max - q.length);
     drawIcons(items);
     items.querySelectorAll('button.q').forEach((b) => b.addEventListener('click', () => { w.cancelQueued(+b.dataset.i); renderer.consume(w.fx, sfx); }));
@@ -738,7 +749,7 @@ function onTap(px, py) {
     renderer.consume(w.fx, sfx);
     return;
   }
-  if (p.y > 0 && p.y < BASE_FACE[0] + 150) { w.setLane(lane); playSfx('click'); }
+  if (p.y > 0 && p.y < BASE_FACE[0] + 150) { w.setLane(lane, false); w.fwd[lane] = false; playSfx('click'); }
 }
 
 // minimap: tap or drag to move the camera
@@ -763,7 +774,7 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (game.paused) return;
-  if (e.shiftKey && /^digit[1-5]$/i.test(e.code)) { w.setLane(+e.code.slice(5) - 1); return; }
+  if (e.shiftKey && /^digit[1-5]$/i.test(e.code)) { pickLane(+e.code.slice(5) - 1); return; }
   if (k >= '1' && k <= '5') {
     const list = game.ui.tab === 'mechs' ? w.unlocked.mechs : w.unlocked.turrets;
     const t = list[+k - 1];

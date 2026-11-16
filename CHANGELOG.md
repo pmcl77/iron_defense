@@ -11,6 +11,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ### Dev experiments (dev build only)
 - **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
+  - **Forward deploy:** your turrets double as deploy points for their own lane. Tap the selected lane button again to switch that lane to forward (button shows **FWD**), once more for the base; each lane remembers its choice, and Shift+1–5 works the same. New mechs appear just behind the lane's frontmost turret; if it falls, the next one back, else the base (FWD crossed out meanwhile). Queued orders keep their own choice (▲ in the queue). Tapping the field near the base selects that lane at the base. Player only.
   - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
   - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
   - **Overtime from 8 / 15 min:** from then on both sides get +15 energy/s (HUD shows "+N+15/s").
