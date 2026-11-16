@@ -176,6 +176,17 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - C bigger kill bounty: shortlisted.
     - F limit on mechs: interesting, but a risk of passive play (waiting to deploy).
     - G exposed base: the player starts with no turrets, so its base would be exposed from the start; it would need to apply only after turrets were lost, or only to the enemy.
+  - **Proposal: experiment switches on dev (2026-11-16, to decide)**
+    - A dev-only "Experiments" section in Settings; every switch defaults to today's game. Each battle's stats record the switches, so battles can be compared.
+    - **4c Forward deploy** (user: "turrets double as forward bases"): off / on.
+      - Same lane only: a turret in L3 is a deploy point for L3, not for L2/L4. Turret placement stays a decision, one turret doesn't serve three lanes.
+      - Point: just behind (base side of) the frontmost finished turret in that lane. A turret under attack still works (reinforcing is the point); when it falls, the next one back, else the base.
+      - UI: the lane button shows a small "FWD" mark when that lane has a deploy point. Deploys go forward automatically. Tapping the already selected lane button again switches that lane between forward and base (for defending at home).
+      - Player only for the first test (the enemy's stage turrets stand on rows 3–5 from the start).
+    - **C Kill bounty:** 25% (today) / 40% / 60%.
+    - **A Enemy income ramp:** ×2 over 7 min (today) / ×1.5 / none.
+    - **B End phase:** off / from 6 min / from 10 min: both sides' income ×2 and an "OVERTIME" label in the HUD. Small (a timer and the label). Base armor stays (could be added later).
+    - **Test order:** 4c alone first, then C, then combinations; A and B as needed.
   - **More ideas from the user (2026-11-16), for later:**
     - **Deployment location** adds variety (in Clash Royale troops can be placed anywhere, but that's "magic"; this game leans realistic). Realistic forms: deploy at a held forward position (4c) or an air drop with cooldown that can be shot down.
     - **Air units** (helicopters/VTOL): ignore turret walls and lane blocking, only some turrets can hit them; counter-play, but new targeting rules, turret types and art.
