@@ -6,3 +6,7 @@ samples/
 screens/
 tmp_files/
 .playwright-mcp/
+
+# local secrets (never commit; the repo is public)
+secrets.env
+*.env
