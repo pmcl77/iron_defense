@@ -48,6 +48,7 @@ The simulation never draws. It emits `fx` events that `render.js` turns into par
 
 ```bash
 node tools/test.mjs            # headless rule tests
+node tools/test_stats.mjs      # battle statistics function (functions/api/stats.js)
 node tools/balance.mjs [runs] [stages…]   # bot plays the campaign and reports win rates
 node tools/shots.cjs <outdir>  # headless browser smoke test with screenshots (needs Playwright)
 node tools/make_icons.cjs      # render icons/icon.svg to PNG

@@ -119,7 +119,30 @@ function launch(i) {
   $('#stage-name').textContent = st.endless ? `WAVE ${i - STAGES.length + 1}` : st.name.toUpperCase();
   toast(`${st.name}: destroy the enemy base`);
 }
+// ---------- battle statistics (functions/api/stats.js, ISSUES.md) ----------
+// One anonymous summary per battle: no device id, no name. Failures (offline, local server) are ignored.
+function sendStats(result, stars = 0) {
+  const w = game.world;
+  if (!save.settings.stats || game.mode !== 'play' || !w || w.statsSent) return;
+  if (result === 'quit' && w.time < 15) return; // instant restarts are noise
+  w.statsSent = true;
+  const i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
+  w.sample();
+  const body = {
+    v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i, stageName: st.name, result, stars,
+    time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed, lost: w.stats.lost,
+    baseHp: [pct(w.bases[0]), pct(w.bases[1])], energyLeft: Math.round(w.energy),
+    loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
+    enemy: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
+    mechs: w.log.mechs, turrets: w.log.turrets, lost: w.log.lost, specials: w.log.specials,
+    upgrades: w.log.upgrades, timeline: w.log.timeline,
+  };
+  try {
+    fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
+  } catch { /* ignore */ }
+}
 function quitToMenu(to = 'stages') {
+  sendStats('quit');
   game.mode = 'menu';
   hud.hidden = true;
   hideSell();
@@ -141,6 +164,7 @@ function finishStage() {
   writeSave(save);
   const after = unlocked(), fresh = [];
   for (const k of ['mechs', 'turrets', 'specials']) for (const t of after[k]) if (!before[k].includes(t)) fresh.push((MECHS[t] || TURRETS[t] || SPECIALS[t]).name);
+  sendStats(win ? 'win' : 'lose', stars);
   playSfx(win ? 'win' : 'lose');
   const t = w.time;
   screen.className = '';
@@ -308,6 +332,7 @@ function showSettings() {
       <div class="toggle"><span>Sound</span><button class="btn small" data-a="sound">${save.settings.sound ? 'On' : 'Off'}</button></div>
       <div class="toggle"><span>Graphics</span><button class="btn small" data-a="gfx">${save.settings.graphics === 'simple' ? 'Simple' : 'Voxel'}</button></div>
       <div class="toggle"><span>Aegis links</span><button class="btn small" data-a="aegis">${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button></div>
+      <div class="toggle"><span>Send battle stats</span><button class="btn small" data-a="stats">${save.settings.stats ? 'On' : 'Off'}</button></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
       <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
@@ -317,6 +342,7 @@ function showSettings() {
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showSettings(); },
     fs: () => { if (document.fullscreenElement) document.exitFullscreen(); else tryFullscreen(true); },
     aegis: () => { cycleAegis(); showSettings(); },
+    stats: () => { save.settings.stats = !save.settings.stats; writeSave(save); showSettings(); },
     gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
     reset: (el) => { if (el.dataset.confirm) { save = resetSave(); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
   });
@@ -334,7 +360,7 @@ function showPause() {
         <button class="btn" data-a="quit">Quit to stages</button>
       </div></div>`;
   bind({
-    resume, restart: () => startStage(game.stageIndex),
+    resume, restart: () => { sendStats('quit'); startStage(game.stageIndex); },
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showPause(); },
     aegis: () => { cycleAegis(); showPause(); },
     quit: () => quitToMenu('stages'),

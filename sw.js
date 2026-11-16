@@ -1,6 +1,6 @@
 // Network-first service worker: always fresh when online, works offline.
 // When adding files, update SHELL and bump CACHE.
-const CACHE = 'iron-defense-v3';
+const CACHE = 'iron-defense-v4';
 const SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'manifest-dev.webmanifest',
   'src/main.js', 'src/world.js', 'src/render.js', 'src/render_voxel.js', 'src/data.js', 'src/audio.js', 'src/save.js', 'src/version.js',
@@ -13,7 +13,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET' || new URL(e.request.url).pathname.startsWith('/api/')) return;
   e.respondWith(
     fetch(e.request)
       .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return res; })

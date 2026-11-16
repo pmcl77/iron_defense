@@ -40,6 +40,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Line passes a fighting friendly with a longer range:** a Gunner behind a fighting Seeker passes it and returns to its lane in front, so the column stays in one lane. Two of the same type, or a Seeker behind a fighting Gunner, fan out as before.
 - **Fixed:** after passing, a faster Line mech could walk past its Tank in the passing lane and return home ahead of it (Mortar.f-Brawler-Gunner ended Gunner-first). It now falls in behind the Tank. If the mech it may not pass stops to fight instead (MO.f-SE-GU: the Seeker returns home and shoots), the pass becomes a fan-out and the Gunner walks on in the passing lane instead of standing still.
 
+### Tech
+- **Battle statistics:** after each battle (and when you quit or restart a battle after 15 s or more) the game sends an anonymous summary to the site: version, stage, result, stars, time, base HP, loadout, Workshop levels, mechs and turrets per type for both sides, losses, specials, upgrades and a 30 s timeline. No device id or name. Stored in Cloudflare D1 (`functions/api/stats.js`; release and dev in separate databases), readable only with the key. Switch: Settings → *Send battle stats* (on by default). Offline or on the local test server nothing is sent and nothing breaks.
+
 ## [0.3.0]: 2026-11-15
 
 ### Gameplay

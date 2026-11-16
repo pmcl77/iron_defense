@@ -28,6 +28,8 @@ const BODY_TURN = 3;      // rad/s: how fast a mech's legs turn toward where it 
 const turnTo = (a, b, step) => { const d = angDiff(a, b); return a + Math.max(-step, Math.min(step, d)); };
 const isStructure = (f) => f.kind === 'turret' || f.kind === 'base';
 
+const bump = (o, k) => { o[k] = (o[k] || 0) + 1; };
+
 export class World {
   // unlocked: { mechs, turrets, specials }. opts.seed makes the run reproducible.
   constructor(stage, save, unlocked, opts = {}) {
@@ -41,6 +43,9 @@ export class World {
     this.fx = [];
     this.result = null;
     this.stats = { kills: 0, deployed: 0, lost: 0 };
+    // battle log for the statistics upload (main.js sendStats): counts per team and type, plus a 30 s timeline
+    this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [] };
+    this.nextSample = 0;
     this.activeLane = 2;
 
     // unit levels per team
@@ -85,6 +90,14 @@ export class World {
     this.ai = { energy: 40, next: null, recent: [] };
   }
 
+  // timeline entry: [time s, energy, own base HP %, enemy base HP %, own mechs, enemy mechs]
+  sample() {
+    const n = [0, 0];
+    for (const e of this.entities) if (!e.dead && e.kind === 'mech') n[e.team]++;
+    const pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
+    this.log.timeline.push([Math.round(this.time), Math.round(this.energy), pct(this.bases[0]), pct(this.bases[1]), n[0], n[1]]);
+  }
+
   // ---------- entities ----------
   spawn(o) {
     const def = o.kind === 'mech' ? MECHS[o.type] : o.kind === 'turret' ? TURRETS[o.type] : o.kind === 'constructor' ? CONSTRUCTOR : BASE;
@@ -98,6 +111,7 @@ export class World {
       jitter: o.jitter || 0, shift: null, target: null, blocker: null, home0: o.lane ?? -1, born: this.time,
     };
     this.entities.push(e);
+    if (o.kind === 'mech' || o.kind === 'turret') bump(this.log[o.kind === 'mech' ? 'mechs' : 'turrets'][o.team], o.type);
     return e;
   }
   placeTurret(team, type, lane, row) {
@@ -213,6 +227,7 @@ export class World {
     this.energy -= c;
     const before = levelMult(this.lvl[0][type]).hp;
     this.lvl[0][type]++;
+    this.log.upgrades.push([Math.round(this.time), type]);
     const ratio = levelMult(this.lvl[0][type]).hp / before;
     for (const e of this.entities) if (e.team === 0 && e.type === type && !e.dead) { e.maxHp *= ratio; e.hp *= ratio; }
     this.fx.push({ t: 'upgrade' });
@@ -224,6 +239,7 @@ export class World {
     if (c == null || this.energy < c || this.result) return false;
     this.energy -= c;
     this.baseLvl[k]++;
+    this.log.upgrades.push([Math.round(this.time), 'base.' + k]);
     const b = this.bases[0];
     if (k === 'armor') { const add = BASE.hp * 0.2; b.maxHp += add; b.hp += add; }
     if (k === 'gun') this.gunLvl[0] = this.baseLvl.gun;
@@ -235,6 +251,7 @@ export class World {
   special(k, x = FIELD.w / 2, y = 1200) {
     if (!this.canSpecial(k)) return false;
     this.specialCd[k] = SPECIALS[k].cd * this.specialMult;
+    bump(this.log.specials, k);
     if (k === 'bomb') {
       for (let i = 0; i < 7; i++) {
         const a = this.rnd() * TAU, r = Math.sqrt(this.rnd()) * 110;
@@ -261,6 +278,7 @@ export class World {
       this.updateQueue(dt);
       this.updateAI(dt);
       this.updateConstructor(dt);
+      if (this.time >= this.nextSample) { this.sample(); this.nextSample += 30; }
     }
     for (const e of this.entities) {
       if (e.dead) continue;
@@ -796,6 +814,7 @@ export class World {
       if (this.cells[f.team][f.lane][f.row] === f) this.cells[f.team][f.lane][f.row] = null;
     }
     if (f.team === 0 && f.kind === 'mech') this.stats.lost++;
+    if (f.kind === 'mech' || f.kind === 'turret') bump(this.log.lost[f.team], f.type);
     if (team === 0 && f.team === 1) {
       this.stats.kills++;
       this.energy = Math.min(this.maxEnergy, this.energy + (f.def.cost || 0) * ENERGY.bounty);

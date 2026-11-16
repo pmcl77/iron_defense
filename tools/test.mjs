@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -569,6 +569,20 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const top = Math.max(...[0, 1, 2, 3, 4].map((l) => lanes.filter((x) => x === l).length)) / lanes.length;
   check('lane choice varies (no lane above 60%)', top < 0.6 && new Set(lanes).size === 5, `top ${(top * 100).toFixed(0)}%`);
   check('a split attack never uses the same lane twice', Array.from({ length: 200 }, () => { const a = w3.aiLane(0, [0, 0, 0, 0, 0]); return w3.aiLane(0, [0, 0, 0, 0, 0], a) !== a; }).every(Boolean));
+}
+
+// ---------- battle log (statistics upload) ----------
+{
+  const w = new World(stageDef(4), defaultSave(), ALL, { seed: 2 });
+  w.energy = 999; w.deploy('gunner', 1); w.deploy('scout', 2); w.placeTurret(0, 'sentry', 0, 1);
+  w.upgradeUnit('gunner'); w.specialCd.surge = 0; w.special('surge');
+  for (let i = 0; i < 61 * 60; i++) w.update(1 / 60);
+  const L = w.log;
+  check('log counts own deploys and turrets', L.mechs[0].gunner === 1 && L.mechs[0].scout === 1 && L.turrets[0].sentry === 1);
+  check('log counts enemy deploys', Object.values(L.mechs[1]).reduce((a, b) => a + b, 0) > 0);
+  check('log records specials and upgrades', L.specials.surge === 1 && L.upgrades[0][1] === 'gunner');
+  check('timeline every 30 s', L.timeline.length === 3 && L.timeline[1][0] === 30 && L.timeline[0].length === 6, JSON.stringify(L.timeline));
+  check('battle log is small', JSON.stringify(L).length < 4000);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
