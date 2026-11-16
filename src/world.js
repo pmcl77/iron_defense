@@ -91,11 +91,13 @@ export class World {
   }
 
   // timeline entry: [time s, energy, own base HP %, enemy base HP %, own mechs, enemy mechs]
-  sample() {
+  sample(push = true) {
     const n = [0, 0];
     for (const e of this.entities) if (!e.dead && e.kind === 'mech') n[e.team]++;
     const pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
-    this.log.timeline.push([Math.round(this.time), Math.round(this.energy), pct(this.bases[0]), pct(this.bases[1]), n[0], n[1]]);
+    const s = [Math.round(this.time), Math.round(this.energy), pct(this.bases[0]), pct(this.bases[1]), n[0], n[1]];
+    if (push) this.log.timeline.push(s);
+    return s;
   }
 
   // ---------- entities ----------

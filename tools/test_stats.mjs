@@ -3,8 +3,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import { onRequestPost, onRequestGet } from '../functions/api/stats.js';
 
-function d1() {
+function d1(setup) {
   const db = new DatabaseSync(':memory:');
+  if (setup) db.exec(setup);
   const stmt = (sql, args = []) => ({
     bind: (...a) => stmt(sql, a),
     run: async () => { db.prepare(sql).run(...args); return { success: true }; },
@@ -41,6 +42,40 @@ ok(data.summary.length === 2 && data.summary.every((s) => s.n === 1 && s.stage =
 ok(data.next === data.rows[1].id, 'next = last id');
 const r2 = await (await get('?since=' + data.rows[0].id, { 'x-stats-key': 'secret-key' })).json();
 ok(r2.rows.length === 1 && r2.rows[0].result === 'lose', 'since + header key');
+
+// battle ids, abandoned rounds, device and name
+const ID = 'a1b2c3d4e5f60718', DEV = '0123456789abcdef';
+const rows = async () => (await (await get('?key=secret-key')).json()).rows;
+ok((await post({ ...battle, stage: 5, id: ID, device: DEV, result: 'abandoned', time: 120 })).status === 201, 'abandoned stored');
+ok((await post({ ...battle, stage: 5, id: ID, device: DEV, result: 'abandoned', time: 150 })).status === 201, 'newer checkpoint accepted');
+let s5 = (await rows()).filter((r) => r.stage === 5);
+ok(s5.length === 1 && s5[0].time === 150, 'newer checkpoint replaces the older one');
+await post({ ...battle, stage: 5, id: ID, device: DEV, result: 'win', time: 400 });
+s5 = (await rows()).filter((r) => r.stage === 5);
+ok(s5.length === 1 && s5[0].result === 'win' && s5[0].time === 400, 'real result replaces abandoned');
+await post({ ...battle, stage: 5, id: ID, device: DEV, result: 'abandoned', time: 200 });
+s5 = (await rows()).filter((r) => r.stage === 5);
+ok(s5.length === 1 && s5[0].result === 'win', 'a real result is never replaced');
+await post({ ...battle, stage: 5, id: 'ffffffffffffffff', device: DEV, result: 'lose' });
+ok((await rows()).filter((r) => r.stage === 5).length === 2, 'other battle id is a new row');
+ok((await post({ ...battle, id: 'XYZ' })).status === 400 && (await post({ ...battle, device: 12 })).status === 400, 'bad id or device rejected');
+ok((await post({ ...battle, name: 5 })).status === 400, 'non-string name rejected');
+await post({ ...battle, stage: 7, name: '  Phil\u0007ippe the very long name  ' });
+const n7 = (await rows()).find((r) => r.stage === 7);
+ok(n7 && n7.name === 'Philippe the very lo', 'name cleaned and cut to 20', n7 && n7.name);
+await post({ ...battle, stage: 8, name: '   ' });
+ok(!('name' in (await rows()).find((r) => r.stage === 8)), 'empty name dropped');
+const sum = (await (await get('?key=secret-key')).json()).summary.find((s) => s.stage === 5 && s.result === 'win');
+ok(sum && sum.devices === 1, 'summary counts devices');
+
+// a database made by the first version (no battle column) is upgraded in place
+const old = { STATS_DB: d1(`CREATE TABLE battles (id INTEGER PRIMARY KEY AUTOINCREMENT, created TEXT NOT NULL DEFAULT (datetime('now')),
+  version TEXT, build TEXT, stage INTEGER, result TEXT, duration INTEGER, data TEXT NOT NULL);
+  INSERT INTO battles (version, build, stage, result, duration, data) VALUES ('0.4.0-dev', 'dev', 8, 'win', 550, '{"v":"0.4.0-dev","stage":8}');`), STATS_KEY: 'k' };
+const { onRequestPost: p2, onRequestGet: g2 } = await import('../functions/api/stats.js?fresh');
+const r3 = await p2({ env: old, request: new Request('https://x', { method: 'POST', body: JSON.stringify({ ...battle, id: ID }) }) });
+const d3 = await (await g2({ env: old, request: new Request('https://x?key=k') })).json();
+ok(r3.status === 201 && d3.rows.length === 2 && d3.rows[0].stage === 8, 'old table upgraded, old row kept');
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

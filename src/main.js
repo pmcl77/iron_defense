@@ -6,7 +6,7 @@ import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
 import { VoxelRenderer } from './render_voxel.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
-import { loadSave, writeSave, resetSave, defaultSave } from './save.js';
+import { loadSave, writeSave, resetSave, defaultSave, deviceId, randomHex } from './save.js';
 import { VERSION } from './version.js';
 
 const $ = (s) => document.querySelector(s);
@@ -105,6 +105,7 @@ function launch(i) {
   game.stageIndex = i;
   game.mode = 'play';
   game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials });
+  game.world.battleId = randomHex(8);
   game.paused = false;
   game.resultShown = false;
   game.ui = freshUi();
@@ -120,26 +121,58 @@ function launch(i) {
   toast(`${st.name}: destroy the enemy base`);
 }
 // ---------- battle statistics (functions/api/stats.js, ISSUES.md) ----------
-// One anonymous summary per battle: no device id, no name. Failures (offline, local server) are ignored.
-function sendStats(result, stars = 0) {
-  const w = game.world;
-  if (!save.settings.stats || game.mode !== 'play' || !w || w.statsSent) return;
-  if (result === 'quit' && w.time < 15) return; // instant restarts are noise
-  w.statsSent = true;
-  const i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
-  w.sample();
+// One summary per battle with a random device id and the optional player name (Settings).
+// Failures (offline, local server) are ignored.
+// Checkpoint: while a battle runs, its summary is kept in localStorage as 'abandoned' (every 30 s and when the app is
+// hidden). A finished, quit or restarted battle removes it; a leftover (app closed or killed) is sent at the next start.
+// The server replaces an 'abandoned' row when the real result of the same battle id arrives.
+const CP_KEY = 'iron-defense-checkpoints';
+const MIN_TIME = 15; // shorter quits are noise
+function summary(result, stars = 0) {
+  const w = game.world, i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
   const body = {
+    id: w.battleId, device: deviceId(), ...(save.settings.name ? { name: save.settings.name } : {}),
     v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i, stageName: st.name, result, stars,
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed, lost: w.stats.lost,
     baseHp: [pct(w.bases[0]), pct(w.bases[1])], energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
     enemy: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: w.log.mechs, turrets: w.log.turrets, lost: w.log.lost, specials: w.log.specials,
-    upgrades: w.log.upgrades, timeline: w.log.timeline,
+    upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)],
   };
+  return body;
+}
+function post(body) {
   try {
     fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
   } catch { /* ignore */ }
+}
+function checkpoints(change) {
+  let cp = {};
+  try { cp = JSON.parse(localStorage.getItem(CP_KEY)) || {}; } catch { /* ignore */ }
+  if (change) { change(cp); try { localStorage.setItem(CP_KEY, JSON.stringify(cp)); } catch { /* ignore */ } }
+  return cp;
+}
+function sendStats(result, stars = 0) {
+  const w = game.world;
+  if (game.mode !== 'play' || !w || !w.battleId || w.statsSent) return;
+  w.statsSent = true;
+  checkpoints((cp) => { delete cp[w.battleId]; });
+  if (!save.settings.stats || (result === 'quit' && w.time < MIN_TIME)) return;
+  post(summary(result, stars));
+}
+function checkpoint() {
+  const w = game.world;
+  if (!save.settings.stats || game.mode !== 'play' || !w || !w.battleId || w.statsSent || w.result || w.time < MIN_TIME) return;
+  checkpoints((cp) => { cp[w.battleId] = summary('abandoned'); });
+  w.cpAt = w.log.timeline.length;
+}
+// at start: send battles that were left without a result
+function flushCheckpoints() {
+  const cp = checkpoints();
+  if (!Object.keys(cp).length) return;
+  if (save.settings.stats) for (const b of Object.values(cp)) post(b);
+  try { localStorage.removeItem(CP_KEY); } catch { /* ignore */ }
 }
 function quitToMenu(to = 'stages') {
   sendStats('quit');
@@ -333,6 +366,7 @@ function showSettings() {
       <div class="toggle"><span>Graphics</span><button class="btn small" data-a="gfx">${save.settings.graphics === 'simple' ? 'Simple' : 'Voxel'}</button></div>
       <div class="toggle"><span>Aegis links</span><button class="btn small" data-a="aegis">${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button></div>
       <div class="toggle"><span>Send battle stats</span><button class="btn small" data-a="stats">${save.settings.stats ? 'On' : 'Off'}</button></div>
+      <div class="toggle"><span>Player name <small class="sub">(stats, optional) · device #${deviceId().slice(0, 4)}</small></span><input id="pname" class="name-input" maxlength="20" placeholder="none" autocomplete="off" spellcheck="false"></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
       <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
@@ -344,8 +378,12 @@ function showSettings() {
     aegis: () => { cycleAegis(); showSettings(); },
     stats: () => { save.settings.stats = !save.settings.stats; writeSave(save); showSettings(); },
     gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
-    reset: (el) => { if (el.dataset.confirm) { save = resetSave(); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
+    reset: (el) => { if (el.dataset.confirm) { const name = save.settings.name; save = resetSave(); save.settings.name = name; writeSave(save); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
   });
+  const nameIn = $('#pname');
+  nameIn.value = save.settings.name || '';
+  nameIn.addEventListener('change', () => { save.settings.name = nameIn.value.trim().slice(0, 20); writeSave(save); });
+  nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameIn.blur(); });
 }
 function showPause() {
   game.paused = true;
@@ -706,7 +744,7 @@ function frame(now) {
   }
   if (game.mode === 'play' && !game.paused) keyPan(dtReal);
   if (w) { renderer.consume(w.fx, sfx); renderer.draw(w, simDt, game.ui); }
-  if (game.mode === 'play') { updateHud(); checkResult(); }
+  if (game.mode === 'play') { updateHud(); checkResult(); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
   requestAnimationFrame(frame);
 }
 
@@ -717,6 +755,8 @@ applyGraphics();
 startDemo();
 showMenu();
 requestAnimationFrame(frame);
+flushCheckpoints();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') checkpoint(); });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // debug hooks
@@ -731,5 +771,5 @@ window.__step = (seconds) => {
     renderer.updateParticles(STEP);
   }
   renderer.draw(w, 0, game.ui);
-  if (game.mode === 'play') { updateHud(); checkResult(); }
+  if (game.mode === 'play') { updateHud(); checkResult(); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
 };
