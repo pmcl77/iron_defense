@@ -145,7 +145,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Decided (user, 2026-11-16): B. Built.** Tests in `tools/test_stats.mjs` (replace rules, old table upgraded in place).
   - **Follow-up: event log** (user, 2026-11-16: "does it also include deployment order, timestamp and lanes?"). Today only counts per type, upgrades with time, and the 30 s timeline.
     - Proposal: add events with time: deploys of both sides `[t, type, lane]`, turrets built/sold `[t, type, lane, row]`, specials `[t, kind, x, y]`. About 3–4 KB per 10-minute battle; raise the server limit from 16 to 64 KB.
-    - **Decided (user, 2026-11-16), with unit level, upgrades, plus deaths (lane, progress, killer) and the enemy order/group. Built.** Only real deploys (no queue). Format documented at `World.ev()` in `src/world.js`; a busy 10-minute battle ≈ 8 KB.
+    - **Decided (user, 2026-11-16), with unit level, upgrades, plus deaths (lane, progress, killer) and the enemy order/group. Built.** Only real deploys (no queue). Format documented at `World.ev()` in `src/world.js`; a busy 10-minute battle ≈ 8 KB. Since `fmt: 2` (user, 2026-11-16): stage, lanes, rows and groups count from 1 like in the game; levels count upgrades (0 = none). Rows 1–6 in the dev database are the older 0-based format.
 
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
   - **Today:** the field (40% less damage taken, radius 140, doesn't stack, not on the Aegis itself; it also covers own turrets and the base) is shown only as a dashed rotating circle. You can't tell who is inside.

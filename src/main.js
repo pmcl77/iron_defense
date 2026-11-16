@@ -132,7 +132,8 @@ function summary(result, stars = 0) {
   const w = game.world, i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
   const body = {
     id: w.battleId, device: deviceId(), ...(save.settings.name ? { name: save.settings.name } : {}),
-    v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i, stageName: st.name, result, stars,
+    // fmt 2: stage, lanes, rows and groups count from 1 (fmt 1, the first dev battles: from 0)
+    fmt: 2, v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed, lost: w.stats.lost,
     baseHp: [pct(w.bases[0]), pct(w.bases[1])], energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
