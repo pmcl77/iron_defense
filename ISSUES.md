@@ -130,11 +130,12 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - A: random device id, made once per device and kept in the save. Separates devices, not people.
     - B: optional player name in Settings (empty by default), sent with each battle; the same name on several devices links them.
     - Recommendation: A + B. Friends should be told that the game sends stats (switch in Settings).
-    - Status: to decide.
+    - B in detail: Settings row "Player name (for stats)", up to 20 characters, only a label (no login, not checked); a short device code (e.g. `#3f9a`) shown in Settings to tell devices apart.
+    - **Decided (user, 2026-11-16): A (device id).** B: to decide.
   - **Follow-up: rounds stopped without the pause menu** (user, 2026-11-16). Pause → Quit/Restart after 15 s already sends `quit`; closing or reloading the app, or the phone killing it, sends nothing.
     - A: send on page hide. Immediate, but switching apps briefly would count as stopping and give doubles when coming back.
     - B: checkpoint: keep the running summary in local storage (every 30 s and when the app is hidden), remove it when the battle ends; at the next start, send a leftover as `abandoned`. Reliable, no doubles; arrives on the next start.
-    - Recommendation: B.
+    - Recommendation: B. Play doesn't change (pause/resume works as long as the app stays open; a battle is never restored after the app was closed). Each battle gets a random id; the server replaces an `abandoned` row when the real result of the same battle arrives (game opened twice).
     - Status: to decide.
 
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
