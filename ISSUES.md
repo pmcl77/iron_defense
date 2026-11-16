@@ -136,7 +136,12 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - 4c **forward deployment:** new mechs appear at the frontmost own turret row. Gives turrets a role in attacking (none built in any recorded battle). Bigger design change (what if that turret falls?).
     - Group deploy action (user idea): later, march speed may make it less needed.
   - **Proposed order:** (1) test build: comeback bonus limited (+40% → about +10%) + 4b march speed; user plays. (2) If pushes still stall: 4a or 4c. (3) If still too long: 2, end phase. (4) Last: step 6 numbers.
-  - Status: to decide (test build now, or after the no-Seeker rounds).
+  - **User (2026-11-16):** "Right now we should try some solutions with the current game to try to get playtime to a reasonable limit." **Test build (step 1 of the order) built:** pressure bonus 0.4 → 0.1 (`AI.pressureBonus`); march pace (`MARCH` in data.js: pace 60, clear 420; passing compares the actual pace). To play-test.
+  - **More ideas from the user (2026-11-16), for later:**
+    - **Deployment location** adds variety (in Clash Royale troops can be placed anywhere, but that's "magic"; this game leans realistic). Realistic forms: deploy at a held forward position (4c) or an air drop with cooldown that can be shot down.
+    - **Air units** (helicopters/VTOL): ignore turret walls and lane blocking, only some turrets can hit them; counter-play, but new targeting rules, turret types and art.
+    - **Slow mechs with massive HP plus faster driving vehicles** (tracked/wheeled): mechs stay heavy, vehicles are the fast option; fits the realistic direction and eases travel time.
+  - Status: test build to play-test.
 - **[balance/AI] Findings from the first battle with events** (Ash Ridge, stage 10, won 3★ in 753 s, 2026-11-16; one battle, so hints, not proof)
   - **Seeker carries everything:** 138 of the player's 159 kills came from Seekers (42 deployed, up to level 5); Brawler 22 deployed → 3 kills, Gunner 5 → 0, Mortar 6 → 3. Kill credit goes to the last hit, which favours long-range missiles, but the gap is large. Candidate for step 6.
   - **Two-lane setup:** the player deployed almost only in lanes 2 and 4 (57 of 75), Brawler + Seeker pairs. From there long reach covers the whole field. Matches the open question "do lanes 2 + 4 become the only sensible setup?".

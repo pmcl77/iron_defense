@@ -42,6 +42,10 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 - **Enemy AI never deploys an Aegis alone** (found in the battle statistics): it comes only as part of a group. Before, about 1 in 10 enemy orders was a lone Aegis with nothing to protect.
 
+- **Battle length test** (ISSUES "Battles are too long"):
+  - **March pace:** a mech with nothing near walks at least 60, so slow types (Mortar, Brawler, Seeker, Gunner) reach a distant fight much sooner; on contact they drop back to their heavy combat pace. Faster mechs (Scout) keep their speed. Both sides march; a column stays together.
+  - **Smaller comeback bonus for the enemy:** its extra income when your mechs push toward its base is now at most +10% (was +40%), so a good push isn't simply absorbed.
+
 ### Tech
 - **Battle statistics:** after each battle (and when you quit or restart a battle after 15 s or more) the game sends a summary to the site: version, stage, result, stars, time, base HP, loadout, Workshop levels, mechs and turrets per type for both sides, losses, specials, upgrades and a 30 s timeline. Stored in Cloudflare D1 (`functions/api/stats.js`; release and dev in separate databases), readable only with the key. Switch: Settings → *Send battle stats* (on by default). Offline or on the local test server nothing is sent and nothing breaks.
   - **Device id and player name:** each battle carries a random id of the device (kept when you reset progress) and, if set, the player name from Settings (optional, up to 20 characters, just a label). Settings shows a short device code, e.g. `#3f9a`.

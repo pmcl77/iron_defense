@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -9,9 +9,10 @@ function check(name, cond, info = '') {
   if (cond) pass++; else { fail++; console.log(`FAIL  ${name}${info ? '  — ' + info : ''}`); }
 }
 // A quiet test world: no enemy income, no player regen, plenty of energy.
-function mk(turrets = []) {
+// march: the march pace (MARCH.pace by default); 0 = off, for tests of the rules at combat pace
+function mk(turrets = [], march) {
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets, base: {} };
-  const w = new World(st, defaultSave(), ALL, { seed: 7 });
+  const w = new World(st, defaultSave(), ALL, { seed: 7, march });
   w.ai.energy = -1e9; w.regen = 0; w.energy = 5000; w.maxEnergy = 5000;
   return w;
 }
@@ -237,7 +238,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const slow = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'gunner', 0, 2, 540, 1e9);
   run(w, 6);
   check('line stays behind a marching tank', g.lane === 2 && g.y < slow.y && slow.y - g.y >= slow.radius + g.radius, `gap ${(slow.y - g.y).toFixed(1)}`);
-  const w2 = mk();
+  const w2 = mk([], 0);
   const slow2 = mech(w2, 'brawler', 0, 2, 600, 1e9), fast = mech(w2, 'scout', 0, 2, 540, 1e9);
   run(w2, 3);
   check('charger overtakes a tank', fast.y > slow2.y, `fast ${fast.y.toFixed(0)} slow ${slow2.y.toFixed(0)}`);
@@ -382,7 +383,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
 
 // 20. overtaking with slower mechs in both neighbouring lanes: one lane at a time, never back behind the passed mech
 {
-  const w = mk();
+  const w = mk([], 0);
   const br = mech(w, 'brawler', 0, 2, 600, 1e9), g = mech(w, 'scout', 0, 2, 540, 1e9);
   mech(w, 'mortar', 0, 1, 660, 1e9); mech(w, 'mortar', 0, 3, 660, 1e9);
   let last = g.lane, jumps = 0, backBehind = 0, left = false;
@@ -578,6 +579,31 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const top = Math.max(...[0, 1, 2, 3, 4].map((l) => lanes.filter((x) => x === l).length)) / lanes.length;
   check('lane choice varies (no lane above 60%)', top < 0.6 && new Set(lanes).size === 5, `top ${(top * 100).toFixed(0)}%`);
   check('a split attack never uses the same lane twice', Array.from({ length: 200 }, () => { const a = w3.aiLane(0, [0, 0, 0, 0, 0]); return w3.aiLane(0, [0, 0, 0, 0, 0], a) !== a; }).every(Boolean));
+}
+
+// ---------- march pace (MARCH) ----------
+{
+  const w = mk();
+  const b = mech(w, 'brawler', 0, 2, 400, 1e9), sc = mech(w, 'scout', 0, 0, 400, 1e9);
+  run(w, 5);
+  const y0 = b.y, s0 = sc.y; run(w, 2);
+  const v = (b.y - y0) / 2, vs = (sc.y - s0) / 2;
+  check('march: a lone Brawler walks at the march pace', Math.abs(v - MARCH.pace) < 1, `v ${v.toFixed(1)}`);
+  check('march: a Scout keeps its own (higher) speed', Math.abs(vs - MECHS.scout.speed) < 1, `v ${vs.toFixed(1)}`);
+  const w2 = mk([], 0), b2 = mech(w2, 'brawler', 0, 2, 400, 1e9);
+  run(w2, 7);
+  check('march off: base speed', Math.abs((b2.y - 400) / 7 - MECHS.brawler.speed) < 1);
+  // contact: an enemy ahead → back to combat pace before it gets there
+  const w3 = mk(), b3 = mech(w3, 'brawler', 0, 2, 400, 1e9);
+  const en = mech(w3, 'gunner', 1, 2, 1500, 1e9);
+  let gap = null;
+  for (let t = 0; t < 40 && gap == null; t += 1 / 60) { w3.update(1 / 60); if (t > 5 && b3.mb < 1) gap = en.y - b3.y; }
+  check('march: slows to combat pace within reach of an enemy', gap != null && gap > 300 && gap < MARCH.clear + 60, `at ${gap && gap.toFixed(0)} from it`);
+  check('march: the enemy marches too, and slows as well', en.mb < 1);
+  // a Gunner behind a marching Brawler doesn't try to pass: both march at the same pace
+  const w4 = mk(), b4 = mech(w4, 'brawler', 0, 2, 600, 1e9), g4 = mech(w4, 'gunner', 0, 2, 520, 1e9);
+  let left = false; for (let t = 0; t < 12; t += 1 / 60) { w4.update(1 / 60); if (g4.lane !== 2 || g4.shift) left = true; }
+  check('march: a column marches together, nobody steps out', !left && b4.y - g4.y < 120, `gap ${(b4.y - g4.y).toFixed(0)}`);
 }
 
 // ---------- battle log (statistics upload) ----------

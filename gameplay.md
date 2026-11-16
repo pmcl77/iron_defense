@@ -140,6 +140,8 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 5. Enemy AI deploy variety, using roles (§10). **Built in 0.4.0-dev.**
 6. Balance pass with the bot.
 
+**March pace** *(test build, 0.4.0-dev; ISSUES "Battles are too long")*: a mech with no target and no enemy mech, turret or base within 420 walks at least 60 (the march pace). Slower types speed up (Mortar 28, Brawler 32, Seeker 40, Gunner 44 → 60), faster ones keep their speed (Scout 76). It eases in over about a second and drops back to its combat pace quickly on contact. Legs take longer strides rather than only faster steps. Both sides march. A column marches together at the same pace, so nobody passes a marching friendly unless it's really faster (passing compares the actual pace). In code: `MARCH` in data.js (`pace: 0` turns it off).
+
 ### 5.3 Targeting
 
 - A mech targets the **nearest enemy within range that's ahead of it or level with it**. Range is a straight-line (circle) distance measured to the target's edge.
@@ -281,7 +283,7 @@ Specials don't cost energy; they only have cooldowns. Each one starts a battle a
 
 The enemy works like Ironline's AI, adapted for lanes:
 
-- **Income:** the stage's regen value. It doubles over the first 7 minutes, and goes up by up to 40% when your mechs get close to its base. Enemy Reactor levels multiply this further (§7).
+- **Income:** the stage's regen value. It doubles over the first 7 minutes, and goes up by up to 10% when your mechs get close to its base (was 40% until the battle-length test, so a good push isn't simply absorbed). Enemy Reactor levels multiply this further (§7).
 - **Unit choice** *(step 5 of the movement build, 0.4.0-dev; tuning in `AI_GROUPS` and `AI` in data.js)*:
   - **Singles:** it prefers cheap units early and expensive ones later.
   - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group. A group is a small formation from role templates, deployed front to back: Tank + Line, Tank + Artillery, Line + Artillery, two Line, two Line + Support, Tank + Line + Support, siege (Charger + Artillery; the Breacher rather than the Scout). Same-type packs only for cheap units (2–3 Scouts) and, rarely, two Brawlers (they spread out with the side attack). A template is used only if the stage roster has a type for each role.

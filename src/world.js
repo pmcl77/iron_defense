@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
@@ -48,6 +48,7 @@ export class World {
     this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [] };
     this.aiOrders = 0;
     this.nextSample = 0;
+    this.march = opts.march ?? MARCH.pace;
     this.activeLane = 2;
 
     // unit levels per team
@@ -117,6 +118,16 @@ export class World {
     const s = [Math.round(this.time), Math.round(this.energy), pct(this.bases[0]), pct(this.bases[1]), n[0], n[1]];
     if (push) this.log.timeline.push(s);
     return s;
+  }
+
+  // any enemy mech, turret or base within r (bases: distance to the front face)
+  enemyNear(e, r) {
+    for (const f of this.entities) {
+      if (f.dead || f.team === e.team || f.kind === 'constructor') continue;
+      const d = f.kind === 'base' ? Math.abs(f.y - e.y) - f.radius : Math.hypot(f.x - e.x, f.y - e.y) - f.radius;
+      if (d < r) return true;
+    }
+    return false;
   }
 
   // ---------- entities ----------
@@ -411,8 +422,12 @@ export class World {
       const vx = e.bx + (e.detour || 0) - px, vy = e.y - py;
       e.body = turnTo(e.body, Math.abs(vx) > 1e-4 ? Math.atan2(vx, vy) : home, BODY_TURN * dt);
     };
-    if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; done(); return; }
-    const sp = speed * (e.shift ? LANE_CHANGE.fwd : 1);
+    if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; e.mb = 0; done(); return; }
+    // march pace: extra speed while nothing is near (see MARCH)
+    const want = this.march > speed && !t && !this.enemyNear(e, MARCH.clear) ? this.march - speed : 0;
+    e.mb = e.mb || 0;
+    e.mb = want > e.mb ? Math.min(want, e.mb + MARCH.ramp * dt) : Math.max(want, e.mb - MARCH.brake * dt);
+    const sp = (speed + e.mb) * (e.shift ? LANE_CHANGE.fwd : 1);
     let ny = e.y + dir * sp * dt, block = null;
     for (const f of this.entities) {
       if (f.dead || f === e) continue;
@@ -453,7 +468,7 @@ export class World {
     e.y = ny;
     done();
     e.moving = moved > 1e-6 || !!e.shift;
-    e.phase += moved / (e.radius * 0.9);
+    e.phase += moved / (e.radius * 0.9 * Math.sqrt((speed + e.mb) / speed)); // marching: longer strides, not just faster steps
     e.blocker = block && block.team !== e.team ? block : null;
     if (block && !e.shift) this.onBlocked(e, block, R);
     // after passing someone, return to the home lane once it's clear
@@ -644,7 +659,7 @@ export class World {
   // walking at about the same speed (Chargers going around a fight or an enemy mech)
   tryOvertake(e, blocker, force = false, toShot = false) {
     // not worth it if the mech ahead is walking at almost the same speed
-    if (!force && blocker && blocker.moving && this.stat(e, 'speed') - this.stat(blocker, 'speed') < 8) return false;
+    if (!force && blocker && blocker.moving && this.stat(e, 'speed') + (e.mb || 0) - this.stat(blocker, 'speed') - (blocker.mb || 0) < 8) return false; // actual pace (march)
     const dir = FWD[e.team], R = e.def.rules;
     const home = e.homeLane ?? e.lane;
     // never swing back into the home lane before the mech being passed is behind us
@@ -923,7 +938,7 @@ export class World {
     for (const e of this.entities) {
       if (e.team === 0 && e.kind === 'mech' && !e.dead && e.y > face - 900) { pressure += e.def.cost; laneP[Math.max(0, e.lane)] += e.def.cost; }
     }
-    if (pressure > 0) regen *= 1 + Math.min(0.4, pressure / 1500);
+    if (pressure > 0) regen *= 1 + Math.min(AI.pressureBonus, pressure / 1500);
     ai.energy += regen * dt;
 
     if (!ai.next) ai.next = this.aiOrder(pressure);

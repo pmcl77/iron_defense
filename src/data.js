@@ -49,6 +49,11 @@ export const ROLES = {
 export const STOP_AT = 0.95; // ranged units stop at this share of their range
 // lane changes are walked (gameplay.md §5.2): sideways at side × the mech's speed, forward at fwd × while doing it.
 // 120 units of lane width: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s.
+// March pace (test, ISSUES "Battles are too long"): a mech with no target and no enemy within `clear` walks at
+// least `pace` (slower types speed up, faster ones keep their speed), so reinforcements and groups reach a distant
+// fight sooner. It eases into it (`ramp` per s) and drops back quickly (`brake` per s) on contact. Legs take
+// longer strides rather than only faster steps. pace 0 = off.
+export const MARCH = { pace: 60, clear: 420, ramp: 30, brake: 120 };
 export const LANE_CHANGE = { side: 1.0, fwd: 0.6 };
 // walking around own turrets (cosmetic): pad half-widths, start this far ahead of the pad, how far a mech's
 // body counts (× radius), drift speed (× speed, at least minRate) and the drift cap when both sides are built up
@@ -114,6 +119,7 @@ export const AI = {
   splitChance: 0.15,          // share of group orders that are a split attack: two small groups in two lanes
   defensive: ['brawler', 'gunner', 'seeker'], // picks under pressure (half the time); no Aegis: a Support never goes alone
   recent: 4, recentPenalty: 0.5, // lanes used in the last 4 orders get this weight factor per use
+  pressureBonus: 0.1, // extra income when the player's mechs are near its base, at most (was 0.4; ISSUES "Battles are too long")
 };
 // Traits (gameplay.md §5.5): each changes exactly one rule of the mech's role.
 //   pref   targeting: 'mech' or 'structure' first (role default: nearest, no preference)
