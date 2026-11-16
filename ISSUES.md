@@ -122,8 +122,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     2. **Decisive end phase for both sides:** after a few minutes, e.g. double energy for both and lower base armor, so someone breaks through. A soft limit; the battle is still won by destroying the base.
     3. **Hard time limit:** e.g. 6 min; then the side with more base HP left wins, a draw goes to a short sudden death (or counts as a loss). Most predictable for phone sessions; can end on points.
     4. **Structural:** shorter field, faster mechs or less base HP. Shortens everything, also the parts that work; only if 1–3 aren't enough.
-  - **Recommendation:** 1 + 2; 3 only as an extra backstop (e.g. at 8 min) if wanted. Details and numbers our own, not copied.
-  - Status: to discuss; the coming no-Seeker battles will show whether the stalemate comes from the rules or from the Seeker.
+  - ~~Recommendation: 1 + 2~~ (revised below).
+  - **User (2026-11-16):** 1: balancing would make battles longer or one-sided, so why would it remove the cause? 2: interesting. 3: no, a points decision after a grind is no accomplishment. 4: probably necessary.
+  - **Two causes of the grind:**
+    - (a) **Rubber band:** the enemy's +40% income under pressure helps whoever is losing, so pushes get absorbed. Win rate and length are separate: removing the bonus and setting difficulty with other numbers (enemy regen, level, turrets) can keep the win rate but let a good push break through.
+    - (b) **Defender's advantage from the field:** bases 2200 apart; a Brawler walks base to base in about 70 s, a Gunner about 50 s, under turret and base fire, while the defender's reinforcements fight within seconds. Numbers can't fix this; that's why 4 is needed.
+  - **Option 4 in detail:** shorter field (e.g. about 1600 between bases, 5 build rows per side instead of 7) keeps the heavy, slow walk; faster mechs would undo the 0.3.0 heavy feel; less base HP barely helps (the base falls in about 100 s once reached). Affects the build grid, all stage turret positions, camera and minimap, AI rules, tests and balance.
+  - **Revised recommendation:** a test version on dev with the shorter field and without the pressure income bonus; the user plays it; then decide on 2 (end phase) as a backstop; then step 6 tunes the numbers.
+  - Status: to decide (test version now, or after the no-Seeker rounds).
 - **[balance/AI] Findings from the first battle with events** (Ash Ridge, stage 10, won 3★ in 753 s, 2026-11-16; one battle, so hints, not proof)
   - **Seeker carries everything:** 138 of the player's 159 kills came from Seekers (42 deployed, up to level 5); Brawler 22 deployed → 3 kills, Gunner 5 → 0, Mortar 6 → 3. Kill credit goes to the last hit, which favours long-range missiles, but the gap is large. Candidate for step 6.
   - **Two-lane setup:** the player deployed almost only in lanes 2 and 4 (57 of 75), Brawler + Seeker pairs. From there long reach covers the whole field. Matches the open question "do lanes 2 + 4 become the only sensible setup?".
