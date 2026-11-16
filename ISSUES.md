@@ -137,6 +137,9 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - B: checkpoint: keep the running summary in local storage (every 30 s and when the app is hidden), remove it when the battle ends; at the next start, send a leftover as `abandoned`. Reliable, no doubles; arrives on the next start.
     - Recommendation: B. Play doesn't change (pause/resume works as long as the app stays open; a battle is never restored after the app was closed). Each battle gets a random id; the server replaces an `abandoned` row when the real result of the same battle arrives (game opened twice).
     - **Decided (user, 2026-11-16): B. Built.** Tests in `tools/test_stats.mjs` (replace rules, old table upgraded in place).
+  - **Follow-up: event log** (user, 2026-11-16: "does it also include deployment order, timestamp and lanes?"). Today only counts per type, upgrades with time, and the 30 s timeline.
+    - Proposal: add events with time: deploys of both sides `[t, type, lane]`, turrets built/sold `[t, type, lane, row]`, specials `[t, kind, x, y]`. About 3–4 KB per 10-minute battle; raise the server limit from 16 to 64 KB.
+    - Status: to decide.
 
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
   - **Today:** the field (40% less damage taken, radius 140, doesn't stack, not on the Aegis itself; it also covers own turrets and the base) is shown only as a dashed rotating circle. You can't tell who is inside.
