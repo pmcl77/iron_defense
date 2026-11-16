@@ -125,6 +125,17 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Status: decided 2026-11-16: option A (Cloudflare D1), two databases (prod + dev). **Built** (0.4.0-dev).
   - **Setup (done by the user, 2026-11-16):** D1 databases `iron-defense-stats` (Production) and `iron-defense-stats-dev` (Preview), bound as `STATS_DB`; secret `STATS_KEY` in both environments. No `wrangler.toml` in the repo (it would override the dashboard bindings).
   - **Reading:** `https://iron-defense.pages.dev/api/stats?key=…` (dev: `dev.iron-defense.pages.dev`) returns `{summary, rows, next}`; `since=<id>` for only new rows, `limit` up to 5000. Tests: `node tools/test_stats.mjs`.
+  - **First real data (2026-11-16):** stage 9 Ironwood won 3★ in 550 s by the user with mid-level upgrades and no turrets; the balance bot wins it 0% at mid. The bot plays much worse than a human, so step 6 should not rely on the bot alone.
+  - **Follow-up: player/device identification** (user, 2026-11-16: friends may play, and the user plays on several devices). Today every battle is anonymous.
+    - A: random device id, made once per device and kept in the save. Separates devices, not people.
+    - B: optional player name in Settings (empty by default), sent with each battle; the same name on several devices links them.
+    - Recommendation: A + B. Friends should be told that the game sends stats (switch in Settings).
+    - Status: to decide.
+  - **Follow-up: rounds stopped without the pause menu** (user, 2026-11-16). Pause → Quit/Restart after 15 s already sends `quit`; closing or reloading the app, or the phone killing it, sends nothing.
+    - A: send on page hide. Immediate, but switching apps briefly would count as stopping and give doubles when coming back.
+    - B: checkpoint: keep the running summary in local storage (every 30 s and when the app is hidden), remove it when the battle ends; at the next start, send a leftover as `abandoned`. Reliable, no doubles; arrives on the next start.
+    - Recommendation: B.
+    - Status: to decide.
 
 - **[ui/art] Aegis: show which friendlies its field protects** (user idea, 2026-11-15: "lightning beams to friendlies in range")
   - **Today:** the field (40% less damage taken, radius 140, doesn't stack, not on the Aegis itself; it also covers own turrets and the base) is shown only as a dashed rotating circle. You can't tell who is inside.
