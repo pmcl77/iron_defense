@@ -129,7 +129,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - (b) **Defender's advantage from the field:** bases 2200 apart; a Brawler walks base to base in about 70 s, a Gunner about 50 s, under turret and base fire, while the defender's reinforcements fight within seconds. Numbers can't fix this; that's why 4 is needed.
   - **Option 4 in detail:** shorter field (e.g. about 1600 between bases, 5 build rows per side instead of 7) keeps the heavy, slow walk; faster mechs would undo the 0.3.0 heavy feel; less base HP barely helps (the base falls in about 100 s once reached). Affects the build grid, all stage turret positions, camera and minimap, AI rules, tests and balance.
   - **Revised recommendation:** a test version on dev with the shorter field and without the pressure income bonus; the user plays it; then decide on 2 (end phase) as a backstop; then step 6 tunes the numbers.
-  - Status: to decide (test version now, or after the no-Seeker rounds).
+  - **User (2026-11-16):** a good push shouldn't be punished by a comeback mechanic, "at least not over a certain degree". Lets energy rise to max on purpose to deploy groups instead of lone mechs; maybe favour group deploys. Reinforcing a fight far from the base is almost impossible: many have died before help (any mech) arrives.
+  - **The common core is travel time.** Variants of 4:
+    - 4a shorter field (as above; big change).
+    - 4b **march speed:** about 1.6× while no enemy is near and not fighting, combat pace on contact. Reinforcements and late group members catch up; fights still feel heavy. One rule, field and stages unchanged.
+    - 4c **forward deployment:** new mechs appear at the frontmost own turret row. Gives turrets a role in attacking (none built in any recorded battle). Bigger design change (what if that turret falls?).
+    - Group deploy action (user idea): later, march speed may make it less needed.
+  - **Proposed order:** (1) test build: comeback bonus limited (+40% → about +10%) + 4b march speed; user plays. (2) If pushes still stall: 4a or 4c. (3) If still too long: 2, end phase. (4) Last: step 6 numbers.
+  - Status: to decide (test build now, or after the no-Seeker rounds).
 - **[balance/AI] Findings from the first battle with events** (Ash Ridge, stage 10, won 3★ in 753 s, 2026-11-16; one battle, so hints, not proof)
   - **Seeker carries everything:** 138 of the player's 159 kills came from Seekers (42 deployed, up to level 5); Brawler 22 deployed → 3 kills, Gunner 5 → 0, Mortar 6 → 3. Kill credit goes to the last hit, which favours long-range missiles, but the gap is large. Candidate for step 6.
   - **Two-lane setup:** the player deployed almost only in lanes 2 and 4 (57 of 75), Brawler + Seeker pairs. From there long reach covers the whole field. Matches the open question "do lanes 2 + 4 become the only sensible setup?".
