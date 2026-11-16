@@ -193,6 +193,15 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
       - Queue: one FIFO; each order remembers base or forward. If the turret is gone when the order's turn comes, it uses the next turret back in that lane, else the base.
       - B: a list Off / 8 / 10 / 12 / 15 min instead of a free number (quicker on a phone, fewer distinct values so battles are comparable in the stats).
       - Deploy events in the stats get a forward mark.
+    - **User (2026-11-16):** multi-tap, queue and fallback agreed. B: Off / 8 / 15 min. C and A agreed. One experiment at a time: a single "Experiment" list (one entry active; combinations only as named entries added later). Tag "DEV: <name>" (not "EXP", which reads like experience points).
+    - **Income today, player vs enemy (row 15, Endless 1):**
+      - Player: 8/s + 3 (Power Grid perk) + 2 per Reactor level (3 levels: +6) = about 15–17/s, plus the kill bounty (25% of each enemy mech's cost; row 15: about 12,000 energy, about 7/s on average) → about 22/s. The player also pays for turrets, Constructor trips and upgrades.
+      - Enemy: stage regen 12.9 × 1.15 (Reactor 1) = about 15/s at the start, doubling over 7 minutes to about 30/s, up to about 33/s under pressure. No kill bounty. Its stage turrets, levels and base upgrades are free.
+      - Unit costs are the same for both. Enemy mechs get the stage level for free (Endless 1: level 2 = +30% damage and HP), player mechs from the Workshop.
+      - So after 7 minutes the enemy has about 1.4× the player's income (403 vs 296 mechs deployed in row 15).
+    - **Consequences:**
+      - **B ×2 for both** keeps the ratio but doubles the absolute gap (about 8/s → 16/s more for the enemy). Fairer: **the same flat bonus for both** (e.g. +15/s each), which narrows the ratio and doesn't favour whoever already earns more.
+      - **C** only helps the player today, because the enemy gets no bounty. Options: as planned (a player buff, tuned later), or give the enemy the same bounty (symmetric: whoever wins fights gets ahead, either side).
   - **More ideas from the user (2026-11-16), for later:**
     - **Deployment location** adds variety (in Clash Royale troops can be placed anywhere, but that's "magic"; this game leans realistic). Realistic forms: deploy at a held forward position (4c) or an air drop with cooldown that can be shot down.
     - **Air units** (helicopters/VTOL): ignore turret walls and lane blocking, only some turrets can hit them; counter-play, but new targeting rules, turret types and art.
