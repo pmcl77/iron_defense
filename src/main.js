@@ -148,11 +148,13 @@ function summary(result, stars = 0) {
   };
   return body;
 }
-const KEEPALIVE_MAX = 60000, CP_MAX = 20, CP_DAYS = 14;
+const KEEPALIVE_MAX = 60000, CP_MAX = 20, CP_DAYS = 14, SERVER_MAX = 1000000;
 // resolves true when the server stored it
 function post(body) {
   try {
-    const text = JSON.stringify(body);
+    let text = JSON.stringify(body);
+    // the server takes up to 1 MB (hours of play); if ever bigger, send everything except the event list
+    if (text.length > SERVER_MAX) text = JSON.stringify({ ...body, events: [], eventsDropped: body.events.length });
     return fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: text, keepalive: text.length < KEEPALIVE_MAX })
       .then((r) => r.ok, () => false);
   } catch { return Promise.resolve(false); }
