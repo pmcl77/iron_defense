@@ -61,6 +61,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ### UI
 - **Camera stays put when you pick a turret card.** It used to jump back to your base to show all build cells; now it keeps your view (e.g. the front turret line), as the user asked.
+- **Battle clock** in the top bar, under the stage name (minutes:seconds; stops when the battle ends).
 - **Enemy intel** on the loadout screen, which now opens before every battle: the enemy's unit types, level, starting turrets and base upgrades, so you can pick your loadout against it. Unit types you've never fought show as "?" until you meet them (a save from before counts the units of all cleared stages as met). In battle the enemy level stands next to its HP bar.
 
 ### Tech

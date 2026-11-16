@@ -886,6 +886,7 @@ export class World {
     f.hp = 0; f.dead = true;
     if (f.kind === 'base') {
       this.result = f.team === 1 ? 'win' : 'lose';
+      this.endTime = this.time;
       this.winnerTeam = 1 - f.team;
       this.endTime = this.time;
       this.fx.push({ t: 'baseDown', x: f.x, y: f.y, team: f.team });

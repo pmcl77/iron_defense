@@ -617,6 +617,7 @@ function updateHud() {
   setText($('#hp1t'), 'hp1', String(Math.ceil(b1.hp)));
   $('#energy-fill').style.width = `calc(${(100 * w.energy / w.maxEnergy).toFixed(1)}% - 2px)`;
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
+  { const t = Math.floor(w.result ? w.endTime : w.time); setText($('#clock'), 'clk', `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`); }
   setText($('#regen'), 'rg', w.overtime ? `+${w.regen}+${OVERTIME_BONUS}/s` : `+${w.regen}/s`);
   if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; toast(`OVERTIME: +${OVERTIME_BONUS} energy/s for both sides`); }
   laneEls.forEach((b, i) => {
