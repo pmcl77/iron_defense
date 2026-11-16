@@ -591,7 +591,6 @@ function onCard(t, mech) {
     game.ui.placing = game.ui.placing === t ? null : t;
     if (game.ui.placing) {
       toast(`Tap free cells to order ${TURRETS[t].name}s · tap the card again to stop`);
-      if (renderer.camY > 400) { renderer.camY = 100; renderer.clampCam(); }
     }
   }
 }
