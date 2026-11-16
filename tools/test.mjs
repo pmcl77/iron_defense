@@ -710,11 +710,15 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     w.deployCd = {}; w.deploy('gunner', 2, true);
     const g2 = w.entities.filter((e) => e.kind === 'mech').pop();
     check('forward: turret gone → next one back', g2.y < t3.y && g2.y > t3.y - 100, g2.y);
-    t3.dead = true; w.cells[0][2][3] = null;
+    w.damage(t3, 1e9, null, 1);
+    check('forward: last turret of the lane destroyed → lane back to base', !w.laneFwd(2) && w.fwd[2] === false);
     w.deploy('scout', 2, true);
     const g3 = w.entities.filter((e) => e.kind === 'mech').pop();
     check('forward: no turret left → base', g3.y === BASE_FACE[0] + 24);
-    check('forward: third tap back to base', w.setLane(2) === 'base' && !w.laneFwd(2));
+    w.setLane(1); w.setLane(1);
+    check('forward: third tap back to base', w.setLane(1) === 'base' && !w.laneFwd(1));
+    w.setLane(1); w.sell(1, 6);
+    check('forward: last turret of the lane sold → lane back to base', !w.laneFwd(1));
     // queue: each order keeps its own choice
     const q = mk([], 0, 'forward'); q.placeTurret(0, 'sentry', 2, 4); q.setLane(2); q.energy = 0; // lane 3 is selected at the start: one tap = forward
     q.request('gunner'); q.setLane(2); q.request('gunner');

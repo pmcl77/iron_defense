@@ -183,6 +183,9 @@ export class World {
     for (let r = ROWS - 1; r >= 0; r--) { const t = this.cells[0][lane][r]; if (t && !t.dead) return t; }
     return null;
   }
+  // the lane's last turret is gone (destroyed or sold): the lane goes back to base deploys
+  // (orders already queued as forward fall back to the base when their turn comes)
+  dropFwd(lane) { if (this.fwd[lane] && !this.forwardTurret(lane)) this.fwd[lane] = false; }
   laneFwd(lane) { return !!this.exp.forward && this.fwd[lane]; }
   spawnPoint(lane, fwd) {
     const t = fwd ? this.forwardTurret(lane) : null;
@@ -279,6 +282,7 @@ export class World {
     t.dead = true; t.sold = true;
     this.ev('sold', t.type, lane + 1, row + 1);
     this.cells[0][lane][row] = null;
+    this.dropFwd(lane);
     this.fx.push({ t: 'sell', x: t.x, y: t.y });
     return true;
   }
@@ -889,6 +893,7 @@ export class World {
     }
     if (f.kind === 'turret') {
       if (this.cells[f.team][f.lane][f.row] === f) this.cells[f.team][f.lane][f.row] = null;
+      if (f.team === 0) this.dropFwd(f.lane);
     }
     if (f.team === 0 && f.kind === 'mech') this.stats.lost++;
     if (f.kind === 'mech' || f.kind === 'turret') {

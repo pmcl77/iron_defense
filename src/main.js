@@ -622,7 +622,6 @@ function updateHud() {
   laneEls.forEach((b, i) => {
     b.classList.toggle('on', i === w.activeLane);
     b.classList.toggle('fwd', w.laneFwd(i));
-    b.classList.toggle('fwd-off', w.laneFwd(i) && !w.forwardTurret(i)); // its turret fell: deploys at the base for now
   });
   for (const c of cardEls) {
     const def = c.mech ? MECHS[c.t] : TURRETS[c.t];

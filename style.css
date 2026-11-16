@@ -96,9 +96,8 @@ canvas#game { position: absolute; inset: 0; display: block; }
 }
 .lanes button::after { content: ''; border: 5px solid transparent; border-bottom: 7px solid currentColor; border-top: none; }
 .lanes button.on { background: rgba(78,163,255,0.9); color: #08121e; }
-/* dev experiment "Forward deploy": the lane deploys at its frontmost turret (dimmed: that turret fell, base for now) */
+/* dev experiment "Forward deploy": the lane deploys at its frontmost turret */
 .lanes button.fwd::after { content: 'FWD'; border: none; font-size: 8px; font-weight: 800; line-height: 1; padding: 2px 3px; background: #ffb43a; color: #1a1000; }
-.lanes button.fwd-off::after { opacity: 0.4; text-decoration: line-through; }
 
 .row3 { display: flex; gap: 4px; height: 104px; }
 .tabs { display: flex; flex-direction: column; gap: 4px; width: 26px; flex: none; }
