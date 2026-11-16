@@ -28,7 +28,7 @@ ok((await post({ ...battle, v: '<script>' })).status === 400, 'bad version rejec
 ok((await post({ ...battle, stage: 2.5 })).status === 400, 'non-integer stage rejected');
 ok((await post('not json')).status === 400, 'bad json rejected');
 ok((await post('[1,2]')).status === 400, 'array rejected');
-ok((await post({ ...battle, pad: 'x'.repeat(20000) })).status === 413, 'oversized body rejected');
+ok((await post({ ...battle, pad: 'x'.repeat(70000) })).status === 413, 'oversized body rejected');
 ok((await onRequestPost({ env: {}, request: new Request('https://x', { method: 'POST', body: '{}' }) })).status === 503, 'missing binding → 503');
 
 ok((await get('')).status === 403, 'read without key forbidden');

@@ -138,7 +138,7 @@ function summary(result, stars = 0) {
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
     enemy: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: w.log.mechs, turrets: w.log.turrets, lost: w.log.lost, specials: w.log.specials,
-    upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)],
+    upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
   };
   return body;
 }

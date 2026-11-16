@@ -582,7 +582,28 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('log counts enemy deploys', Object.values(L.mechs[1]).reduce((a, b) => a + b, 0) > 0);
   check('log records specials and upgrades', L.specials.surge === 1 && L.upgrades[0][1] === 'gunner');
   check('timeline every 30 s', L.timeline.length === 3 && L.timeline[1][0] === 30 && L.timeline[0].length === 6, JSON.stringify(L.timeline));
-  check('battle log is small', JSON.stringify(L).length < 4000);
+  check('battle log is small', JSON.stringify(L).length < 6000, JSON.stringify(L).length + ' bytes');
+  const E = (k) => L.events.filter((e) => e[1] === k);
+  check('event: own deploy with level and lane', E('deploy').some((e) => e[2] === 0 && e[3] === 'gunner' && e[4] === 0 && e[5] === 1 && e[0] === 0));
+  check('event: turret with lane and row', E('turret').some((e) => e[2] === 0 && e[3] === 'sentry' && e[5] === 0 && e[6] === 1));
+  check('event: special and upgrade', E('special')[0]?.[2] === 'surge' && E('upgrade')[0]?.[2] === 'gunner' && E('upgrade')[0]?.[3] === 1);
+  const ed = E('deploy').filter((e) => e[2] === 1);
+  check('event: enemy deploy has order and group', ed.length > 0 && ed.every((e) => Number.isInteger(e[6]) && Number.isInteger(e[7])));
+  check('events in time order', L.events.every((e, i) => i === 0 || e[0] >= L.events[i - 1][0]));
+}
+{
+  // a long busy battle stays well under the server limit (64 KB)
+  const w = new World(stageDef(8), defaultSave(), ALL, { seed: 4 });
+  const types = ['brawler', 'gunner', 'mortar', 'seeker', 'scout'];
+  for (let i = 0; i < 600 * 60 && !w.result; i++) {
+    if (i % 240 === 0) { w.energy = 999; w.deploy(types[(i / 240) % 5], (i / 240) % 5); }
+    w.update(1 / 60);
+  }
+  const E = w.log.events, size = JSON.stringify(w.log).length;
+  const deaths = E.filter((e) => e[1] === 'death');
+  check('event: deaths with lane, progress and killer', deaths.length > 20 && deaths.filter((e) => e[3] !== 'sentry' && e[3] !== 'arc' && e[3] !== 'howitzer').every((e) => Number.isInteger(e[4]) && e[5] >= 0 && e[5] <= 100 && typeof e[6] === 'string'));
+  check('10-minute battle log under 32 KB', size < 32000, `${size} bytes, ${E.length} events`);
+  console.log(`  (10-minute test battle: ${E.length} events, ${(size / 1024).toFixed(1)} KB)`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

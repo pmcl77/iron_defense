@@ -43,8 +43,10 @@ export class World {
     this.fx = [];
     this.result = null;
     this.stats = { kills: 0, deployed: 0, lost: 0 };
-    // battle log for the statistics upload (main.js sendStats): counts per team and type, plus a 30 s timeline
-    this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [] };
+    // battle log for the statistics upload (main.js sendStats): counts per team and type, a 30 s timeline, and
+    // events in time order (see ev() below)
+    this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [] };
+    this.aiOrders = 0;
     this.nextSample = 0;
     this.activeLane = 2;
 
@@ -90,6 +92,19 @@ export class World {
     this.ai = { energy: 40, next: null, recent: [] };
   }
 
+  // Battle events, time in s (0.1). Team 0 = player, 1 = enemy. Progress = % of the way from own base to the enemy base.
+  //   [t, 'deploy', team, type, level, lane]            + for the enemy: order number, group in that order (split attack = 2 groups)
+  //   [t, 'turret', team, type, level, lane, row]       turret finished (enemy start turrets at t = 0)
+  //   [t, 'sold', type, lane, row]
+  //   [t, 'death', team, type, lane, progress, killer]  killer = attacker type ('base', 'bomb' for Bombing)
+  //   [t, 'special', kind, x, y]
+  //   [t, 'upgrade', key, new level]                    key = unit type or base.armor / base.gun / base.reactor
+  ev(...a) { this.log.events.push([Math.round(this.time * 10) / 10, ...a]); }
+  progress(e) {
+    const p = (e.y - BASE_FACE[e.team]) / (BASE_FACE[1 - e.team] - BASE_FACE[e.team]);
+    return Math.round(100 * Math.max(0, Math.min(1, p)));
+  }
+
   // timeline entry: [time s, energy, own base HP %, enemy base HP %, own mechs, enemy mechs]
   sample(push = true) {
     const n = [0, 0];
@@ -119,6 +134,7 @@ export class World {
   placeTurret(team, type, lane, row) {
     const t = this.spawn({ kind: 'turret', type, team, lane, row, x: laneX(lane), y: cellY(team, row) });
     this.cells[team][lane][row] = t;
+    this.ev('turret', team, type, this.lvl[team][type], lane, row);
     return t;
   }
   stat(e, key) {
@@ -147,6 +163,7 @@ export class World {
     const jitter = (this.rnd() * 2 - 1) * 20;
     const e = this.spawn({ kind: 'mech', type, team: 0, lane, x: laneX(lane) + jitter, y: BASE_FACE[0] + 24, jitter });
     this.stats.deployed++;
+    this.ev('deploy', 0, type, this.lvl[0][type], lane);
     this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 0, type });
     return true;
   }
@@ -215,6 +232,7 @@ export class World {
     if (!t || this.result) return false;
     this.energy = Math.min(this.maxEnergy, this.energy + sellRefund(TURRETS[t.type], t.hp / t.maxHp));
     t.dead = true; t.sold = true;
+    this.ev('sold', t.type, lane, row);
     this.cells[0][lane][row] = null;
     this.fx.push({ t: 'sell', x: t.x, y: t.y });
     return true;
@@ -230,6 +248,7 @@ export class World {
     const before = levelMult(this.lvl[0][type]).hp;
     this.lvl[0][type]++;
     this.log.upgrades.push([Math.round(this.time), type]);
+    this.ev('upgrade', type, this.lvl[0][type]);
     const ratio = levelMult(this.lvl[0][type]).hp / before;
     for (const e of this.entities) if (e.team === 0 && e.type === type && !e.dead) { e.maxHp *= ratio; e.hp *= ratio; }
     this.fx.push({ t: 'upgrade' });
@@ -242,6 +261,7 @@ export class World {
     this.energy -= c;
     this.baseLvl[k]++;
     this.log.upgrades.push([Math.round(this.time), 'base.' + k]);
+    this.ev('upgrade', 'base.' + k, this.baseLvl[k]);
     const b = this.bases[0];
     if (k === 'armor') { const add = BASE.hp * 0.2; b.maxHp += add; b.hp += add; }
     if (k === 'gun') this.gunLvl[0] = this.baseLvl.gun;
@@ -254,6 +274,7 @@ export class World {
     if (!this.canSpecial(k)) return false;
     this.specialCd[k] = SPECIALS[k].cd * this.specialMult;
     bump(this.log.specials, k);
+    this.ev('special', k, Math.round(x), Math.round(y));
     if (k === 'bomb') {
       for (let i = 0; i < 7; i++) {
         const a = this.rnd() * TAU, r = Math.sqrt(this.rnd()) * 110;
@@ -816,7 +837,10 @@ export class World {
       if (this.cells[f.team][f.lane][f.row] === f) this.cells[f.team][f.lane][f.row] = null;
     }
     if (f.team === 0 && f.kind === 'mech') this.stats.lost++;
-    if (f.kind === 'mech' || f.kind === 'turret') bump(this.log.lost[f.team], f.type);
+    if (f.kind === 'mech' || f.kind === 'turret') {
+      bump(this.log.lost[f.team], f.type);
+      this.ev('death', f.team, f.type, f.lane, f.kind === 'mech' ? this.progress(f) : null, src ? src.type : 'bomb');
+    }
     if (team === 0 && f.team === 1) {
       this.stats.kills++;
       this.energy = Math.min(this.maxEnergy, this.energy + (f.def.cost || 0) * ENERGY.bounty);
@@ -903,7 +927,8 @@ export class World {
     if (ai.energy >= cost) {
       ai.energy -= cost;
       let first = -1;
-      for (const g of ai.next.groups) {
+      const order = ++this.aiOrders;
+      for (const [gi, g] of ai.next.groups.entries()) {
         const lane = this.aiLane(pressure, laneP, first);
         if (first < 0) first = lane;
         ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
@@ -911,6 +936,7 @@ export class World {
           const jitter = (this.rnd() * 2 - 1) * 20;
           const e = this.spawn({ kind: 'mech', type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24 + i * 34, jitter });
           this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
+          this.ev('deploy', 1, type, this.lvl[1][type], lane, order, gi);
         });
       }
       ai.next = null;

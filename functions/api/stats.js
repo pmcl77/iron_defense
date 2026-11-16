@@ -11,7 +11,7 @@
 
 const RESULTS = ['win', 'lose', 'quit', 'abandoned'];
 const HEX16 = /^[0-9a-f]{16}$/;
-const MAX_BODY = 16384;
+const MAX_BODY = 65536;
 const SCHEMA = `CREATE TABLE IF NOT EXISTS battles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   created TEXT NOT NULL DEFAULT (datetime('now')),
