@@ -16,7 +16,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
   - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
   - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
-  - **Overtime from 8 / 15 min:** from then on both sides get +15 energy/s (HUD shows "+N+15/s").
+  - **Overtime from 8 / 15 min:** from then on both sides get +15 energy/s (HUD shows "+N+15/s"). Its start is announced by a pulsing OVERTIME banner under the top bar, and the battle clock turns red.
 - Branch previews (`<branch>.iron-defense.pages.dev`) now count as dev builds.
 
 ### Gameplay
@@ -63,6 +63,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ### UI
 - **Camera stays put when you pick a turret card.** It used to jump back to your base to show all build cells; now it keeps your view (e.g. the front turret line), as the user asked.
+- **Endless button** names the wave it starts ("Endless · wave 3"): the first wave you haven't won yet. Before, "from N" restarted the last wave you had already won.
 - **Battle clock** in the top bar, under the stage name (minutes:seconds; stops when the battle ends).
 - **Enemy intel** on the loadout screen, which now opens before every battle: the enemy's unit types, level, starting turrets and base upgrades, so you can pick your loadout against it. Unit types you've never fought show as "?" until you meet them (a save from before counts the units of all cleared stages as met). In battle the enemy level stands next to its HP bar.
 

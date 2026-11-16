@@ -339,7 +339,7 @@ function showMenu() {
 }
 function showStages() {
   screen.className = '';
-  const endlessOpen = save.cleared >= STAGES.length, eFrom = Math.max(1, save.endlessBest);
+  const endlessOpen = save.cleared >= STAGES.length, eFrom = save.endlessBest + 1; // the first wave not yet won
   screen.innerHTML = `
     <div class="panel">
       <div class="head"><div><h2>Campaign</h2><p class="sub">Destroy the enemy base. Keep yours standing for more stars.</p></div>
@@ -352,7 +352,7 @@ function showStages() {
         }).join('')}
       </div>
       <div class="btn-row">
-        <button class="btn ${endlessOpen ? 'primary' : ''}" data-a="endless" ${endlessOpen ? '' : 'disabled'}>Endless ${endlessOpen ? `· from ${eFrom}` : '· clear all 12'}</button>
+        <button class="btn ${endlessOpen ? 'primary' : ''}" data-a="endless" ${endlessOpen ? '' : 'disabled'}>Endless ${endlessOpen ? `· wave ${eFrom}` : '· clear all 12'}</button>
         <button class="btn" data-a="workshop">Workshop · <span class="credits">${save.credits}¢</span></button>
       </div>
     </div>`;
@@ -620,7 +620,8 @@ function updateHud() {
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   { const t = Math.floor(w.result ? w.endTime : w.time); setText($('#clock'), 'clk', `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`); }
   setText($('#regen'), 'rg', w.overtime ? `+${w.regen}+${OVERTIME_BONUS}/s` : `+${w.regen}/s`);
-  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; toast(`OVERTIME: +${OVERTIME_BONUS} energy/s for both sides`); }
+  $('#clock').classList.toggle('ot', !!w.overtime);
+  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', `+${OVERTIME_BONUS} energy/s for both sides`); }
   laneEls.forEach((b, i) => {
     b.classList.toggle('on', i === w.activeLane);
     b.classList.toggle('fwd', w.laneFwd(i));
@@ -673,6 +674,16 @@ function updateQueue() {
 }
 $('#queue .qclear').addEventListener('click', () => { const w = game.world; if (w) { w.clearQueue(); renderer.consume(w.fx, sfx); } });
 let toastTimer = 0;
+// big announcement under the top bar: pulses, then fades out after about 3.5 s
+let bannerTimer;
+function banner(title, sub) {
+  const b = $('#banner');
+  $('#toast').classList.remove('show');
+  b.hidden = true; void b.offsetWidth; // restart the animation
+  b.innerHTML = `${title}<small>${sub}</small>`;
+  b.hidden = false;
+  clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.hidden = true; }, 3600);
+}
 function toast(msg) {
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
