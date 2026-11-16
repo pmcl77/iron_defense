@@ -114,6 +114,16 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **[feature] Enemy AI later:** D, stage personalities (e.g. "swarm": many light units; "siege": Lancer, Mortar, Breacher; "armored": Brawler, Aegis) for variety between stages; and the agreed "counter AI" (real counter-picking against your army). *(A + B + C built in step 5, see CHANGELOG.)*
 
 ### Under discussion
+- **[gameplay/balance] Battles are too long** (user, 2026-11-16: "battles are too long … that is what I like about Clash Royale, as a battle is capped to 5 min maximum"; not to copy it)
+  - **Data:** recorded wins 9:10, 12:33 and 22:13; the lost stage 12 win was long too. No time limit exists (only the bot stops at 10 min).
+  - **Where the time goes:** the midfield stalemate, not the base. In Breakwater the enemy base stayed at 100% for about 20 minutes, then fell in about 100 s. Two rules stretch the stalemate: the enemy's income doubles over the first 7 minutes, and rises by up to 40% when the player's mechs are near its base (the harder you push, the more it deploys).
+  - **Options:**
+    1. **Tune in step 6:** battle length as an explicit goal (e.g. a typical win in 4–6 min); weaken the pressure bonus and/or the income doubling so a push breaks through. Numbers only, but no guaranteed maximum.
+    2. **Decisive end phase for both sides:** after a few minutes, e.g. double energy for both and lower base armor, so someone breaks through. A soft limit; the battle is still won by destroying the base.
+    3. **Hard time limit:** e.g. 6 min; then the side with more base HP left wins, a draw goes to a short sudden death (or counts as a loss). Most predictable for phone sessions; can end on points.
+    4. **Structural:** shorter field, faster mechs or less base HP. Shortens everything, also the parts that work; only if 1–3 aren't enough.
+  - **Recommendation:** 1 + 2; 3 only as an extra backstop (e.g. at 8 min) if wanted. Details and numbers our own, not copied.
+  - Status: to discuss; the coming no-Seeker battles will show whether the stalemate comes from the rules or from the Seeker.
 - **[balance/AI] Findings from the first battle with events** (Ash Ridge, stage 10, won 3★ in 753 s, 2026-11-16; one battle, so hints, not proof)
   - **Seeker carries everything:** 138 of the player's 159 kills came from Seekers (42 deployed, up to level 5); Brawler 22 deployed → 3 kills, Gunner 5 → 0, Mortar 6 → 3. Kill credit goes to the last hit, which favours long-range missiles, but the gap is large. Candidate for step 6.
   - **Two-lane setup:** the player deployed almost only in lanes 2 and 4 (57 of 75), Brawler + Seeker pairs. From there long reach covers the whole field. Matches the open question "do lanes 2 + 4 become the only sensible setup?".
