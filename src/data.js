@@ -75,7 +75,7 @@ export const MECHS = {
     proj: 'melee', radius: 28, turn: TURN, desc: 'Heavy melee tank. Smashes walls.',
   },
   mortar: {
-    role: 'artillery', name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 3.2, range: 520, speed: 28, cd: 4.5,
+    role: 'artillery', name: 'Mortar', cost: 170, hp: 180, dmg: 60, reload: 3.2, range: 460, speed: 28, cd: 4.5,
     proj: 'shell', splash: 70, radius: 24, turn: TURN, pauseToFire: true,
     flight: [1.0, 400], scatterMax: 40, structMult: 0.5,
     desc: 'Long-range splash. Slow shells: best vs units that stand still.',
@@ -86,14 +86,14 @@ export const MECHS = {
   },
   seeker: {
     role: 'line', name: 'Seeker', cost: 150, hp: 260, dmg: 35, reload: 2.4, range: 380, speed: 40, cd: 4,
-    proj: 'missile', salvo: 2, splash: 30, traits: ['prefersMechs', 'longReach'], radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
+    proj: 'missile', salvo: 2, splash: 30, traits: ['prefersMechs'], radius: 22, turn: TURN, desc: 'Homing missile salvos. Hunts mechs.',
   },
   breacher: {
     role: 'charger', name: 'Breacher', cost: 190, hp: 950, dmg: 30, reload: 1.2, range: 60, speed: 30, cd: 5,
     proj: 'melee', structMult: 4, stunOnHit: 0.3, radius: 30, turn: TURN, desc: 'Wallbreaker. ×4 damage to turrets and bases.',
   },
   lancer: {
-    role: 'artillery', name: 'Lancer', cost: 200, hp: 300, dmg: 30, reload: 2.5, range: 460, speed: 32, cd: 5,
+    role: 'artillery', name: 'Lancer', cost: 200, hp: 300, dmg: 30, reload: 2.5, range: 540, speed: 32, cd: 5,
     proj: 'slug', structMult: 3, traits: ['prefersStructures'], radius: 22, turn: TURN, pauseToFire: true,
     desc: 'Siege gun. Outranges turrets, ×3 vs structures.',
   },
@@ -142,7 +142,7 @@ export const TURRETS = {
     desc: 'Rapid-fire gun. Blocks its cell.',
   },
   howitzer: {
-    name: 'Howitzer', cost: 160, hp: 950, dmg: 55, reload: 2.0, range: 430, proj: 'shell', splash: 60, radius: 34, turn: 2.5,
+    name: 'Howitzer', cost: 160, hp: 950, dmg: 55, reload: 2.0, range: 500, proj: 'shell', splash: 60, radius: 34, turn: 2.5,
     desc: 'Long-range shells with splash.',
   },
   arc: {
@@ -186,8 +186,11 @@ export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart:
 export const MAX_UNIT_LEVEL = 5;
 export const BASE_MAX_ENERGY = 300;
 export const upgradeCost = (def, lvl) => Math.min(BASE_MAX_ENERGY, Math.round(def.cost * 0.9 * (lvl + 1)));
+// Levels add only damage and HP (decided 2026-11-16): range, speed and fire rate stay fixed, so the range ladder
+// (gameplay.md §5.4) and the movement rules don't depend on upgrades.
+export const LEVEL_STEP = 0.15;
 export const levelMult = (lvl) => ({
-  dmg: 1 + 0.25 * lvl, hp: 1 + 0.25 * lvl, speed: 1 + 0.04 * lvl, range: 1 + 0.04 * lvl, reload: 1 - 0.04 * lvl,
+  dmg: 1 + LEVEL_STEP * lvl, hp: 1 + LEVEL_STEP * lvl, speed: 1, range: 1, reload: 1,
 });
 // Selling refunds 25% (nearly dead) to 50% (full HP) of the build cost.
 export const sellRefund = (def, hpFrac) => Math.round(def.cost * 0.5 * (0.5 + 0.5 * hpFrac));

@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -362,7 +362,7 @@ function showHelp() {
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
     ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 5) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
-    ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Seekers reach two lanes to each side (from the middle lane: every lane). Turrets and bases reach every lane.'],
+    ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Turrets and bases reach every lane.'],
     ['Roles', 'Every mech has a role that decides how it moves. Pick what you deploy and where:'],
     ...Object.entries(ROLES).map(([k, r]) => [r.name, `${r.desc} ${MECH_TYPES.filter((t) => MECHS[t].role === k).map((t) => MECHS[t].name).join(', ')}.`]),
     ['Traits', `A trait changes one rule of a mech's role. ${MECH_TYPES.filter((t) => MECHS[t].traits.length).map((t) => `${MECHS[t].name}: ${MECHS[t].traits.map((k) => TRAITS[k].name.toLowerCase()).join(', ')}`).join('. ')}.`],
@@ -446,7 +446,7 @@ function showUpgrades() {
         ${types.map(([k, t, def]) => {
           const lv = w.lvl[0][t], c = w.unitUpgradeCost(t);
           return `<div class="item"><canvas width="92" height="92" data-icon="${k}:${t}"></canvas>
-            <div class="info"><b>${def.name}${pips(lv, MAX_UNIT_LEVEL)}</b><small>+25% damage &amp; HP, a bit faster</small></div>
+            <div class="info"><b>${def.name}${pips(lv, MAX_UNIT_LEVEL)}</b><small>+${Math.round(LEVEL_STEP * 100)}% damage &amp; HP</small></div>
             <button class="btn small" data-a="unit" data-t="${t}" ${c == null || w.energy < c ? 'disabled' : ''}>${c == null ? 'MAX' : '⚡' + c}</button></div>`;
         }).join('')}
       </div>

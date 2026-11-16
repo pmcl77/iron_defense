@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -200,9 +200,9 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('Reinforced Walls: base HP', w.bases[0].maxHp === 4350, `hp ${w.bases[0].maxHp}`);
   check('Fast Uplink: cooldowns', Math.abs(w.specialMult - 0.7) < 1e-9 && Math.abs(w.specialCd.bomb - 14) < 1e-9);
   const m = w.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: 300, y: 500 });
-  check('Veteran Training: unit level', w.lvl[0].gunner === 3 && m.maxHp === 230 * 1.75, `hp ${m.maxHp}`);
+  check('Veteran Training: unit level', w.lvl[0].gunner === 3 && Math.abs(m.maxHp - 230 * 1.45) < 1e-9, `hp ${m.maxHp}`);
   w.order(2, 1, 'sentry'); w.update(1 / 60);
-  check('Veteran Training: Constructor', w.con && w.con.maxHp === 350, `hp ${w.con && w.con.maxHp}`);
+  check('Veteran Training: Constructor', w.con && Math.abs(w.con.maxHp - 200 * (1 + 3 * LEVEL_STEP)) < 1e-9, `hp ${w.con && w.con.maxHp}`);
 }
 
 // 16. lane reach: own lane ± 1 (Seeker exempt)
@@ -215,13 +215,17 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const near = mech(w, 'scout', 1, 3, 1150, 1e9); near.def = { ...near.def, speed: 0, dmg: 0 };
   w.update(1 / 60);
   check('gunner targets the neighbouring lane', g.target === near);
-  // traits: the Seeker's long reach is ± 2 lanes
-  const sk = mech(w, 'seeker', 0, 0, 1000, 1e9); w.update(1 / 60);
-  check('seeker (long reach) does not reach three lanes away', sk.target === null, `target lane ${sk.target?.lane}`);
-  const sk2 = mech(w, 'seeker', 0, 2, 1000, 1e9); w.update(1 / 60);
-  check('seeker (long reach) reaches two lanes away', sk2.target === far || sk2.target === near);
-  const sk1 = mech(w, 'seeker', 0, 1, 1000, 1e9); w.update(1 / 60);
-  check('seeker in lane 1 reaches lane 3', sk1.target === near, `target lane ${sk1.target?.lane}`);
+  // the Seeker has normal reach now (test build 2026-11-16: Long reach removed)
+  const sk0 = mech(w, 'seeker', 0, 1, 1000, 1e9); w.update(1 / 60);
+  check('seeker in lane 2 (data) no longer reaches two lanes away', sk0.target === null, `target lane ${sk0.target?.lane}`);
+  // the Long reach trait itself (on a Seeker given the trait's rules): ± 2 lanes
+  const lr = (lane) => { const m = mech(w, 'seeker', 0, lane, 1000, 1e9); m.def = { ...m.def, rules: { ...m.def.rules, ...TRAITS.longReach.set } }; return m; };
+  const sk = lr(0); w.update(1 / 60);
+  check('long reach does not reach three lanes away', sk.target === null, `target lane ${sk.target?.lane}`);
+  const sk2 = lr(2); w.update(1 / 60);
+  check('long reach reaches two lanes away', sk2.target === far || sk2.target === near);
+  const sk1 = lr(1); w.update(1 / 60);
+  check('long reach from lane 1 reaches lane 3', sk1.target === near, `target lane ${sk1.target?.lane}`);
   // traits: preferences
   const wp = mk([['sentry', 2, 7]]);
   const tp = tough(wp.cells[1][2][7]); tp.def = { ...tp.def, dmg: 0 };
@@ -230,7 +234,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   wp.update(1 / 60);
   check('lancer (prefers structures) picks the turret over a closer mech', lp.target === tp, `target ${lp.target?.kind}`);
   check('seeker (prefers mechs) picks the mech', sp.target === mp, `target ${sp.target?.kind}`);
-  check('rules = role + traits', MECHS.seeker.rules.reach === 2 && MECHS.seeker.rules.pref === 'mech' && MECHS.seeker.rules.fireOnMove === false && MECHS.gunner.rules.reach === 1 && MECHS.gunner.rules.pref === null);
+  check('rules = role + traits', MECHS.seeker.rules.reach === 1 && MECHS.seeker.rules.pref === 'mech' && MECHS.seeker.rules.fireOnMove === false && MECHS.gunner.rules.reach === 1 && MECHS.gunner.rules.pref === null);
 }
 // 17. Line stays behind a marching tank; a Charger passes it and returns home
 {
@@ -266,7 +270,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('line fans out behind a fighting line mech of the same range', Math.abs(gs2.lane - 2) === 1 && gs2.homeLane == null && gs2.target === tgs, `lane ${gs2.lane} home ${gs2.homeLane}`);
   // proposal H: passing a fighting friendly, it takes the side toward the shot (enemy in lane 3, not the default lane 1)
   const wh = mk();
-  const th = mech(wh, 'brawler', 1, 3, 1650, 1e9); th.def = { ...th.def, dmg: 0, speed: 0 };
+  const th = mech(wh, 'brawler', 1, 3, 1570, 1e9); // within the Mortar's 460 th.def = { ...th.def, dmg: 0, speed: 0 };
   const mh = mech(wh, 'mortar', 0, 2, 1150, 1e9), gh = mech(wh, 'gunner', 0, 2, 1090, 1e9);
   let hSide = null;
   for (let i = 0; i < 10 * 60 && hSide == null; i++) { wh.update(1 / 60); wh.fx.length = 0; if (gh.lane !== 2) hSide = gh.lane; }
@@ -362,7 +366,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('mortar deals half damage to turrets', h0 - t.hp > 0 && h0 - t.hp <= 30.0001, `dmg ${h0 - t.hp}`);
   const w2 = mk();
   const m2 = mech(w2, 'mortar', 0, 2, 1000, 1e9); m2.cool = 0;
-  const runner = mech(w2, 'scout', 1, 3, 1480, 1000); runner.def = { ...runner.def, dmg: 0, range: 1 };
+  const runner = mech(w2, 'scout', 1, 3, 1440, 1000); // near the Mortar's 460 runner.def = { ...runner.def, dmg: 0, range: 1 };
   w2.update(1 / 60);
   const shell = w2.projectiles.find((p) => p.kind === 'shell');
   check('mortar shell flight time ≥ 2 s at long range', shell && shell.T >= 2, `T ${shell && shell.T.toFixed(2)}`);
@@ -579,6 +583,18 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const top = Math.max(...[0, 1, 2, 3, 4].map((l) => lanes.filter((x) => x === l).length)) / lanes.length;
   check('lane choice varies (no lane above 60%)', top < 0.6 && new Set(lanes).size === 5, `top ${(top * 100).toFixed(0)}%`);
   check('a split attack never uses the same lane twice', Array.from({ length: 200 }, () => { const a = w3.aiLane(0, [0, 0, 0, 0, 0]); return w3.aiLane(0, [0, 0, 0, 0, 0], a) !== a; }).every(Boolean));
+}
+
+// ---------- levels: only damage and HP; the range ladder ----------
+{
+  const m = levelMult(5);
+  check('levels add only damage and HP', m.dmg === 1 + 5 * LEVEL_STEP && m.hp === m.dmg && m.range === 1 && m.speed === 1 && m.reload === 1);
+  const w = mk(), lo = mech(w, 'seeker', 0, 2, 400, 1e9);
+  w.lvl[0].seeker = 5; const hi = mech(w, 'seeker', 0, 0, 400, 1e9);
+  check('an upgraded mech keeps its range and speed', w.stat(hi, 'range') === w.stat(lo, 'range') && w.stat(hi, 'speed') === w.stat(lo, 'speed'));
+  const R = (t) => (MECHS[t] || TURRETS[t]).range;
+  check('range ladder: Arc < Gunner < Sentry < Seeker < Mortar < Howitzer < Lancer',
+    R('arc') < R('gunner') && R('gunner') < R('sentry') && R('sentry') < R('seeker') && R('seeker') < R('mortar') && R('mortar') < R('howitzer') && R('howitzer') < R('lancer'));
 }
 
 // ---------- march pace (MARCH) ----------

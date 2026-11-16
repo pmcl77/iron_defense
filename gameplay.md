@@ -145,7 +145,7 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 ### 5.3 Targeting
 
 - A mech targets the **nearest enemy within range that's ahead of it or level with it**. Range is a straight-line (circle) distance measured to the target's edge.
-- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; the **Seeker** reaches two lanes to each side (Long reach trait, §5.5: from lane 3 every lane, from lane 1 lanes 1–3); **turrets and bases** fire into any lane. Splash and zap chains still hit anything in their radius.
+- **Lane reach:** a mech can only target enemies in **its own lane and the two lanes next to it**. A mech in lane 3 covers lanes 2–4; a mech in lane 1 covers lanes 1–2. Exceptions: the enemy **base** spans every lane and is always reachable; **turrets and bases** fire into any lane. (The Seeker reached two lanes to each side with the Long reach trait until the test build of 2026-11-16, §5.5.) Splash and zap chains still hit anything in their radius.
 - **Mechs turn to aim.** The upper body (torso and weapons) rotates toward the target at any angle, while the legs keep walking along the lane. Torso turn rate is about 360°/s *(tune)*, and a mech fires only once it's aimed within 10°.
 - **Ahead first:** a mech picks a target ahead of it or level with it whenever one is in range. It turns to shoot at targets behind it only when nothing ahead is in range.
 - **Turrets and bases fire in every direction.** Otherwise any mech that got past a turret would be safe from it.
@@ -162,11 +162,11 @@ The first five are copied from Ironline; the last three are new *(tune)*:
 | Scout | 40 | 90 | 8 | 0.35 | 150 | 76 | 1.2 s | Bullet |
 | Gunner | 80 | 230 | 18 | 0.6 | 260 | 44 | 2 s | Bullet |
 | Brawler | 140 | 700 | 48 | 1.0 | 60 | 32 | 3.5 s | Melee |
-| Mortar | 170 | 180 | 60 (×0.5 vs turrets and bases) | 3.2 | 520 | 28 | 4.5 s | Slow shell, splash 70 |
+| Mortar | 170 | 180 | 60 (×0.5 vs turrets and bases) | 3.2 | 460 (was 520) | 28 | 4.5 s | Slow shell, splash 70 |
 | Aegis | 120 | 340 | 6 | 0.8 | 180 | 46 | 4 s | Bullet, 40% damage-reduction field within 200 (was 140 until 0.4.0-dev) |
 | **Seeker** | 150 | 260 | 2 × 35 | 2.4 | 380 | 40 | 4 s | Missile salvo, splash 30, prefers mechs |
 | **Breacher** | 190 | 950 | 30 (×4 vs turrets and bases) | 1.2 | 60 | 30 | 5 s | Melee; each hit stuns a turret for 0.3 s |
-| **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 460 | 32 | 5 s | Siege slug, prefers turrets and bases |
+| **Lancer** | 200 | 300 | 30 (×3 vs turrets and bases) | 2.5 | 540 (was 460) | 32 | 5 s | Siege slug, prefers turrets and bases |
 
 Speeds are in field units per second, after the 20% slowdown of 0.3.0-dev. The Aegis is a little faster than the Line mechs (46 vs Gunner 44, Seeker 40), so it can catch up with the fight it follows (0.4.0-dev, user).
 
@@ -199,7 +199,7 @@ Attack types work as in Ironline, measured in 2D:
 **Traits** (each replaces one role rule):
 - **Prefers mechs:** picks enemy mechs over structures.
 - **Prefers structures:** picks turrets and bases over mechs.
-- **Long reach:** targets own lane ± 2 instead of ± 1 (§5.3).
+- **Long reach:** targets own lane ± 2 instead of ± 1 (§5.3). *Currently on no mech: removed from the Seeker in the test build of 2026-11-16 (from lane 3 it covered every lane; ISSUES).*
 
 | Type | Role | Weapon | Traits | Card text |
 |---|---|---|---|---|
@@ -214,6 +214,26 @@ Attack types work as in Ironline, measured in 2D:
 
 Later units get a role the same way (the heavy tank: Tank if it leads and brawls, Charger if it goes for walls; a repair mech: Support).
 
+### Range ladder (mechs and turrets)
+
+*(test build 0.4.0-dev, 2026-11-16; ISSUES "Seeker" / turret notes)* Every unit's range, short to long. Ranges never change with level (§8), so this order holds in every battle:
+
+| Range | Unit | Role in the ladder |
+|---|---|---|
+| 60 | Brawler, Breacher | melee |
+| 150 | Scout | |
+| 180 | Aegis | |
+| 230 | Arc Coil (turret) | close defence |
+| 260 | Gunner | |
+| 290 | Sentry (turret) | close defence: outranges Gunners and everything shorter |
+| 340 | Base gun | |
+| 380 | Seeker | outranges Sentries |
+| 460 | Mortar | artillery against mechs; outranges Sentries and Seekers, not the Howitzer |
+| 500 | Howitzer (turret) | covers the turret wall: reaches a Seeker attacking a Sentry one row ahead (about 480), and a Mortar attacking a Sentry in the neighbouring lane of the same row (about 475) |
+| 540 | Lancer | the only unit that outranges every turret: the turret hunter |
+
+Rules of thumb: a Sentry stops what comes close; a Howitzer beside or behind it covers it against Seekers, and a Howitzer in the same row also against Mortars; Lancers have to be answered with mechs.
+
 *Old rule, removed in 0.4.0-dev:* a global Hold / Advance toggle per side (key F). Hold stopped mechs whenever a target was in range; Advance kept them walking while firing, stepping around turrets and overtaking friendlies.
 
 ## 6. Turrets
@@ -223,7 +243,7 @@ Turrets are fixed units with high HP. They attack the first unit they see, using
 | Turret | Cost | HP | Damage | Reload (s) | Range | Attack |
 |---|---|---|---|---|---|---|
 | Sentry | 90 | 650 | 9 | 0.22 | 290 | Bullet |
-| Howitzer | 160 | 950 | 55 | 2.0 | 430 | Shell, splash 60 |
+| Howitzer | 160 | 950 | 55 | 2.0 | 500 (was 430) | Shell, splash 60 |
 | Arc Coil | 200 | 750 | 30 | 1.2 | 230 | Zap, 3 targets |
 
 ### 6.1 Ordering turrets
@@ -265,7 +285,7 @@ The player base starts with 3000 HP, +15% per Reinforced Walls perk level.
 
 ## 8. Unit levels and in-battle upgrades
 
-The rules are the same as Ironline. Every mech and turret type has a level from 0 to 5. Each level gives +25% damage and HP, and +4% speed, range and fire rate. Upgrades apply to every unit of that type, including ones already on the field.
+The rules are the same as Ironline. Every mech and turret type has a level from 0 to 5. Each level gives **+15% damage and HP** (`LEVEL_STEP` in data.js). Range, speed and fire rate stay fixed (decided 2026-11-16: the range ladder and the movement rules must not depend on upgrades; until then +25% damage and HP, +4% speed, range and fire rate). Upgrades apply to every unit of that type, including ones already on the field.
 
 The cost to go from level L to L+1 is `min(300, round(unit cost × 0.9 × (L + 1)))`. The Constructor isn't upgraded in battle; its level only comes from the Workshop.
 
