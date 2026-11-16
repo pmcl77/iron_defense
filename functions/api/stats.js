@@ -2,7 +2,8 @@
 // Deploys with the site. Set up per environment in the dashboard (Production = main, Preview = dev):
 //   STATS_DB  - D1 database binding (iron-defense-stats / iron-defense-stats-dev)
 //   STATS_KEY - secret needed to read the data
-// POST /api/stats         one battle summary from the game (main.js sendStats)
+// POST /api/stats         one battle summary from the game (main.js sendStats); gzipped when the header
+//                         "x-stats-enc: gzip" is set (keeps long battles under the browsers' 64 KB keepalive limit)
 // GET  /api/stats?key=…   { summary, rows, next }; optional since=<row> and limit=<n> (max 5000).
 //                         Each row is the sent summary (its `id` = battle id) plus `row` (database row number) and `created`.
 //                         The key can also be sent as header "x-stats-key".
@@ -11,7 +12,7 @@
 
 const RESULTS = ['win', 'lose', 'quit', 'abandoned'];
 const HEX16 = /^[0-9a-f]{16}$/;
-const MAX_BODY = 1048576; // 1 MB; a 22-minute battle is about 36 KB
+const MAX_BODY = 1048576; // 1 MB uncompressed; a 28-minute battle is about 60 KB (11 KB gzipped)
 const SCHEMA = `CREATE TABLE IF NOT EXISTS battles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   created TEXT NOT NULL DEFAULT (datetime('now')),
@@ -43,11 +44,31 @@ async function sameKey(a, b) {
   return d === 0;
 }
 
+// the request body as text, gunzipped if marked; null if over MAX_BODY (also after decompression)
+async function readBody(request) {
+  if (!request.body) return '';
+  let stream = request.body;
+  if (request.headers.get('x-stats-enc') === 'gzip') stream = stream.pipeThrough(new DecompressionStream('gzip'));
+  const reader = stream.getReader(), parts = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.length;
+    if (n > MAX_BODY) { reader.cancel().catch(() => {}); return null; }
+    parts.push(value);
+  }
+  const all = new Uint8Array(n);
+  let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+  return new TextDecoder().decode(all);
+}
+
 export async function onRequestPost({ request, env }) {
   const db = env.STATS_DB;
   if (!db) return json({ error: 'not configured' }, 503);
-  const text = await request.text();
-  if (text.length > MAX_BODY) return json({ error: 'too large' }, 413);
+  let text;
+  try { text = await readBody(request); } catch { return json({ error: 'bad body' }, 400); }
+  if (text === null) return json({ error: 'too large' }, 413);
   let b;
   try { b = JSON.parse(text); } catch { return json({ error: 'bad json' }, 400); }
   if (!b || typeof b !== 'object' || Array.isArray(b)) return json({ error: 'invalid' }, 400);

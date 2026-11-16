@@ -82,5 +82,16 @@ const d3 = await (await g2({ env: old, request: new Request('https://x?key=k') }
 ok(r3.status === 201 && d3.rows.length === 2 && d3.rows[0].stage === 8, 'old table upgraded, old row kept');
 
 ok((await post({ ...battle, stage: 20, pad: 'x'.repeat(200000) })).status === 201, 'a 200 KB battle is accepted');
+// gzipped bodies (long battles stay under the 64 KB keepalive limit)
+const gz = async (text) => new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+const postGz = async (bytes) => onRequestPost({ env, request: new Request('https://x/api/stats', { method: 'POST', headers: { 'x-stats-enc': 'gzip' }, body: bytes }) });
+const big = { ...battle, id: 'abcdefabcdef0042', stage: 21, events: Array.from({ length: 3000 }, (_, i) => [i / 10, 'deploy', 1, 'seeker', 1 + (i % 5), 2]) };
+const zipped = await gz(JSON.stringify(big));
+ok(zipped.length < 60000 && JSON.stringify(big).length > 60000, 'a long battle gzips below the keepalive limit');
+ok((await postGz(zipped)).status === 201, 'gzipped battle stored');
+const back = (await (await get('?key=secret-key')).json()).rows.find((r) => r.id === 'abcdefabcdef0042');
+ok(back && back.events.length === 3000, 'gzipped battle reads back complete');
+ok((await postGz(new Uint8Array([1, 2, 3, 4]))).status === 400, 'broken gzip rejected');
+ok((await postGz(await gz(JSON.stringify({ ...battle, pad: 'x'.repeat(1100000) })))).status === 413, 'gzipped body too large once unpacked rejected');
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

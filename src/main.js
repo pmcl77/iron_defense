@@ -163,7 +163,9 @@ function launch(i) {
 // hidden). When the battle ends (or is quit/restarted) the final summary replaces it and stays until the server has
 // confirmed it; anything left (app closed or killed, offline, server error) is sent again at the next start.
 // The server replaces an 'abandoned' row when the real result of the same battle id arrives.
-// keepalive (survives closing the page) is limited to 64 KB by browsers, so bigger summaries are sent without it.
+// keepalive (survives closing the page or switching apps) is limited to 64 KB by browsers, so summaries are gzipped
+// (a 28-minute battle: 60 KB → 11 KB); a still bigger one is sent without keepalive. Pending summaries are sent again
+// at start, when the app comes back to the foreground, when the network returns and on the way back to the menu.
 const CP_KEY = 'iron-defense-checkpoints';
 const MIN_TIME = 15; // shorter quits are noise
 const duo = (a) => ({ player: a[0], enemy: a[1] });
@@ -185,15 +187,21 @@ function summary(result, stars = 0) {
   return body;
 }
 const KEEPALIVE_MAX = 60000, CP_MAX = 20, CP_DAYS = 14, SERVER_MAX = 1000000;
+async function gzip(text) {
+  if (typeof CompressionStream === 'undefined') return null;
+  try { return await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); } catch { return null; }
+}
 // resolves true when the server stored it
-function post(body) {
+async function post(body) {
   try {
     let text = JSON.stringify(body);
     // the server takes up to 1 MB (hours of play); if ever bigger, send everything except the event list
     if (text.length > SERVER_MAX) text = JSON.stringify({ ...body, events: [], eventsDropped: body.events.length });
-    return fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: text, keepalive: text.length < KEEPALIVE_MAX })
-      .then((r) => r.ok, () => false);
-  } catch { return Promise.resolve(false); }
+    const gz = await gzip(text), size = gz ? gz.byteLength : text.length;
+    const headers = { 'content-type': 'application/json', ...(gz ? { 'x-stats-enc': 'gzip' } : {}) };
+    const r = await fetch('/api/stats', { method: 'POST', headers, body: gz || text, keepalive: size < KEEPALIVE_MAX });
+    return r.ok;
+  } catch { return false; }
 }
 function checkpoints(change) {
   let cp = {};
@@ -209,10 +217,13 @@ function checkpoints(change) {
   }
   return cp;
 }
+const sending = new Set();
 function deliver(id, body) {
+  if (sending.has(id)) return;
+  sending.add(id);
   // remove it only if it's still the same entry (a running battle may have written a newer checkpoint meanwhile)
   const same = (e) => e && e.body && e.body.result === body.result && e.body.time === body.time;
-  post(body).then((ok) => { if (ok) checkpoints((cp) => { if (same(cp[id])) delete cp[id]; }); });
+  post(body).then((ok) => { sending.delete(id); if (ok) checkpoints((cp) => { if (same(cp[id])) delete cp[id]; }); });
 }
 function sendStats(result, stars = 0) {
   const w = game.world;
@@ -231,14 +242,17 @@ function checkpoint() {
   checkpoints((cp) => { cp[w.battleId] = { at: Date.now(), body: summary('abandoned') }; });
   w.cpAt = w.log.timeline.length;
 }
-// at start: send battles that were left without a result
+// send pending summaries: battles left without a result and results the server hasn't confirmed yet
+// (not the checkpoint of the battle that is still running)
 function flushCheckpoints() {
   if (!save.settings.stats) { try { localStorage.removeItem(CP_KEY); } catch { /* ignore */ } return; }
   const cp = checkpoints((c) => { for (const k in c) if (!c[k].body) delete c[k]; }); // drop the old format
-  for (const [id, e] of Object.entries(cp)) deliver(id, e.body);
+  const w = game.world, running = game.mode === 'play' && w && !w.statsSent ? w.battleId : null;
+  for (const [id, e] of Object.entries(cp)) if (id !== running) deliver(id, e.body);
 }
 function quitToMenu(to = 'stages') {
   sendStats('quit');
+  flushCheckpoints();
   game.mode = 'menu';
   hud.hidden = true;
   hideSell();
@@ -821,7 +835,8 @@ startDemo();
 showMenu();
 requestAnimationFrame(frame);
 flushCheckpoints();
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') checkpoint(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') checkpoint(); else flushCheckpoints(); });
+window.addEventListener('online', () => flushCheckpoints());
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // debug hooks
