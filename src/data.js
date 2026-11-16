@@ -112,7 +112,7 @@ export const AI_GROUPS = [
 export const AI = {
   groupChance: [0.25, 0.45], // share of orders that are groups: early, after about 2.5 minutes
   splitChance: 0.15,          // share of group orders that are a split attack: two small groups in two lanes
-  defensive: ['brawler', 'gunner', 'seeker', 'aegis'], // picks under pressure (half the time)
+  defensive: ['brawler', 'gunner', 'seeker'], // picks under pressure (half the time); no Aegis: a Support never goes alone
   recent: 4, recentPenalty: 0.5, // lanes used in the last 4 orders get this weight factor per use
 };
 // Traits (gameplay.md §5.5): each changes exactly one rule of the mech's role.

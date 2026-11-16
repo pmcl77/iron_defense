@@ -561,6 +561,15 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   // early stages: only templates the roster allows
   const w2 = new World({ ...st, roster: ['scout', 'gunner'] }, defaultSave(), ALL, { seed: 3 });
   const o2 = Array.from({ length: 500 }, () => w2.aiOrder(0)).flatMap((o) => o.groups.flat());
+  {
+    const wa = new World(st, defaultSave(), ALL, { seed: 9 });
+    let lone = 0, withAegis = 0;
+    for (let i = 0; i < 3000; i++) {
+      wa.time = (i % 300) * 1; const o = wa.aiOrder(i % 3 === 0 ? 500 : 0);
+      for (const g of o.groups) { if (g.includes('aegis')) withAegis++; if (g.length === 1 && g[0] === 'aegis') lone++; }
+    }
+    check('enemy never deploys an Aegis alone (also under pressure)', lone === 0 && withAegis > 50, `lone ${lone}, in groups ${withAegis}`);
+  }
   check('groups use only the stage roster', o2.every((t) => t === 'scout' || t === 'gunner'));
   // lanes: varied even with one weak lane, and split groups go to two different lanes
   const w3 = new World(st, defaultSave(), ALL, { seed: 5 });

@@ -40,6 +40,8 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Line passes a fighting friendly with a longer range:** a Gunner behind a fighting Seeker passes it and returns to its lane in front, so the column stays in one lane. Two of the same type, or a Seeker behind a fighting Gunner, fan out as before.
 - **Fixed:** after passing, a faster Line mech could walk past its Tank in the passing lane and return home ahead of it (Mortar.f-Brawler-Gunner ended Gunner-first). It now falls in behind the Tank. If the mech it may not pass stops to fight instead (MO.f-SE-GU: the Seeker returns home and shoots), the pass becomes a fan-out and the Gunner walks on in the passing lane instead of standing still.
 
+- **Enemy AI never deploys an Aegis alone** (found in the battle statistics): it comes only as part of a group. Before, about 1 in 10 enemy orders was a lone Aegis with nothing to protect.
+
 ### Tech
 - **Battle statistics:** after each battle (and when you quit or restart a battle after 15 s or more) the game sends a summary to the site: version, stage, result, stars, time, base HP, loadout, Workshop levels, mechs and turrets per type for both sides, losses, specials, upgrades and a 30 s timeline. Stored in Cloudflare D1 (`functions/api/stats.js`; release and dev in separate databases), readable only with the key. Switch: Settings → *Send battle stats* (on by default). Offline or on the local test server nothing is sent and nothing breaks.
   - **Device id and player name:** each battle carries a random id of the device (kept when you reset progress) and, if set, the player name from Settings (optional, up to 20 characters, just a label). Settings shows a short device code, e.g. `#3f9a`.

@@ -286,7 +286,8 @@ The enemy works like Ironline's AI, adapted for lanes:
   - **Singles:** it prefers cheap units early and expensive ones later.
   - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group. A group is a small formation from role templates, deployed front to back: Tank + Line, Tank + Artillery, Line + Artillery, two Line, two Line + Support, Tank + Line + Support, siege (Charger + Artillery; the Breacher rather than the Scout). Same-type packs only for cheap units (2–3 Scouts) and, rarely, two Brawlers (they spread out with the side attack). A template is used only if the stage roster has a type for each role.
   - **Split attacks:** about 15% of group orders are two small groups (up to 2 units each) sent into two different lanes at once.
-  - **Under pressure** (your mechs near its base): half the time a single unit from a defensive set (Brawler, Gunner, Seeker, Aegis) instead of always a Brawler.
+  - **Under pressure** (your mechs near its base): half the time a single unit from a defensive set (Brawler, Gunner, Seeker) instead of always a Brawler.
+  - **A Support (Aegis) never goes alone:** it only comes as part of a group (alone it has nothing to protect).
 - **Lane choice:** 20% a random lane; under pressure 20% the lane you push in; otherwise weighted toward the weakest-defended lanes (fewest turret HP in range), not always the weakest, and a lane used in its last 4 orders is less likely each time (×0.5 per use) *(tune)*.
 - **Behavior:** its mechs follow the same roles as yours (§5.2).
 - **Later:** stage personalities (e.g. "siege", "swarm"); real counter-picking against your army (the "counter AI" feature).

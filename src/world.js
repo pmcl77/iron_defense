@@ -965,10 +965,12 @@ export class World {
         return { groups: [g] };
       }
     }
-    // single unit: cheap ones early, more even later
-    const wts = roster.map((t) => 1 / Math.pow(MECHS[t].cost, 1 - late * 0.8));
-    let r = this.rnd() * wts.reduce((x, y) => x + y, 0), pick = roster[0];
-    for (let i = 0; i < roster.length; i++) { r -= wts[i]; if (r <= 0) { pick = roster[i]; break; } }
+    // single unit: cheap ones early, more even later. A Support (Aegis) only comes with a group: alone it has
+    // nothing to protect.
+    const solo = roster.filter((t) => MECHS[t].role !== 'support');
+    const wts = solo.map((t) => 1 / Math.pow(MECHS[t].cost, 1 - late * 0.8));
+    let r = this.rnd() * wts.reduce((x, y) => x + y, 0), pick = solo[0];
+    for (let i = 0; i < solo.length; i++) { r -= wts[i]; if (r <= 0) { pick = solo[i]; break; } }
     return { groups: [[pick]] };
   }
   // a group from the templates the roster allows (maxSize: only groups up to that size); null if none fits
