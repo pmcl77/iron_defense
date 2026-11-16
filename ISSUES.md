@@ -122,6 +122,8 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Battle 2** (Breakwater, stage 11, won 3★ in 1333 s, no turrets): Seekers 192 of 238 kills (81%); two-lane trains early, five-lane SE/GU spread mid-game; long grind (enemy base untouched until ~20:30).
   - **User (2026-11-16):** kept the Seeker at its Workshop level on purpose: "fully upgraded and released as a horde they seem almost unstoppable."
   - **Battle 3** (Last Bastion, stage 12, without Seekers: Gunner, Mortar, Aegis, Lancer, Breacher; lost in 237 s): no Tank in the loadout, enemy fought deep in the player's half from about 2 min; enemy Seekers killed 12 of the player's 29 losses. Not comparable with battles 1–2 (hardest stage, no Tank).
+  - **Lost data:** the user's stage 12 win with Seekers (2026-11-16) never arrived: a long battle's summary exceeded the 64 KB browser keepalive limit (and the server limit). Fixed: no keepalive above 60 KB, server limit 1 MB, final summaries kept until the server confirms.
+  - **Battle 4** (Last Bastion, without Seekers: SC, GU, BW, MO, LA; lost in 440 s, no turrets): two-lane play (lanes 2 and 4); Gunners 20 and Brawlers 14 of 55 kills; enemy base never hit.
   - Status: to discuss; collect more battles first.
 - **[tech/balance] Battle statistics for balancing** (user idea, 2026-11-16: "Is it possible for the game to record statistics on the cloudflare server that you could analyze?")
   - **What:** after each battle the game sends an anonymous summary (no personal data): version and build (dev/release), stage, result, stars, duration, base HP left, mechs/turrets deployed (counts), loadout, Workshop levels, enemy deploys, specials used.

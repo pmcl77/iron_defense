@@ -28,7 +28,7 @@ ok((await post({ ...battle, v: '<script>' })).status === 400, 'bad version rejec
 ok((await post({ ...battle, stage: 2.5 })).status === 400, 'non-integer stage rejected');
 ok((await post('not json')).status === 400, 'bad json rejected');
 ok((await post('[1,2]')).status === 400, 'array rejected');
-ok((await post({ ...battle, pad: 'x'.repeat(70000) })).status === 413, 'oversized body rejected');
+ok((await post({ ...battle, pad: 'x'.repeat(1100000) })).status === 413, 'oversized body rejected');
 ok((await onRequestPost({ env: {}, request: new Request('https://x', { method: 'POST', body: '{}' }) })).status === 503, 'missing binding → 503');
 
 ok((await get('')).status === 403, 'read without key forbidden');
@@ -81,5 +81,6 @@ const r3 = await p2({ env: old, request: new Request('https://x', { method: 'POS
 const d3 = await (await g2({ env: old, request: new Request('https://x?key=k') })).json();
 ok(r3.status === 201 && d3.rows.length === 2 && d3.rows[0].stage === 8, 'old table upgraded, old row kept');
 
+ok((await post({ ...battle, stage: 20, pad: 'x'.repeat(200000) })).status === 201, 'a 200 KB battle is accepted');
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

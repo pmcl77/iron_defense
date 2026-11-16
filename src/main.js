@@ -124,8 +124,10 @@ function launch(i) {
 // One summary per battle with a random device id and the optional player name (Settings).
 // Failures (offline, local server) are ignored.
 // Checkpoint: while a battle runs, its summary is kept in localStorage as 'abandoned' (every 30 s and when the app is
-// hidden). A finished, quit or restarted battle removes it; a leftover (app closed or killed) is sent at the next start.
+// hidden). When the battle ends (or is quit/restarted) the final summary replaces it and stays until the server has
+// confirmed it; anything left (app closed or killed, offline, server error) is sent again at the next start.
 // The server replaces an 'abandoned' row when the real result of the same battle id arrives.
+// keepalive (survives closing the page) is limited to 64 KB by browsers, so bigger summaries are sent without it.
 const CP_KEY = 'iron-defense-checkpoints';
 const MIN_TIME = 15; // shorter quits are noise
 const duo = (a) => ({ player: a[0], enemy: a[1] });
@@ -146,37 +148,55 @@ function summary(result, stars = 0) {
   };
   return body;
 }
+const KEEPALIVE_MAX = 60000, CP_MAX = 20, CP_DAYS = 14;
+// resolves true when the server stored it
 function post(body) {
   try {
-    fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
-  } catch { /* ignore */ }
+    const text = JSON.stringify(body);
+    return fetch('/api/stats', { method: 'POST', headers: { 'content-type': 'application/json' }, body: text, keepalive: text.length < KEEPALIVE_MAX })
+      .then((r) => r.ok, () => false);
+  } catch { return Promise.resolve(false); }
 }
 function checkpoints(change) {
   let cp = {};
   try { cp = JSON.parse(localStorage.getItem(CP_KEY)) || {}; } catch { /* ignore */ }
-  if (change) { change(cp); try { localStorage.setItem(CP_KEY, JSON.stringify(cp)); } catch { /* ignore */ } }
+  if (change) {
+    change(cp);
+    // keep it small: at most CP_MAX entries, none older than CP_DAYS (e.g. on the local test server nothing is accepted)
+    const old = Date.now() - CP_DAYS * 864e5;
+    const keys = Object.keys(cp).filter((k) => (cp[k].at || 0) >= old).sort((a, b) => cp[b].at - cp[a].at).slice(0, CP_MAX);
+    const keep = {}; for (const k of keys) keep[k] = cp[k];
+    try { localStorage.setItem(CP_KEY, JSON.stringify(keep)); } catch { /* ignore */ }
+    return keep;
+  }
   return cp;
+}
+function deliver(id, body) {
+  // remove it only if it's still the same entry (a running battle may have written a newer checkpoint meanwhile)
+  const same = (e) => e && e.body && e.body.result === body.result && e.body.time === body.time;
+  post(body).then((ok) => { if (ok) checkpoints((cp) => { if (same(cp[id])) delete cp[id]; }); });
 }
 function sendStats(result, stars = 0) {
   const w = game.world;
   if (game.mode !== 'play' || !w || !w.battleId || w.statsSent) return;
   w.statsSent = true;
-  checkpoints((cp) => { delete cp[w.battleId]; });
-  if (!save.settings.stats || (result === 'quit' && w.time < MIN_TIME)) return;
-  post(summary(result, stars));
+  const id = w.battleId;
+  if (!save.settings.stats || (result === 'quit' && w.time < MIN_TIME)) { checkpoints((cp) => { delete cp[id]; }); return; }
+  const body = summary(result, stars);
+  checkpoints((cp) => { cp[id] = { at: Date.now(), body }; });
+  deliver(id, body);
 }
 function checkpoint() {
   const w = game.world;
   if (!save.settings.stats || game.mode !== 'play' || !w || !w.battleId || w.statsSent || w.result || w.time < MIN_TIME) return;
-  checkpoints((cp) => { cp[w.battleId] = summary('abandoned'); });
+  checkpoints((cp) => { cp[w.battleId] = { at: Date.now(), body: summary('abandoned') }; });
   w.cpAt = w.log.timeline.length;
 }
 // at start: send battles that were left without a result
 function flushCheckpoints() {
-  const cp = checkpoints();
-  if (!Object.keys(cp).length) return;
-  if (save.settings.stats) for (const b of Object.values(cp)) post(b);
-  try { localStorage.removeItem(CP_KEY); } catch { /* ignore */ }
+  if (!save.settings.stats) { try { localStorage.removeItem(CP_KEY); } catch { /* ignore */ } return; }
+  const cp = checkpoints((c) => { for (const k in c) if (!c[k].body) delete c[k]; }); // drop the old format
+  for (const [id, e] of Object.entries(cp)) deliver(id, e.body);
 }
 function quitToMenu(to = 'stages') {
   sendStats('quit');
