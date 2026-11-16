@@ -189,10 +189,8 @@ export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart:
 //   bounty:   player kill bounty share (normal ENERGY.bounty)
 //   ramp:     how much the enemy income grows over the first 7 minutes (normal 1 = doubles)
 //   overtime: from this time (s) both sides get OVERTIME_BONUS energy/s more
-//   forward:  turrets double as forward deploy points (same lane; tap the selected lane button again)
 export const EXPERIMENTS = {
   off: { name: 'Off' },
-  forward: { name: 'Forward deploy', forward: true },
   bounty40: { name: 'Kill bounty 40%', bounty: 0.4 },
   bounty60: { name: 'Kill bounty 60%', bounty: 0.6 },
   ramp15: { name: 'Enemy ramp ×1.5', ramp: 0.5 },

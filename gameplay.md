@@ -76,6 +76,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 - One lane is **active**. It's shown by a highlight on the field and on a strip of **5 lane buttons in the HUD**, just above the cards. It starts on the middle lane. (The buttons are needed because your base is off screen once you scroll forward.)
 - **Deployment queue:** a mech card tapped without enough energy, or while the card cools down, queues the order (max 5) in the active lane. Strictly first in, first out: the whole queue waits for energy and cooldowns, and energy is paid on deploy. Cancel one order by tapping it, or all with CLEAR. A queued deploy waits until its lane's spawn point is clear, at most 1.5 s.
 - Tapping a mech card deploys that mech at your base, into the active lane.
+- **Forward deploy** *(0.4.0-dev, player only)*: your turrets double as forward bases for their **own lane only** (a turret in L3 serves L3, not L2/L4). Tapping the already selected lane button again switches that lane to forward (button shows **FWD**, only if the lane has a finished turret); once more switches it back to the base. Each lane remembers its choice. New mechs appear just behind (base side of) the lane's frontmost turret; a turret under attack still works. If it falls, the next turret back in that lane takes over; when the lane's last turret is destroyed or sold, the lane goes back to the base. Queued orders keep their own choice (▲ in the queue) and fall back the same way. Tapping the field near your base selects that lane at the base. The enemy doesn't deploy forward (it would have to build its turrets like the player; ISSUES.md "same rules for the enemy").
 - Each card has a short cooldown after use, as in Ironline.
 - **Loadout:** you have up to 8 mech types, but the HUD holds 5 mech cards. Before each battle you pick a loadout of 5 unlocked mechs, which keeps hotkeys 1–5. The last loadout is remembered. *(Might later grow to allow all 8 mechs.)*
 - **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. A unit type you've never fought shows as "?" until you meet it. During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
@@ -388,6 +389,7 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 |---|---|---|
 | Pan camera | Drag the field vertically, or tap the minimap | W/S, arrow keys, mouse wheel |
 | Choose active lane | Tap one of the 5 lane buttons in the HUD | Shift+1–5 |
+| Forward / base deploy for a lane | Tap the selected lane button again | Shift+same number again |
 | Deploy a mech | Tap its card | 1–5 |
 | Order turrets | TURRETS tab → card → tap one or more free cells | T, 1–3, then click cells |
 | Cancel an order / sell a turret | Tap the planned cell / tap your turret → Sell | Click |

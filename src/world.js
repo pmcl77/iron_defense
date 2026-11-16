@@ -53,7 +53,7 @@ export class World {
     this.exp = EXPERIMENTS[this.expKey];
     this.overtime = false;
     this.activeLane = 2;
-    this.fwd = Array(LANES).fill(false); // per lane: deploy forward (dev experiment 'forward')
+    this.fwd = Array(LANES).fill(false); // per lane: deploy forward at the frontmost own turret
 
     // unit levels per team
     this.lvl = [{}, {}];
@@ -102,7 +102,7 @@ export class World {
   // Numbers people read start at 1, as in the game: lane 1-5 (left to right, as the lane buttons), row 1-7 (1 = nearest
   // to that side's base), order and group from 1. Level counts upgrades (0 = none), as the "L2" on the cards.
   //   [t, 'deploy', team, type, level, lane]            + for the enemy: order number, group in that order (split attack = 2 groups)
-  //                                                     + for a player forward deploy (dev experiment): row of the turret
+  //                                                     + for a player forward deploy: row of the turret
   //   [t, 'turret', team, type, level, lane, row]       turret finished (enemy start turrets at t = 0)
   //   [t, 'sold', type, lane, row]
   //   [t, 'death', team, type, lane, progress, killer]  killer = attacker type ('base', 'bomb' for Bombing)
@@ -176,17 +176,16 @@ export class World {
   canDeploy(type) {
     return !this.result && this.unlocked.mechs.includes(type) && this.energy >= MECHS[type].cost && !(this.deployCd[type] > 0);
   }
-  // Forward deploy (dev experiment): a lane's frontmost finished own turret is a deploy point for that lane only.
+  // Forward deploy (player only): a lane's frontmost finished own turret is a deploy point for that lane only.
   // New mechs appear just behind it (base side); if it's gone, the next one back, else the base.
   forwardTurret(lane) {
-    if (!this.exp.forward) return null;
     for (let r = ROWS - 1; r >= 0; r--) { const t = this.cells[0][lane][r]; if (t && !t.dead) return t; }
     return null;
   }
   // the lane's last turret is gone (destroyed or sold): the lane goes back to base deploys
   // (orders already queued as forward fall back to the base when their turn comes)
   dropFwd(lane) { if (this.fwd[lane] && !this.forwardTurret(lane)) this.fwd[lane] = false; }
-  laneFwd(lane) { return !!this.exp.forward && this.fwd[lane]; }
+  laneFwd(lane) { return this.fwd[lane]; }
   spawnPoint(lane, fwd) {
     const t = fwd ? this.forwardTurret(lane) : null;
     return t ? { y: t.y - t.radius - 30, row: t.row } : { y: BASE_FACE[0] + 24, row: null };
@@ -242,11 +241,11 @@ export class World {
     if (!this.spawnClear(q.lane, q.fwd) && this.queueWait < QUEUE.wait) return;
     if (this.deploy(q.type, q.lane, q.fwd)) { this.queue.shift(); this.queueWait = 0; }
   }
-  // Lane button: select a lane. With forward deploy, tapping the selected lane again switches it between base and
+  // Lane button: select a lane. Tapping the selected lane again switches it between base and
   // forward (each lane remembers its choice). Returns 'fwd' | 'base' | 'noturret' (forward wanted, no turret) | 'lane'.
   setLane(l, toggle = true) {
     if (l < 0 || l >= LANES) return false;
-    if (toggle && this.exp.forward && l === this.activeLane) {
+    if (toggle && l === this.activeLane) {
       if (this.fwd[l]) { this.fwd[l] = false; return 'base'; }
       if (!this.forwardTurret(l)) return 'noturret';
       this.fwd[l] = true; return 'fwd';

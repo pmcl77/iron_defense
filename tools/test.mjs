@@ -693,9 +693,9 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const w2 = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp: 'ot8' });
   w2.time = 600; w2.overtime = true; w2.ai.energy = -1e9; const a0 = w2.ai.energy; w2.updateAI(1);
   check('overtime: enemy +15/s', Math.abs(w2.ai.energy - a0 - (2 * r + OVERTIME_BONUS)) < 1e-6, w2.ai.energy - a0);
-  // forward deploy: same lane, frontmost turret, fallback, queue remembers, toggling
+  // forward deploy (normal rule): same lane, frontmost turret, fallback, queue remembers, toggling
   {
-    const w = mk([], 0, 'forward');
+    const w = mk([], 0);
     check('forward: no turret → toggling refused', w.setLane(2) === 'noturret' && !w.laneFwd(2));
     const t3 = w.placeTurret(0, 'sentry', 2, 3), t5 = w.placeTurret(0, 'sentry', 2, 5);
     w.placeTurret(0, 'sentry', 1, 6);
@@ -720,12 +720,12 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     w.setLane(1); w.sell(1, 6);
     check('forward: last turret of the lane sold → lane back to base', !w.laneFwd(1));
     // queue: each order keeps its own choice
-    const q = mk([], 0, 'forward'); q.placeTurret(0, 'sentry', 2, 4); q.setLane(2); q.energy = 0; // lane 3 is selected at the start: one tap = forward
+    const q = mk([], 0); q.placeTurret(0, 'sentry', 2, 4); q.setLane(2); q.energy = 0; // lane 3 is selected at the start: one tap = forward
     q.request('gunner'); q.setLane(2); q.request('gunner');
     check('forward: queue remembers base/forward per order', q.queue[0].fwd === true && q.queue[1].fwd === false);
-    // off: a second tap does nothing special
-    const o = mk([]); o.placeTurret(0, 'sentry', 2, 4);
-    check('forward off: no toggling, no forward point', o.setLane(2) === 'lane' && !o.laneFwd(2) && !o.forwardTurret(2));
+    // first tap on another lane only selects it
+    const o = mk([]); o.placeTurret(0, 'sentry', 1, 4);
+    check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && !o.laneFwd(1) && !!o.forwardTurret(1));
   }
   check('every experiment has a name', Object.values(EXPERIMENTS).every((x) => x.name));
 }
