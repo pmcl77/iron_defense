@@ -164,8 +164,8 @@ canvas#game { position: absolute; inset: 0; display: block; }
 @keyframes banner-pulse { from { box-shadow: 0 0 0 0 rgba(227, 83, 63, 0.9); transform: translateX(-50%) scale(1); }
   to { box-shadow: 0 0 18px 4px rgba(227, 83, 63, 0.7); transform: translateX(-50%) scale(1.06); } }
 @keyframes banner-out { to { opacity: 0; } }
-.stage .clock.ot { color: var(--foe); font-weight: 800; animation: clock-pulse 1.2s ease-in-out infinite alternate; }
-@keyframes clock-pulse { to { opacity: 0.55; } }
+.stage .clock.ot { color: #ffd23a; font-size: 11px; font-weight: 800; text-shadow: 0 0 4px rgba(255, 140, 0, 0.6); animation: clock-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes clock-pulse { to { text-shadow: 0 0 9px rgba(255, 90, 40, 0.95); } }
 
 /* ---------- screens ---------- */
 #screen:empty { display: none; }
