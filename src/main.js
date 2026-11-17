@@ -620,7 +620,9 @@ function updateHud() {
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   { const t = Math.floor(w.result ? w.endTime : w.time); setText($('#clock'), 'clk', `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`); }
   const ot = w.overtime ? w.exp : {};
-  setText($('#regen'), 'rg', `+${w.regen}${ot.otMult ? `×${ot.otMult}` : ''}${ot.otBonus ? `+${ot.otBonus}` : ''}/s`);
+  // overtime: the effective income in yellow (the formula "+17×1.5/s" doesn't fit next to the wrench)
+  setText($('#regen'), 'rg', `+${Math.round(w.otIncome(w.regen))}/s`);
+  $('#regen').classList.toggle('ot', !!w.overtime);
   $('#clock').classList.toggle('ot', !!w.overtime);
   if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', ot.otBonus ? `+${ot.otBonus} energy/s for both sides` : ot.otMult ? `Income ×${ot.otMult} for both sides` : `Bases take ×${ot.otBaseDmg} damage`); }
   laneEls.forEach((b, i) => {

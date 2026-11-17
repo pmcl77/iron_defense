@@ -16,8 +16,8 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
   - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
   - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
-  - **Overtime from 8 min:** from then on both sides get +15 energy/s (HUD shows "+N+15/s"). Its start is announced by a pulsing OVERTIME banner under the top bar, and the battle clock turns bright yellow and bold.
-  - **Overtime ×1.5 from 10 min:** both sides' current income (after upgrades, the enemy's ramp and pressure bonus) ×1.5; kill bounty and Energy Surge unchanged (HUD "+N×1.5/s").
+  - **Overtime from 8 min:** from then on both sides get +15 energy/s (the income display shows the total in yellow, e.g. "+32/s"). Its start is announced by a pulsing OVERTIME banner under the top bar, and the battle clock turns bright yellow and bold.
+  - **Overtime ×1.5 from 10 min:** both sides' current income (after upgrades, the enemy's ramp and pressure bonus) ×1.5; kill bounty and Energy Surge unchanged (the income display shows the result in yellow, e.g. "+26/s").
   - **Overtime: bases ×2 damage from 10 min:** no extra income; both bases take double damage.
   - (Overtime from 15 min removed: too long a stalemate.)
 - Branch previews (`<branch>.iron-defense.pages.dev`) now count as dev builds.
