@@ -476,6 +476,12 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Sharing:** one strip lies between two lanes, so fan-outs from both lanes compete for it: first come, one mech per strip spot.
   - **Follow-up idea (user): use the strip for passing too.** Today a pass needs a free neighbor lane; passing on the strip would let a mech get by a slower friendly without leaving its lane's "ownership". Same questions: blocking on the strip (none, as above), what happens if two mechs pass from both sides onto the same strip (one strip between two lanes is shared by both), whether a passing mech on the strip may shoot (like Line on the move) and when it steps back. Trade-off: passing on the strip keeps the neighbor lanes free for fighting fan-outs; but strips used by both passing and fighting may crowd. To discuss together with the fan-out.
 
+- **[idea/balance] Scout as a mini horde** (user, 2026-11-17; not decided): the Scout is hardly attractive. Idea: one tap deploys a squad of 3 Scouts.
+  - Today: cost 40, HP 90, 23 damage per second, range 150, speed 76, Charger (heads for structures, slips past mechs). The player deployed no Scouts in the last rounds; the enemy's did 126 damage per 100 energy (rows 30–31), among the lowest.
+  - Options: **A.** the card spawns 3 normal Scouts for 3 × 40 = 120 (same value, but a real swarm hits a turret at once). **B.** a "Scout squad" card: 3 lighter Scouts for less (e.g. 100), each a bit weaker. **C.** keep one Scout, but cheaper or with a shorter cooldown.
+  - Questions: one queue slot and one card cooldown per squad? Formation: 3 in a column in one lane, or spread over the strip spots? Same for the enemy (its "cheap pack" groups already send 2–3 Scouts)? With new unit types coming, the squad could be the first "swarm" type.
+  - First thought: A is simplest and keeps the stats readable; the damage stats then show whether a squad pays off.
+
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
 - **[feature] Enemy AI that counters your army,** e.g. flanking massed artillery with fast units. Agreed for later.
