@@ -670,7 +670,7 @@ function updateQueue() {
   const h = q[0], cost = MECHS[h.type].cost, cd = w.deployCd[h.type] || 0;
   const fill = box.querySelector('.q.head .fill');
   if (fill) fill.style.width = `${Math.min(100, 100 * w.energy / cost).toFixed(0)}%`;
-  setText(box.querySelector('.qinfo'), 'qi', `${q.length} / ${QUEUE.max}\n${w.energy < cost ? `next ⚡${Math.ceil(cost - w.energy)}` : cd > 0 ? `wait ${Math.ceil(cd)}s` : 'deploying'}`);
+  setText(box.querySelector('.qinfo'), 'qi', `${q.length} / ${QUEUE.max}\n${w.energy < cost ? `⚡${Math.ceil(cost - w.energy)}` : cd > 0 ? `⏱${Math.ceil(cd)}s` : 'go'}`); // short: 6 slots leave about 30 px on a 384 px phone
 }
 $('#queue .qclear').addEventListener('click', () => { const w = game.world; if (w) { w.clearQueue(); renderer.consume(w.fx, sfx); } });
 let toastTimer = 0;

@@ -181,7 +181,7 @@ export const SPECIALS = {
 
 // deployment queue: max orders; a queued deploy waits until its lane's spawn point is clear,
 // but at most `wait` seconds (so a mech holding near the gate can't block the queue forever)
-export const QUEUE = { max: 5, wait: 1.5 };
+export const QUEUE = { max: 6, wait: 1.5 };
 export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart: 50, perkCap: 40, perkRegen: 1 };
 
 // Dev experiments (ISSUES.md "Battles are too long"): one at a time, chosen in Settings on the dev build only;
