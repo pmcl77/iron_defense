@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, EXPERIMENTS, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, EXPERIMENTS, OVERTIME, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -422,6 +422,7 @@ function showHelp() {
   const items = [
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
+    ['Overtime', `From minute ${OVERTIME.at / 60} both sides earn ×${OVERTIME.mult} energy (the clock turns yellow, the income display shows the new rate). Kill bounty and Energy Surge stay the same.`],
     ['Forward deploy', 'Your turrets double as forward bases for their own lane. When a lane gets its first turret it switches to forward on its own (FWD): new mechs appear just behind that lane\'s frontmost turret. Tap the selected lane button again to switch between forward and base. If that turret falls, the next one back takes over; when the lane\'s last turret is gone, the lane goes back to the base.'],
     ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 5) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
     ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Turrets and bases reach every lane.'],
@@ -619,12 +620,11 @@ function updateHud() {
   $('#energy-fill').style.width = `calc(${(100 * w.energy / w.maxEnergy).toFixed(1)}% - 2px)`;
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   { const t = Math.floor(w.result ? w.endTime : w.time); setText($('#clock'), 'clk', `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`); }
-  const ot = w.overtime ? w.exp : {};
   // overtime: the effective income in yellow (the formula "+17×1.5/s" doesn't fit next to the wrench)
   setText($('#regen'), 'rg', `+${Math.round(w.otIncome(w.regen))}/s`);
   $('#regen').classList.toggle('ot', !!w.overtime);
   $('#clock').classList.toggle('ot', !!w.overtime);
-  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', ot.otBonus ? `+${ot.otBonus} energy/s for both sides` : ot.otMult ? `Income ×${ot.otMult} for both sides` : `Bases take ×${ot.otBaseDmg} damage`); }
+  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', `Income ×${OVERTIME.mult} for both sides`); }
   laneEls.forEach((b, i) => {
     b.classList.toggle('on', i === w.activeLane);
     b.classList.toggle('fwd', w.laneFwd(i));

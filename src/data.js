@@ -182,22 +182,21 @@ export const SPECIALS = {
 // deployment queue: max orders; a queued deploy waits until its lane's spawn point is clear,
 // but at most `wait` seconds (so a mech holding near the gate can't block the queue forever)
 export const QUEUE = { max: 6, wait: 1.5 };
+// Overtime (ISSUES.md "Battles are too long", tested as dev experiments, kept by the user 2026-11-17): from minute 9
+// both sides' current income (after upgrades, the enemy's ramp and pressure bonus) ×1.5; kill bounty and Surge unchanged.
+export const OVERTIME = { at: 540, mult: 1.5 };
 export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart: 50, perkCap: 40, perkRegen: 1 };
 
 // Dev experiments (ISSUES.md "Battles are too long"): one at a time, chosen in Settings on the dev build only;
 // 'off' is the normal game. Each battle's stats record the key. Remove an entry (and its rule in world.js) when decided.
 //   bounty:   player kill bounty share (normal ENERGY.bounty)
 //   ramp:     how much the enemy income grows over the first 7 minutes (normal 1 = doubles)
-//   overtime: from this time (s) on, for both sides: otBonus energy/s more, income ×otMult, or bases take ×otBaseDmg damage
 export const EXPERIMENTS = {
   off: { name: 'Off' },
   bounty40: { name: 'Kill bounty 40%', bounty: 0.4 },
   bounty60: { name: 'Kill bounty 60%', bounty: 0.6 },
   ramp15: { name: 'Enemy ramp ×1.5', ramp: 0.5 },
   noramp: { name: 'No enemy ramp', ramp: 0 },
-  ot8: { name: 'Overtime from 8 min', overtime: 480, otBonus: 15 },
-  otx15: { name: 'Overtime ×1.5 from 10 min', overtime: 600, otMult: 1.5 },
-  otbase: { name: 'Overtime: bases ×2 damage from 10 min', overtime: 600, otBaseDmg: 2 },
 };
 export const MAX_UNIT_LEVEL = 5;
 export const BASE_MAX_ENERGY = 300;

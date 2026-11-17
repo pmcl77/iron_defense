@@ -12,14 +12,13 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ### Gameplay: forward deploy
 - **Forward deploy** (tested as a dev experiment, kept by the user: "more engaging and easier to react"): your turrets double as deploy points for their own lane. Forward is the default: a lane switches to forward on its own when its first turret is finished (button shows **FWD**; a further turret keeps the lane's setting). Tap the selected lane button again to switch between forward and base; each lane remembers its choice, and Shift+1–5 works the same. New mechs appear just behind the lane's frontmost turret; if it falls, the next one back. When a lane's last turret is destroyed or sold, the lane switches back to the base (FWD disappears). Queued orders keep their own choice (▲ in the queue). Tapping the field near the base selects that lane at the base. Player only.
 
+### Gameplay: overtime
+- **Overtime from minute 9:** both sides' income ×1.5 (your regeneration after perks and Reactor upgrades, the enemy's after its ramp and pressure bonus); kill bounty and Energy Surge unchanged. A pulsing OVERTIME banner announces it, and the battle clock and the income display turn yellow (the display shows the new rate, e.g. "+26/s"). Tested as dev experiments (+15/s from 8 min: decisive but hectic and in the player's favour; ×1.5 from 10 min: calmer and fair); kept by the user at 9 minutes. It makes the end of a stalemate bigger, not always shorter (Last Bastion: 8 more minutes); see ISSUES.md.
+
 ### Dev experiments (dev build only)
 - **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
   - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
   - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
-  - **Overtime from 8 min:** from then on both sides get +15 energy/s (the income display shows the total in yellow, e.g. "+32/s"). Its start is announced by a pulsing OVERTIME banner under the top bar, and the battle clock turns bright yellow and bold.
-  - **Overtime ×1.5 from 10 min:** both sides' current income (after upgrades, the enemy's ramp and pressure bonus) ×1.5; kill bounty and Energy Surge unchanged (the income display shows the result in yellow, e.g. "+26/s").
-  - **Overtime: bases ×2 damage from 10 min:** no extra income; both bases take double damage.
-  - (Overtime from 15 min removed: too long a stalemate.)
 - Branch previews (`<branch>.iron-defense.pages.dev`) now count as dev builds.
 
 ### Gameplay

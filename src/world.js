@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, EXPERIMENTS, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, EXPERIMENTS, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -108,7 +108,7 @@ export class World {
   //   [t, 'death', team, type, lane, progress, killer]  killer = attacker type ('base', 'bomb' for Bombing)
   //   [t, 'special', kind, x, y]
   //   [t, 'upgrade', key, new level]                    key = unit type or base.armor / base.gun / base.reactor
-  //   [t, 'overtime']                                   dev experiment: overtime started
+  //   [t, 'overtime']                                   overtime started
   ev(...a) { this.log.events.push([Math.round(this.time * 10) / 10, ...a]); }
   side(team) { return team === 0 ? 1 : 0; }
   progress(e) {
@@ -341,14 +341,14 @@ export class World {
     return true;
   }
 
-  // overtime (dev experiment): the current income (after upgrades, ramp, pressure) ×otMult, +otBonus
-  otIncome(r) { return this.overtime ? r * (this.exp.otMult || 1) + (this.exp.otBonus || 0) : r; }
+  // overtime: the current income (after upgrades, ramp, pressure) ×OVERTIME.mult for both sides
+  otIncome(r) { return this.overtime ? r * OVERTIME.mult : r; }
 
   // ---------- simulation ----------
   update(dt) {
     this.time += dt;
     if (!this.result) {
-      if (!this.overtime && this.exp.overtime && this.time >= this.exp.overtime) {
+      if (!this.overtime && this.time >= OVERTIME.at) {
         this.overtime = true;
         this.ev('overtime');
         this.fx.push({ t: 'overtime' });
@@ -881,7 +881,6 @@ export class World {
       const d = f.kind === 'base' ? Math.abs(s.y - f.y) : Math.hypot(s.x - f.x, s.y - f.y);
       if (d <= s.def.aura) { amount *= 1 - s.def.auraDR; if (f.kind !== 'base') this.fx.push({ t: 'shield', src: s, dst: f }); break; }
     }
-    if (f.kind === 'base' && this.overtime && this.exp.otBaseDmg) amount *= this.exp.otBaseDmg;
     f.hp -= amount;
     f.hurt = 0.12;
     if (f.hp > 0) {

@@ -63,6 +63,7 @@ The rules are the same as Ironline:
 | Regeneration | 8 per second, +1 per Power Grid perk level (permanent, Workshop), +2 per Reactor upgrade (in battle) |
 | Energy cap | 300, +40 per Capacitors perk level (permanent, Workshop), +60 per Reactor upgrade (in battle) |
 | Kill bounty | 25% of the destroyed unit's cost |
+| Overtime *(0.4.0-dev)* | from minute 9, both sides' current income ×1.5 (the player's regeneration after perks and Reactor upgrades; the enemy's after its ramp and pressure bonus). Kill bounty and Energy Surge unchanged. Announced by a pulsing OVERTIME banner; the clock and the income display turn yellow. |
 | Turret sell refund | 25% (nearly dead) to 50% (full HP) of build cost |
 
 Energy pays for mechs, turrets, Constructor trips (§6.2), unit upgrades and base upgrades.
