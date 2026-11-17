@@ -185,7 +185,7 @@ function summary(result, stars = 0) {
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
-    dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)),
+    dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)), strip: duo(w.log.strip.map((a) => a.map(Math.round))),
     upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
   };
   return body;
@@ -424,7 +424,7 @@ function showHelp() {
     ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Turrets and bases reach every lane.'],
     ['Roles', 'Every mech has a role that decides how it moves. Pick what you deploy and where:'],
     ...Object.entries(ROLES).map(([k, r]) => [r.name, `${r.desc} ${MECH_TYPES.filter((t) => MECHS[t].role === k).map((t) => MECHS[t].name).join(', ')}.`]),
-    ['Traits', `A trait changes one rule of a mech's role. ${MECH_TYPES.filter((t) => MECHS[t].traits.length).map((t) => `${MECHS[t].name}: ${MECHS[t].traits.map((k) => TRAITS[k].name.toLowerCase()).join(', ')}`).join('. ')}.`],
+    ['Traits', `A trait changes one rule of a mech's role. ${MECH_TYPES.filter((t) => MECHS[t].traits.length).map((t) => `${MECHS[t].name}: ${MECHS[t].traits.map((k) => `${TRAITS[k].name.toLowerCase()} (${TRAITS[k].desc.replace(/\.$/, '').toLowerCase()})`).join(', ')}`).join('. ')}.`],
     ['Turrets', 'Open TURRETS, pick a turret, then tap free cells to queue orders (paid now). Your Constructor drives out and builds them. Tap a planned cell to cancel. Tap your turret to sell it.'],
     ['Constructor', 'Each trip costs 20 energy, refunded when it gets home safely. If it is destroyed, a new one leaves after 3 s.'],
     ['Specials', 'Bombing (tap a target), EMP (stuns enemies) and Energy Surge (+100 energy). They recharge over time.'],

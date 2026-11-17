@@ -700,6 +700,12 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const b = setup('brawler');
   run(b.w, 8);
   check('strip: tanks never use it', !b.g2.strip && !b.g2.shift?.strip);
+  // only Flankers (Gunner) use strips: a Seeker waits
+  const d = setup('seeker'); d.g2.def = { ...d.g2.def, range: 200 };
+  run(d.w, 8);
+  check('strip: only Flankers (Seeker never)', !d.g2.strip && !d.g2.shift?.strip);
+  check('strip: Gunner is a Flanker, nobody else', MECH_TYPES.filter((t) => MECHS[t].rules.strip).join() === 'gunner');
+  check('strip: logged (entries, damage from strips)', a.w.log.strip[0][0] >= 1 && a.w.log.strip[0][1] > 0, JSON.stringify(a.w.log.strip));
   // with a free neighbouring lane the normal fan-out comes first
   const c = setup(); c.n[1].dead = true; c.w.entities = c.w.entities.filter((e) => !e.dead);
   run(c.w, 8);

@@ -47,8 +47,9 @@ export class World {
     // events in time order (see ev() below)
     // dmg[team][attacker type] = [to mechs, to turrets, to the base, to the Constructor]: HP actually removed (no overkill);
     // attacker 'bomb' = Bombing. taken[team][type] = HP lost. shield[team] = HP the Aegis field saved its side.
+    // strip[team] = [times a mech stepped onto a strip, damage dealt from strips]
     this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [],
-      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0] };
+      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]] };
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
@@ -455,7 +456,7 @@ export class World {
       e.bx += Math.max(-step, Math.min(step, d));
       if (e.lane !== s.to && Math.abs(s.x1 - e.bx) <= Math.abs(e.bx - s.x0)) e.lane = s.to;
       e.phase += Math.min(step, Math.abs(d)) / (e.radius * 0.9);
-      if (Math.abs(s.x1 - e.bx) < 0.01) { e.bx = s.x1; e.shift = null; e.lane = s.to; if (s.strip) e.strip = s.strip; }
+      if (Math.abs(s.x1 - e.bx) < 0.01) { e.bx = s.x1; e.shift = null; e.lane = s.to; if (s.strip) { e.strip = s.strip; this.log.strip[e.team][0]++; } }
     }
     if (e.strip) { this.moveStrip(e, dt, t, R, speed, px, py); return; }
     // Chargers step over toward a turret ahead in a neighbouring lane
@@ -1023,6 +1024,7 @@ export class World {
     const by = src ? src.type : 'bomb', k = { mech: 0, turret: 1, base: 2 }[f.kind] ?? 3;
     const row = (this.log.dmg[team][by] ||= [0, 0, 0, 0]);
     row[k] += real;
+    if (src && src.strip) this.log.strip[team][1] += real;
     this.log.taken[f.team][f.type] = (this.log.taken[f.team][f.type] || 0) + real;
   }
 

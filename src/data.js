@@ -35,15 +35,16 @@ export const rowOf = (team, y) => {
 //   passSide     'protect': when passing, pick the side where its field covers the most friendlies
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
 //   strip        half-lane fan-out: with no shot behind a fighting friendly and both neighbouring lanes taken, it steps
-//                onto the strip between two lanes and fights from there (gameplay.md §5.2, STRIP)
+//                onto the strip between two lanes and fights from there (gameplay.md §5.2, STRIP). No role has it;
+//                it comes with the Flanker trait (Gunner)
 export const ROLES = {
   tank: { name: 'Tank', fireOnMove: true, passes: ['line', 'support', 'artillery', 'charger'], behindFight: 'join', alwaysPass: true, sideAttack: 100, sideLean: 35,
     desc: 'Leads from the front, draws fire and fights whatever blocks it.' },
-  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], passLonger: true, behindFight: 'fanout', strip: true,
+  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], passLonger: true, behindFight: 'fanout',
     desc: 'Stops at range and shoots; takes cover behind a marching tank.' },
-  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true, passSide: 'protect', strip: true,
+  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true, passSide: 'protect',
     desc: 'Follows the fight and stays just behind its front.' },
-  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'fanout', strip: true,
+  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'fanout',
     desc: 'Stays at the back and shoots from as far as possible.' },
   charger: { name: 'Charger', fireOnMove: true, passes: 'all', behindFight: 'around', goal: 'structure',
     desc: 'Charges the first enemy structure in its path, slipping past mechs and shooting on the move.' },
@@ -75,7 +76,7 @@ export const MECHS = {
   },
   gunner: {
     role: 'line', name: 'Gunner', cost: 80, hp: 230, dmg: 18, reload: 0.6, range: 260, speed: 44, cd: 2,
-    proj: 'bullet', radius: 20, turn: TURN, desc: 'Reliable mid-range firepower.',
+    proj: 'bullet', traits: ['flanker'], radius: 20, turn: TURN, desc: 'Reliable mid-range firepower.',
   },
   brawler: {
     role: 'tank', name: 'Brawler', cost: 140, hp: 700, dmg: 48, reload: 1.0, range: 60, speed: 32, cd: 3.5,
@@ -134,6 +135,7 @@ export const AI = {
 export const TRAITS = {
   prefersMechs: { name: 'Prefers mechs', set: { pref: 'mech' }, desc: 'Picks enemy mechs over structures.' },
   prefersStructures: { name: 'Prefers structures', set: { pref: 'structure' }, desc: 'Picks turrets and bases over mechs.' },
+  flanker: { name: 'Flanker', set: { strip: true }, desc: 'In a crowded fight it can fight from the strip between two lanes.' },
   longReach: { name: 'Long reach', set: { reach: 2 }, desc: 'Targets its own lane ± 2 instead of ± 1.' },
 };
 const ROLE_DEFAULTS = { pref: null, reach: 1 };

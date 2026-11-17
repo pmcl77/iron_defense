@@ -125,19 +125,19 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
    1. it has a target in reach from where it stands → **shoots from behind**;
    2. otherwise, the friendly ahead has a longer range → **passes** it (it can't reach that fight from behind);
    3. otherwise → **fans out ±1 lane** into a free neighbor lane;
-   4. no free neighbor lane → **half-lane fan-out** onto the strip between two lanes, if a strip spot is free (Line, Artillery, Support);
+   4. no free neighbor lane → **half-lane fan-out** onto the strip between two lanes, if a strip spot is free (only with the Flanker trait: Gunner);
    5. otherwise → **waits** without a shot.
 
 **Shared rules (all roles):**
 - **Passing:** applies to marching, waiting *and* fighting friendlies: a friendly a mech may pass is passed, and only otherwise does the "stopped and fighting" row apply. Tank passes anyone who isn't a tank, even if that one is only slightly slower (other roles pass only friendlies at least 8 slower). Line passes Support and Artillery, and a *fighting* friendly with a longer range than its own (GU behind SE.f passes; two of the same type, or SE behind GU.f, fan out). Support passes only Artillery, and never a friendly that's fighting. Artillery passes nobody. Charger passes anyone. Otherwise a mech keeps a 4-unit gap behind the friendly in front.
 - **Passing side (follow the leader):** if a friendly from the same lane that the mech may not pass has just stepped out ahead of it to pass, the mech takes the same side, and waits while that lane is still taken right beside it, so a train stays in order (Mortar.f-Brawler-Gunner: the Gunner follows the Brawler around the Mortar). While in the passing lane, a mech never walks past a *marching* friendly in its home lane that it may not pass; it falls in behind it. If that friendly stops to fight, the pass becomes a fan-out: the mech stays in the passing lane and walks on. Without such a leader, the side depends on *why* it moves out (proposal H): passing a **fighting** friendly to get into the fight, it takes the side from which it gets a shot soonest (like a fan-out, but looking as far ahead as needed); passing a **marching or waiting** friendly just to get by, it prefers a side with no enemy close ahead (within about 250). Then the side closer to home, fewer friendlies ahead, toward the center. **Support** (role field `passSide: 'protect'`) first picks the side where its field would cover the most friendlies (mechs and turrets, counted a little ahead of it), so an Aegis moves toward the group that needs it. *(Follow the leader and H built in 0.4.0-dev for play-testing; the user decides whether to keep them.)*
 - **Ranged units stop at about 95% of their range** in front of what stops them (enemy mechs, turrets, the base), so small movements don't take them out of range. Melee units walk up to contact.
-- **Half-lane fan-out** *(0.5.0-dev)*: in a big fight, when both neighbour lanes are taken beside it, a Line, Artillery or Support mech without a shot steps onto the strip between its lane and a neighbour lane and fights from there. The strip is a fighting spot only:
+- **Half-lane fan-out** *(0.5.0-dev)*: in a big fight, when both neighbour lanes are taken beside it, a mech with the **Flanker** trait (Gunner) without a shot steps onto the strip between its lane and a neighbour lane and fights from there. The strip is a fighting spot only:
   - it's in no lane and blocks nobody; enemies can shoot it but walk past it. Its reach stays its lane ±1 (±2 with Long reach).
   - it walks up at most level with the fighting friendly beside it (Support stays its usual distance behind), one mech per spot; a strip lies between two lanes and is shared by both, first come, first served (either side's mechs).
-  - side: the strip spot closest to an enemy it can reach, then toward the center. Tanks (they hold the lane) and Chargers never use it.
+  - side: the strip spot closest to an enemy it can reach, then toward the center. Only Flankers use it (first built for Line, Artillery and Support; narrowed to the Gunner after the play-test of 2026-11-17, because it made Seeker hordes too strong).
   - it steps back into its own lane when it has no shot and can't get closer, or when the fight beside it is over, as soon as there's room. Order by position: a strip mech waiting to come back goes in ahead of lane mechs behind it, and they keep their distance from it. After stepping back it won't take a strip again for 4 s.
-  - same rules for the enemy. Passing on the strip is a possible follow-up (ISSUES.md). In code: `STRIP` and the role field `strip` in data.js.
+  - same rules for the enemy. Passing on the strip is a possible follow-up (ISSUES.md). In code: `STRIP`, the rule `strip` and the trait `flanker` in data.js.
 - **Fan-out** (Line behind a fighting friendly, Tank joining a fight): only once the friendly ahead has stopped to fight, never while it's still marching, so fresh deployments keep their cover. It prefers the side from which it reaches an enemy soonest (counting its lane reach), then the side with fewer friendlies, then toward the center. A Tank only steps over if it can fight something from there.
 - **Lane changes:**
   - a mech walks over diagonally at a pace that matches its speed and turns its legs toward where it walks (sideways at its walk speed, forward at 0.6× meanwhile; only sideways if blocked in front). 120 units of lane width: Scout ≈ 1.6 s, Gunner ≈ 2.7 s, Brawler ≈ 3.8 s, Mortar ≈ 4.3 s
@@ -217,6 +217,7 @@ Attack types work as in Ironline, measured in 2D:
 **Traits** (each replaces one role rule):
 - **Prefers mechs:** picks enemy mechs over structures.
 - **Prefers structures:** picks turrets and bases over mechs.
+- **Flanker** *(0.5.0-dev)*: may use the half-lane fan-out (§5.2): in a crowded fight it fights from the strip between two lanes. On the Gunner only (user, 2026-11-17: gives the Gunner something special; the long-range units already shoot from the back rows, and an Aegis on a strip would only take a Gunner's spot).
 - **Long reach:** targets own lane ± 2 instead of ± 1 (§5.3). *Currently on no mech: removed from the Seeker in the test build of 2026-11-16 (from lane 3 it covered every lane; ISSUES).*
 
 | Type | Role | Weapon | Traits | Card text |
@@ -224,8 +225,8 @@ Attack types work as in Ironline, measured in 2D:
 | Brawler | Tank | melee | none | Leads from the front, draws fire and smashes whatever blocks it, also from the side. |
 | Breacher | Charger | melee, ×4 vs structures, stuns turrets | none | Slowly charges the first structure in its path, walks past mechs and tears turrets down. |
 | Scout | Charger | bullets | none | Fast. Charges the first structure in its path, slips past mechs and shoots on the move. |
-| Gunner | Line | bullets | none | Stops at range and shoots the nearest enemy; takes cover behind marching tanks. |
-| Seeker | Line | homing missiles | prefers mechs, long reach | Stops at range and fires homing missiles at enemy mechs up to two lanes away. |
+| Gunner | Line | bullets | flanker | Stops at range and shoots the nearest enemy; takes cover behind marching tanks; in a crowded fight it fights from the strip between two lanes. |
+| Seeker | Line | homing missiles | prefers mechs | Stops at range and fires homing missiles at enemy mechs in its own and the neighbouring lanes. |
 | Aegis | Support | bullets + 40% damage-reduction field | none | Follows the fight, stays just behind its front and shields everyone nearby. |
 | Mortar | Artillery | slow shells, splash | none | Stays at the back and shells the nearest enemy from long range. |
 | Lancer | Artillery | slugs, ×3 vs structures | prefers structures | Stays at the back and snipes turrets and bases from beyond their range. |
