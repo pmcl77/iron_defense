@@ -428,6 +428,8 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - Who may use it: all roles, or only Line/Artillery (shooters), not Tanks (which should hold the lane)?
     - Same for the enemy (yes, if it's a movement rule).
   - **First thought:** simplest version: the strip is a fighting spot only (no blocking, reach of its home lane ±1), used only when ±1 lanes are full, and the mech returns home when the fight ends. Size: medium (movement, spacing, tests).
+  - **User (2026-11-17): likes the simple version** (noted, not yet to build).
+  - **Follow-up idea (user): use the strip for passing too.** Today a pass needs a free neighbor lane; passing on the strip would let a mech get by a slower friendly without leaving its lane's "ownership". Same questions: blocking on the strip (none, as above), what happens if two mechs pass from both sides onto the same strip (one strip between two lanes is shared by both), whether a passing mech on the strip may shoot (like Line on the move) and when it steps back. Trade-off: passing on the strip keeps the neighbor lanes free for fighting fan-outs; but strips used by both passing and fighting may crowd. To discuss together with the fan-out.
 
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
