@@ -45,7 +45,10 @@ export class World {
     this.stats = { kills: 0, deployed: 0, lost: 0 };
     // battle log for the statistics upload (main.js sendStats): counts per team and type, a 30 s timeline, and
     // events in time order (see ev() below)
-    this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [] };
+    // dmg[team][attacker type] = [to mechs, to turrets, to the base, to the Constructor]: HP actually removed (no overkill);
+    // attacker 'bomb' = Bombing. taken[team][type] = HP lost. shield[team] = HP the Aegis field saved its side.
+    this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [],
+      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0] };
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
@@ -974,11 +977,13 @@ export class World {
       if (src.def.stunOnHit && f.kind === 'turret' && src.def.proj === 'melee') f.stun = Math.max(f.stun, src.def.stunOnHit);
     }
     // Aegis field (doesn't stack, doesn't protect itself)
+    const raw = amount;
     for (const s of this.entities) {
       if (s.dead || s.team !== f.team || s.type !== 'aegis' || s === f || s.stun > 0) continue;
       const d = f.kind === 'base' ? Math.abs(s.y - f.y) : Math.hypot(s.x - f.x, s.y - f.y);
       if (d <= s.def.aura) { amount *= 1 - s.def.auraDR; if (f.kind !== 'base') this.fx.push({ t: 'shield', src: s, dst: f }); break; }
     }
+    this.logDamage(f, raw, amount, src, team);
     f.hp -= amount;
     f.hurt = 0.12;
     if (f.hp > 0) {
@@ -1008,6 +1013,17 @@ export class World {
       this.energy = Math.min(this.maxEnergy, this.energy + (f.def.cost || 0) * ENERGY.bounty);
     }
     this.fx.push({ t: 'die', x: f.x, y: f.y, kind: f.kind, type: f.type, team: f.team, r: f.radius });
+  }
+
+  // damage stats (log.dmg / taken / shield): only HP actually removed, so a big hit on a nearly dead target counts what it took
+  logDamage(f, raw, amount, src, team) {
+    const hp = Math.max(0, f.hp), real = Math.min(amount, hp);
+    if (raw > amount) this.log.shield[f.team] += Math.min(raw, hp) - real;
+    if (real <= 0 || team == null || team === f.team) return;
+    const by = src ? src.type : 'bomb', k = { mech: 0, turret: 1, base: 2 }[f.kind] ?? 3;
+    const row = (this.log.dmg[team][by] ||= [0, 0, 0, 0]);
+    row[k] += real;
+    this.log.taken[f.team][f.type] = (this.log.taken[f.team][f.type] || 0) + real;
   }
 
   // ---------- constructor ----------

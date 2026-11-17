@@ -657,6 +657,21 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   console.log(`  (10-minute test battle: ${E.length} events, ${(size / 1024).toFixed(1)} KB)`);
 }
 
+// ---- damage stats (log.dmg / taken / shield)
+{
+  const w = mk();
+  const g = mech(w, 'gunner', 0, 2, 900), b = mech(w, 'brawler', 1, 2, 1500, 100);
+  w.damage(b, 60, g); w.damage(b, 300, g); // second hit kills: only the 40 HP left count
+  check('damage stats: HP actually removed, no overkill', w.log.dmg[0].gunner?.[0] === 100, JSON.stringify(w.log.dmg[0]));
+  check('damage stats: damage taken by type', w.log.taken[1].brawler === 100);
+  w.damage(w.bases[1], 50, null, 0);
+  check('damage stats: Bombing and base damage', w.log.dmg[0].bomb?.[2] === 50);
+  const w2 = mk();
+  const ae = mech(w2, 'aegis', 1, 2, 1500, 1e9), m = mech(w2, 'gunner', 1, 2, 1480, 1e9), s = mech(w2, 'gunner', 0, 2, 1000);
+  w2.damage(m, 100, s);
+  check('damage stats: Aegis field saved HP', Math.abs(w2.log.shield[1] - 100 * ae.def.auraDR) < 1e-6 && Math.abs(w2.log.dmg[0].gunner[0] - 100 * (1 - ae.def.auraDR)) < 1e-6, `${w2.log.shield[1]}`);
+}
+
 // ---- half-lane fan-out (STRIP)
 {
   // L3 fight: GU1 fights, both neighbouring lanes are taken beside GU2, so GU2 steps onto a strip and fights from there

@@ -170,6 +170,8 @@ function launch(i) {
 const CP_KEY = 'iron-defense-checkpoints';
 const MIN_TIME = 15; // shorter quits are noise
 const duo = (a) => ({ player: a[0], enemy: a[1] });
+// whole numbers for the damage stats (objects of numbers or of [mechs, turrets, base, Constructor] arrays)
+const rounded = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Array.isArray(v) ? v.map(Math.round) : Math.round(v)]));
 // timeline entries: [time s, energy, player base HP %, enemy base HP %, player mechs, enemy mechs]
 function summary(result, stars = 0) {
   const w = game.world, i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
@@ -183,6 +185,7 @@ function summary(result, stars = 0) {
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
+    dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)),
     upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
   };
   return body;
