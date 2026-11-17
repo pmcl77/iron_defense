@@ -693,19 +693,22 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const w2 = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp: 'ot8' });
   w2.time = 600; w2.overtime = true; w2.ai.energy = -1e9; const a0 = w2.ai.energy; w2.updateAI(1);
   check('overtime: enemy +15/s', Math.abs(w2.ai.energy - a0 - (2 * r + OVERTIME_BONUS)) < 1e-6, w2.ai.energy - a0);
-  // forward deploy (normal rule): same lane, frontmost turret, fallback, queue remembers, toggling
+  // forward deploy (normal rule): same lane, frontmost turret, on by default once a lane has a turret
   {
     const w = mk([], 0);
-    check('forward: no turret → toggling refused', w.setLane(2) === 'noturret' && !w.laneFwd(2));
-    const t3 = w.placeTurret(0, 'sentry', 2, 3), t5 = w.placeTurret(0, 'sentry', 2, 5);
+    check('forward: no turret → lane deploys at the base, toggling refused', !w.laneFwd(2) && w.setLane(2) === 'noturret' && !w.laneFwd(2));
+    const t3 = w.placeTurret(0, 'sentry', 2, 3);
+    check('forward: first turret of a lane switches it to forward', w.laneFwd(2));
+    check('forward: second tap switches to base', w.setLane(2) === 'base' && !w.laneFwd(2));
+    const t5 = w.placeTurret(0, 'sentry', 2, 5);
+    check('forward: a further turret keeps the base choice', !w.laneFwd(2));
+    check('forward: tap again switches to forward', w.setLane(2) === 'fwd' && w.laneFwd(2));
     w.placeTurret(0, 'sentry', 1, 6);
-    check('forward: second tap switches to forward', w.setLane(2) === 'fwd' && w.laneFwd(2));
+    check('forward: other lanes get their own first turret', w.laneFwd(1) && !w.laneFwd(0));
     w.deploy('gunner');
     const g = w.entities.filter((e) => e.kind === 'mech').pop();
     check('forward: appears behind the frontmost turret of that lane', g.lane === 2 && g.y < t5.y && g.y > t5.y - 100, g.y);
     check('forward: event carries the turret row', w.log.events.at(-1)[6] === 6);
-    check('forward: other lanes stay at the base', !w.laneFwd(1) && w.setLane(1) === 'lane' && !w.laneFwd(1));
-    w.setLane(2);
     t5.dead = true; w.cells[0][2][5] = null;
     w.deployCd = {}; w.deploy('gunner', 2, true);
     const g2 = w.entities.filter((e) => e.kind === 'mech').pop();
@@ -715,17 +718,17 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     w.deploy('scout', 2, true);
     const g3 = w.entities.filter((e) => e.kind === 'mech').pop();
     check('forward: no turret left → base', g3.y === BASE_FACE[0] + 24);
-    w.setLane(1); w.setLane(1);
-    check('forward: third tap back to base', w.setLane(1) === 'base' && !w.laneFwd(1));
+    w.placeTurret(0, 'sentry', 2, 2);
+    check('forward: a lane that lost all turrets turns forward again with its next one', w.laneFwd(2));
     w.setLane(1); w.sell(1, 6);
     check('forward: last turret of the lane sold → lane back to base', !w.laneFwd(1));
     // queue: each order keeps its own choice
-    const q = mk([], 0); q.placeTurret(0, 'sentry', 2, 4); q.setLane(2); q.energy = 0; // lane 3 is selected at the start: one tap = forward
+    const q = mk([], 0); q.placeTurret(0, 'sentry', 2, 4); q.energy = 0;
     q.request('gunner'); q.setLane(2); q.request('gunner');
     check('forward: queue remembers base/forward per order', q.queue[0].fwd === true && q.queue[1].fwd === false);
     // first tap on another lane only selects it
     const o = mk([]); o.placeTurret(0, 'sentry', 1, 4);
-    check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && !o.laneFwd(1) && !!o.forwardTurret(1));
+    check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && o.laneFwd(1));
   }
   check('every experiment has a name', Object.values(EXPERIMENTS).every((x) => x.name));
 }

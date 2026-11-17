@@ -422,7 +422,7 @@ function showHelp() {
   const items = [
     ['Goal', 'Destroy the enemy base at the top before they destroy yours at the bottom.'],
     ['Lanes', 'The field has 5 lanes. Pick the active lane with the L1–L5 buttons, then tap a mech card to deploy it into that lane.'],
-    ['Forward deploy', 'Your turrets double as forward bases for their own lane. Tap the selected lane button again to deploy forward (FWD): new mechs appear just behind that lane\'s frontmost turret. Tap once more for the base. If that turret falls, the next one back takes over; when the lane\'s last turret is gone, the lane goes back to the base.'],
+    ['Forward deploy', 'Your turrets double as forward bases for their own lane. When a lane gets its first turret it switches to forward on its own (FWD): new mechs appear just behind that lane\'s frontmost turret. Tap the selected lane button again to switch between forward and base. If that turret falls, the next one back takes over; when the lane\'s last turret is gone, the lane goes back to the base.'],
     ['Deploy queue', 'Not enough energy, or the card is cooling down? The tap is queued (up to 5) in the lane you picked. Orders come out strictly in order as energy allows; energy is only paid when a mech deploys. Tap a queued mech to cancel it, CLEAR cancels all, Backspace removes the last.'],
     ['Lanes and reach', 'A mech can only shoot at its own lane and the two lanes next to it. Turrets and bases reach every lane.'],
     ['Roles', 'Every mech has a role that decides how it moves. Pick what you deploy and where:'],

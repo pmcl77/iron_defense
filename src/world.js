@@ -153,6 +153,8 @@ export class World {
     return e;
   }
   placeTurret(team, type, lane, row) {
+    // forward deploy is the default: a lane's first turret switches it to forward (a later one keeps the lane's choice)
+    if (team === 0 && !this.forwardTurret(lane)) this.fwd[lane] = true;
     const t = this.spawn({ kind: 'turret', type, team, lane, row, x: laneX(lane), y: cellY(team, row) });
     this.cells[team][lane][row] = t;
     this.ev('turret', this.side(team), type, this.lvl[team][type], lane + 1, row + 1);
