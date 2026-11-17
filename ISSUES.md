@@ -481,6 +481,10 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Options: **A.** the card spawns 3 normal Scouts for 3 × 40 = 120 (same value, but a real swarm hits a turret at once). **B.** a "Scout squad" card: 3 lighter Scouts for less (e.g. 100), each a bit weaker. **C.** keep one Scout, but cheaper or with a shorter cooldown.
   - Questions: one queue slot and one card cooldown per squad? Formation: 3 in a column in one lane, or spread over the strip spots? Same for the enemy (its "cheap pack" groups already send 2–3 Scouts)? With new unit types coming, the squad could be the first "swarm" type.
   - First thought: A is simplest and keeps the stats readable; the damage stats then show whether a squad pays off.
+  - **User (2026-11-17): like a cheap swarm card** (inspiration: a "3 small units for very little" card; not a big horde): 1 card, 3 Scouts, not much more expensive than one Scout today. So option B.
+    - Rough numbers to start from: cost 50 for the squad (today 40 for one); each Scout about half of today's (HP 45, damage 4–5 per shot), speed and range unchanged. Squad total ≈ 135 HP and ≈ 40 damage per second, vs 90 HP and 23 for one Scout today: more value per energy, but every shot of splash (Mortar, Seeker, Howitzer, Bombing) or the Arc Coil's chain hits several of them. That gives a counter circle: swarm beats single-target units (Brawler, Gunner, Sentry), splash beats swarm.
+    - Kill bounty per Scout from a third of the squad cost. One queue slot, one card cooldown. Same for the enemy (its "cheap pack" groups would use the squad).
+    - Open question: keep the Charger behaviour (run past mechs to turrets and chip them), or make the squad a distraction swarm that attacks the mechs it meets (soaks hits from heavy single-target units)? The second is closer to the inspiration, but it means a role change or a new trait.
 
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
