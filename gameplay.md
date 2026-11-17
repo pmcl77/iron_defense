@@ -118,6 +118,14 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 
 **Charger goal:** the first structure in its path: the nearest enemy turret ahead within ±1 lane (it steps over toward it), otherwise the base.
 
+**Decision order behind a friendly** (the table and the rules below in short; example: a Seeker, role Line):
+1. **Friendly ahead marching or waiting:** passing rules. Pass it if the role allows (Line: only Support and Artillery), otherwise follow at a 4-unit gap.
+2. **Friendly ahead stopped and fighting:**
+   1. it has a target in reach from where it stands → **shoots from behind**;
+   2. otherwise, the friendly ahead has a longer range → **passes** it (it can't reach that fight from behind);
+   3. otherwise → **fans out ±1 lane** into a free neighbor lane;
+   4. no free neighbor lane → **waits** without a shot (big fights: ISSUES.md "Half-lane fan-out").
+
 **Shared rules (all roles):**
 - **Passing:** applies to marching, waiting *and* fighting friendlies: a friendly a mech may pass is passed, and only otherwise does the "stopped and fighting" row apply. Tank passes anyone who isn't a tank, even if that one is only slightly slower (other roles pass only friendlies at least 8 slower). Line passes Support and Artillery, and a *fighting* friendly with a longer range than its own (GU behind SE.f passes; two of the same type, or SE behind GU.f, fan out). Support passes only Artillery, and never a friendly that's fighting. Artillery passes nobody. Charger passes anyone. Otherwise a mech keeps a 4-unit gap behind the friendly in front.
 - **Passing side (follow the leader):** if a friendly from the same lane that the mech may not pass has just stepped out ahead of it to pass, the mech takes the same side, and waits while that lane is still taken right beside it, so a train stays in order (Mortar.f-Brawler-Gunner: the Gunner follows the Brawler around the Mortar). While in the passing lane, a mech never walks past a *marching* friendly in its home lane that it may not pass; it falls in behind it. If that friendly stops to fight, the pass becomes a fan-out: the mech stays in the passing lane and walks on. Without such a leader, the side depends on *why* it moves out (proposal H): passing a **fighting** friendly to get into the fight, it takes the side from which it gets a shot soonest (like a fan-out, but looking as far ahead as needed); passing a **marching or waiting** friendly just to get by, it prefers a side with no enemy close ahead (within about 250). Then the side closer to home, fewer friendlies ahead, toward the center. **Support** (role field `passSide: 'protect'`) first picks the side where its field would cover the most friendlies (mechs and turrets, counted a little ahead of it), so an Aegis moves toward the group that needs it. *(Follow the leader and H built in 0.4.0-dev for play-testing; the user decides whether to keep them.)*
