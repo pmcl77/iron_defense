@@ -92,11 +92,12 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 - **Work on `dev`.** Commit there and never commit straight to `main`.
 - **Play-testing:** the user pushes `dev` and plays it at https://dev.iron-defense.pages.dev (about 1 minute after the push).
 - **Changelog:** every user-visible change goes into `CHANGELOG.md` under "Unreleased" when it's committed on `dev`.
-- **Version:** `src/version.js` holds the version shown in the game. On `dev` it carries a `-dev` suffix (e.g. `0.2.0-dev`).
+- **Version:** `src/version.js` holds the version shown in the game (menu and settings) and recorded in every battle's stats. On `dev` it carries a `-dev.N` suffix: a build number, e.g. `0.5.0-dev.3`.
+- **Dev build number (decided 2026-11-17):** bump `N` with every push to `dev` that changes the game (code under `src/`, `index.html`, `style.css`, assets); pushes of docs or ISSUES.md alone don't count. It lets the user check they're playing the latest build and refer to it ("on dev.3 …"). Note the build number on the changelog entry. The third number (PATCH) is only for bug-fix releases on `main` (e.g. `0.4.1`), never for dev builds.
 - **Release steps:**
   1. On `dev`, rename "Unreleased" in CHANGELOG.md to `[X.Y.Z]: <date>`, set `src/version.js` to `X.Y.Z` and commit.
   2. Merge into `main` and tag `vX.Y.Z`.
-  3. Back on `dev`, add a new "Unreleased" section and set the version to the next `-dev` (e.g. `0.3.0-dev`).
+  3. Back on `dev`, add a new "Unreleased" section and set the version to the next `-dev.0` (e.g. `0.6.0-dev.0`); the first game change after it is `-dev.1`.
   4. Push `main`, `dev` and the tags (`git push origin main dev --tags`).
 - **Releasing:** when a build is tested and good, and the user agrees, merge `dev` into `main` (`git switch main && git merge --ff-only dev`, falling back to a normal merge), optionally tag it (`v0.2`, …), then switch back to `dev`. https://iron-defense.pages.dev updates about 1 minute after `main` is pushed.
 - **Pushing (since 2026-11-14):** I push myself over SSH with a **repo-scoped deploy key**, which has write access to `pmcl77/iron_defense` only.

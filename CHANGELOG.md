@@ -5,9 +5,11 @@ All notable changes to Iron Defense. The newest version is at the top.
 - **Unreleased:** what's on `dev`, playable at https://dev.iron-defense.pages.dev.
 - **Released versions:** what's on `main`, live at https://iron-defense.pages.dev.
 
-Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev` suffix.
+Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev.N` suffix with a build number that goes up with every dev build (e.g. `0.5.0-dev.3`); PATCH is for bug-fix releases only.
 
 ## [Unreleased]: 0.5.0-dev
+
+Dev builds since 0.4.0: dev.1 half-lane fan-out, dev.2 damage stats, dev.3 Flanker trait (Gunner only) and dev build numbers.
 
 ### Stats
 - Battle stats now include **damage per unit type**, not only kills (final blows): damage dealt per side and attacker type, split into mechs, turrets, base and Constructor (`dmg`, Bombing as `bomb`); damage taken per type (`taken`); and the HP the **Aegis field saved** per side (`shield`). Also strip use per side (`strip`: times a mech stepped onto a strip, damage dealt from strips). Only HP actually removed counts (no overkill). About 0.7 KB per battle.
