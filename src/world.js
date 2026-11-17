@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
@@ -452,8 +452,9 @@ export class World {
       e.bx += Math.max(-step, Math.min(step, d));
       if (e.lane !== s.to && Math.abs(s.x1 - e.bx) <= Math.abs(e.bx - s.x0)) e.lane = s.to;
       e.phase += Math.min(step, Math.abs(d)) / (e.radius * 0.9);
-      if (Math.abs(s.x1 - e.bx) < 0.01) { e.bx = s.x1; e.shift = null; e.lane = s.to; }
+      if (Math.abs(s.x1 - e.bx) < 0.01) { e.bx = s.x1; e.shift = null; e.lane = s.to; if (s.strip) e.strip = s.strip; }
     }
+    if (e.strip) { this.moveStrip(e, dt, t, R, speed, px, py); return; }
     // Chargers step over toward a turret ahead in a neighbouring lane
     if (R.goal === 'structure' && !e.shift && e.homeLane == null) this.seekStructure(e);
     this.lean(e, dt, t, R);
@@ -479,9 +480,12 @@ export class World {
         // while passing in another lane, never get ahead of a *marching* friendly in the home lane it may not
         // pass; hang back far enough that the home lane counts as free behind it (laneFree: radii + 10).
         // If that friendly has stopped to fight, the pass becomes a fan-out: stay in this lane and walk on.
-        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !this.canPass(R, f, e) && (f.y - e.y) * dir > 0) {
+        else if (e.homeLane != null && e.lane !== e.homeLane && f.lane === e.homeLane && !f.strip && !this.canPass(R, f, e) && (f.y - e.y) * dir > 0) {
           if (this.fighting(f)) { e.homeLane = null; e.passing = null; continue; }
           s = f.y - dir * (f.radius + e.radius + 12);
+        } else if (f.stripWait && f.lane === e.lane && !e.shift) {
+          // a strip mech ahead waiting to step back into this lane goes first (order by position)
+          s = f.y - dir * (f.radius + e.radius + STRIP.gap + 2);
         } else continue;
         // Support stays a little behind the friendly ahead in its lane, marching or fighting, so it's already in
         // its spot when that one stops (it's faster than Line mechs); neighbouring lanes: see below
@@ -501,7 +505,7 @@ export class World {
       }
       if (front) {
         const s = front.y - dir * (front.radius + e.radius + R.follow);
-        if ((ny - s) * dir > 0) { ny = s; block = null; }
+        if ((ny - s) * dir > 0) { ny = s; block = null; if (!t) this.tryStrip(e); }
       }
     }
     if ((ny - e.y) * dir < 0) ny = e.y; // never pushed backward
@@ -534,7 +538,7 @@ export class World {
   detour(e, dt, speed) {
     const dir = FWD[e.team];
     let want = 0;
-    if (!e.shift) {
+    if (!e.shift && !e.strip) {
       for (const f of this.entities) {
         if (f.dead || f.team !== e.team || f.kind !== 'turret' || f.lane !== e.lane) continue;
         const pad = DETOUR.pad[f.type] ?? DETOUR.pad.default, d = (f.y - e.y) * dir;
@@ -581,7 +585,7 @@ export class World {
   }
 
   // lanes a unit occupies: both while changing lanes (honest occupancy, also reserves the new lane)
-  inLane(f, l) { return f.shift ? f.shift.from === l || f.shift.to === l : f.lane === l; }
+  inLane(f, l) { return f.shift ? f.shift.from === l || f.shift.to === l : !f.strip && f.lane === l; }
   shareLane(a, b) { return a.shift ? this.inLane(b, a.shift.from) || this.inLane(b, a.shift.to) : this.inLane(b, a.lane); }
   // lane a unit is in or heading to
   destLane(f) { return f.shift ? f.shift.to : f.lane; }
@@ -605,9 +609,10 @@ export class World {
     if (this.fighting(f)) {
       // a fighting friendly it may pass is passed; otherwise the role's rule for this situation
       // passing to get into the fight: the side is chosen like a fan-out, toward a shot (proposal H); Chargers just go around
-      if (this.canPass(R, f, e) && !R.noPassFighting) { this.tryOvertake(e, f, true, !R.goal); return; }
+      if (this.canPass(R, f, e) && !R.noPassFighting) { if (!this.tryOvertake(e, f, true, !R.goal) && !e.target) this.tryStrip(e); return; }
       if (R.behindFight === 'join') this.fanOut(e, true);
-      else if (R.behindFight === 'fanout') { if (!e.target) this.fanOut(e, false); }
+      else if (R.behindFight === 'fanout') { if (!e.target && !this.fanOut(e, false)) this.tryStrip(e); }
+      else if (!e.target) this.tryStrip(e);
       else if (R.behindFight === 'around') this.tryOvertake(e, f, true);
       return;
     }
@@ -630,6 +635,101 @@ export class World {
     e.homeLane = null; e.passing = null; // fanning out to fight is permanent
     this.shiftTo(e, opts[0]);
     return true;
+  }
+
+  // ---- half-lane fan-out (gameplay.md §5.2, STRIP) ----
+  // strip id: the half-lane between lanes; side -1 / +1 from lane l
+  stripId(l, side) { return l + side * 0.5; }
+  stripOf(f) { return f.strip ? this.stripId(f.lane, f.strip) : f.shift?.strip ? this.stripId(f.lane, f.shift.strip) : null; }
+  stripX(l, side) { return laneX(l) + side * (laneX(1) - laneX(0)) / 2; }
+  // is the strip spot beside e free? No mech of either team on it (or stepping onto it) close in y
+  stripFree(e, id) {
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.kind !== 'mech' || this.stripOf(f) !== id) continue;
+      if (Math.abs(f.y - e.y) < f.radius + e.radius + STRIP.gap) return false;
+    }
+    return true;
+  }
+  // only when both neighbouring lanes are taken (otherwise the normal fan-out or pass applies); first come, first served
+  tryStrip(e) {
+    const R = e.def.rules;
+    if (!R.strip || e.strip || e.shift || e.target || this.time < (e.stripAgain || 0)) return false;
+    if ([e.lane - 1, e.lane + 1].some((l) => this.laneAllowed(e, l) && this.laneFree(e, l))) return false;
+    const opts = [-1, 1].filter((s) => this.laneAllowed(e, e.lane + s) && this.stripFree(e, this.stripId(e.lane, s)));
+    if (!opts.length) return false;
+    // the side whose strip spot is closest to an enemy it can reach, then toward the center
+    const dir = FWD[e.team];
+    const near = (s) => {
+      const x = this.stripX(e.lane, s);
+      let best = Infinity;
+      for (const f of this.entities) {
+        if (f.dead || f.team === e.team || f.kind === 'constructor' || !this.inReach(e, f) || (f.y - e.y) * dir <= 0) continue;
+        best = Math.min(best, Math.hypot(f.x - x, f.y - e.y));
+      }
+      return best;
+    };
+    opts.sort((a, b) => (near(a) - near(b) || 0) || Math.abs(e.lane + a - 2) - Math.abs(e.lane + b - 2));
+    if (e.bx == null) e.bx = e.x;
+    e.homeLane = null; e.passing = null;
+    e.shift = { from: e.lane, to: e.lane, x0: e.bx, x1: this.stripX(e.lane, opts[0]) + e.jitter * 0.2, strip: opts[0] };
+    this.fx.push({ t: 'sidestep', x: e.x, y: e.y });
+    return true;
+  }
+  // room to step back into its lane: no mech there level with it or just ahead. Mechs behind don't count, however
+  // close: it's ahead of them, so it goes first, and they keep their distance from it (order by position).
+  stripBackFree(e) {
+    const dir = FWD[e.team];
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.kind !== 'mech' || !this.inLane(f, e.lane)) continue;
+      const dy = (f.y - e.y) * dir;
+      if (dy >= 0 && dy < f.radius + e.radius + STRIP.gap) return false;
+    }
+    return true;
+  }
+  // the frontmost fighting friendly in the two lanes beside the strip, within STRIP.front ahead (or level)
+  stripFront(e) {
+    const dir = FWD[e.team], lanes = [e.lane, e.lane + e.strip];
+    let front = null;
+    for (const f of this.entities) {
+      if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || f.strip || !lanes.includes(f.lane) || !this.fighting(f)) continue;
+      const d = (f.y - e.y) * dir;
+      if (d < -(f.radius + e.radius) || d > STRIP.front) continue;
+      if (!front || (f.y - front.y) * dir > 0) front = f;
+    }
+    return front;
+  }
+  // on the strip: fight from here; walk up at most level with the fight; step back into the lane when done
+  moveStrip(e, dt, t, R, speed, px, py) {
+    const dir = FWD[e.team];
+    e.detour = 0; e.x = e.bx;
+    const front = this.stripFront(e);
+    let moved = 0, block = null;
+    if (this.wantsToMove(e, t, R) && front) {
+      let ny = e.y + dir * speed * dt;
+      const cap = front.y - dir * (R.follow ? front.radius + e.radius + R.follow : 0);
+      if ((ny - cap) * dir > 0) ny = cap;
+      const id = this.stripOf(e);
+      for (const f of this.entities) { // other mechs on the same strip, either team
+        if (f.dead || f === e || f.kind !== 'mech' || this.stripOf(f) !== id || (f.y - e.y) * dir <= 0) continue;
+        const s = f.y - dir * (f.radius + e.radius + GAP);
+        if ((ny - s) * dir > 0) { ny = s; block = f; }
+      }
+      if ((ny - e.y) * dir < 0) ny = e.y;
+      moved = Math.abs(ny - e.y);
+      e.y = ny;
+    }
+    e.blocker = block && block.team !== e.team ? block : null;
+    // done here: no target and no closer spot, or the fight beside it is over
+    e.stripWait = !t && (!front || moved < 1e-3);
+    if (e.stripWait && this.stripBackFree(e)) {
+      e.shift = { from: e.lane, to: e.lane, x0: e.bx, x1: laneX(e.lane) + e.jitter * 0.5 };
+      e.strip = null; e.stripWait = false; e.stripAgain = this.time + STRIP.again;
+    }
+    e.moving = moved > 1e-6 || !!e.shift;
+    e.mb = 0;
+    e.phase += moved / (e.radius * 0.9);
+    const vx = e.bx - px, vy = e.y - py;
+    e.body = turnTo(e.body, Math.abs(vx) > 1e-4 ? Math.atan2(vx, vy) : (e.team === 0 ? 0 : Math.PI), BODY_TURN * dt);
   }
 
   // how far ahead the nearest enemy is that e could shoot from lane l (counting its lane reach); Infinity if

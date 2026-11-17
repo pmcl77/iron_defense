@@ -657,6 +657,40 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   console.log(`  (10-minute test battle: ${E.length} events, ${(size / 1024).toFixed(1)} KB)`);
 }
 
+// ---- half-lane fan-out (STRIP)
+{
+  // L3 fight: GU1 fights, both neighbouring lanes are taken beside GU2, so GU2 steps onto a strip and fights from there
+  const setup = (type = 'gunner') => {
+    const w = mk();
+    const foe = mech(w, 'brawler', 1, 2, 1400, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+    const g1 = mech(w, 'gunner', 0, 2, 1150, 1e9), g2 = mech(w, type, 0, 2, 1090, 1e9);
+    const n = [1, 3].map((l) => { const m = mech(w, 'gunner', 0, l, 1090, 1e9); m.def = { ...m.def, speed: 0, dmg: 0 }; return m; });
+    return { w, foe, g1, g2, n };
+  };
+  const a = setup();
+  run(a.w, 8);
+  check('strip: line steps onto a strip when both neighbouring lanes are taken', a.g2.strip && a.g2.lane === 2 && a.g2.target === a.foe, `strip ${a.g2.strip} lane ${a.g2.lane} target ${a.g2.target?.type}`);
+  check('strip: stands between two lanes', a.g2.strip && Math.abs(Math.abs(a.g2.x - laneX(2)) - (laneX(1) - laneX(0)) / 2) < 15, `x ${a.g2.x.toFixed(0)}`);
+  check('strip: not in any lane (blocks nobody)', a.g2.strip && !a.w.inLane(a.g2, 2) && !a.w.inLane(a.g2, 2 + a.g2.strip));
+  check('strip: not ahead of the fight it joins', a.g2.y <= a.g1.y + 1, `strip ${a.g2.y.toFixed(0)} front ${a.g1.y.toFixed(0)}`);
+  check('strip: one mech per spot', !a.w.stripFree({ ...a.g1, y: a.g2.y }, a.w.stripOf(a.g2)));
+  // a third gunner behind; the fight ends: the strip mech steps back first, the lane mech behind keeps its distance
+  const g3 = mech(a.w, 'gunner', 0, 2, 1000, 1e9);
+  run(a.w, 2);
+  a.foe.hp = 0; a.w.damage(a.foe, 1e12, null, 0);
+  run(a.w, 10);
+  check('strip: returns to its lane after the fight', !a.g2.strip && !a.g2.shift && a.g2.lane === 2 && Math.abs(a.g2.x - laneX(2)) < 15, `strip ${a.g2.strip} x ${a.g2.x.toFixed(0)}`);
+  check('strip: goes back in ahead of the mech behind it', a.g2.y > g3.y, `strip mech ${a.g2.y.toFixed(0)} behind ${g3.y.toFixed(0)}`);
+  // Tanks don't use strips (they hold the lane)
+  const b = setup('brawler');
+  run(b.w, 8);
+  check('strip: tanks never use it', !b.g2.strip && !b.g2.shift?.strip);
+  // with a free neighbouring lane the normal fan-out comes first
+  const c = setup(); c.n[1].dead = true; c.w.entities = c.w.entities.filter((e) => !e.dead);
+  run(c.w, 8);
+  check('strip: a free neighbouring lane comes first', !c.g2.strip && c.g2.lane === 3, `lane ${c.g2.lane} strip ${c.g2.strip}`);
+}
+
 // ---- kill bounty, enemy income ramp, overtime, forward deploy
 {
   const w0 = mk([], 0); w0.energy = 0;

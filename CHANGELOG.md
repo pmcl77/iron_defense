@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.5.0-dev
 
+### Gameplay: half-lane fan-out
+- In a big fight, a Line, Artillery or Support mech with no shot and both neighbouring lanes taken now steps onto the **strip between two lanes** and fights from there, so more of a crowd fights at once (test scene with 18 Gunners and Seekers: 17 fighting instead of 9). The strip blocks nobody, reach stays the mech's lane ±1, it never goes further than level with the fight beside it, one mech per spot (first come, first served), and it returns to its own lane when the fight is over, ahead of the mechs behind it. Tanks and Chargers don't use it. Same rules for the enemy.
+
 ## [0.4.0]: 2026-11-17
 
 ### Gameplay: forward deploy

@@ -454,7 +454,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Sound and look:** a deep cannon boom (the new cannon sound, heavier, with recoil), a visible recoil step, and a bright, short tracer for the shell, the opposite of the Lancer's long streak.
   - **Name ideas:** Goliath, Juggernaut, Rhino, Mauler, Warhound. **Recommendation: Goliath** (big, slow and heavy, and it doesn't clash with Bastion or Breacher). **Shortlist (user, 2026-11-14): Goliath or Warhound.**
 
-- **[idea/gameplay] Half-lane fan-out ("flank positions")** (user, 2026-11-17; not decided)
+- **[gameplay] Half-lane fan-out ("flank positions")** (user, 2026-11-17). **Decided and built (0.5.0-dev, 2026-11-17)** as below (blocking none, Line/Artillery/Support, return order by position, first come first served); to play-test. Passing on the strip: follow-up, not built.
   - **Problem:** in big fights (e.g. overtime) many mechs queue behind a fighting friendly, because a fan-out is limited to ±1 lane and those lanes fill up. Only the front mechs fight; the rest wait.
   - **Idea:** a mech may also step halfway to the next lane, onto the strip between two lanes, and fight from there. Two more fighting spots per front, so more of a group fights at once and fights end sooner (also helps battle length).
   - **Open questions:**

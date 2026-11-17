@@ -34,14 +34,16 @@ export const rowOf = (team, y) => {
 //   sideLean     while fighting an enemy in the next lane, slide this far toward it (stays in its lane)
 //   passSide     'protect': when passing, pick the side where its field covers the most friendlies
 //   goal         'structure': heads for the first enemy structure in its path, slips past enemy mechs
+//   strip        half-lane fan-out: with no shot behind a fighting friendly and both neighbouring lanes taken, it steps
+//                onto the strip between two lanes and fights from there (gameplay.md §5.2, STRIP)
 export const ROLES = {
   tank: { name: 'Tank', fireOnMove: true, passes: ['line', 'support', 'artillery', 'charger'], behindFight: 'join', alwaysPass: true, sideAttack: 100, sideLean: 35,
     desc: 'Leads from the front, draws fire and fights whatever blocks it.' },
-  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], passLonger: true, behindFight: 'fanout',
+  line: { name: 'Line', fireOnMove: false, passes: ['support', 'artillery'], passLonger: true, behindFight: 'fanout', strip: true,
     desc: 'Stops at range and shoots; takes cover behind a marching tank.' },
-  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true, passSide: 'protect',
+  support: { name: 'Support', fireOnMove: false, passes: ['artillery'], behindFight: 'stay', follow: 40, noPassFighting: true, passSide: 'protect', strip: true,
     desc: 'Follows the fight and stays just behind its front.' },
-  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'fanout',
+  artillery: { name: 'Artillery', fireOnMove: false, passes: [], behindFight: 'fanout', strip: true,
     desc: 'Stays at the back and shoots from as far as possible.' },
   charger: { name: 'Charger', fireOnMove: true, passes: 'all', behindFight: 'around', goal: 'structure',
     desc: 'Charges the first enemy structure in its path, slipping past mechs and shooting on the move.' },
@@ -55,6 +57,11 @@ export const STOP_AT = 0.95; // ranged units stop at this share of their range
 // longer strides rather than only faster steps. pace 0 = off.
 export const MARCH = { pace: 60, clear: 420, ramp: 30, brake: 120 };
 export const LANE_CHANGE = { side: 1.0, fwd: 0.6 };
+// half-lane fan-out (gameplay.md §5.2): a fighting spot on the strip between two lanes. It blocks nobody and is in no
+// lane (reach stays its lane ± 1). It walks up at most level with the fighting friendly it joins (within `front`
+// ahead), one mech per spot (`gap` between mechs on the same strip, any team), and returns to its lane when it has
+// no shot and can't get closer, or the fight is over, as soon as there's room.
+export const STRIP = { front: 250, gap: 10, again: 4 }; // again: seconds before it may step onto a strip again after returning
 // walking around own turrets (cosmetic): pad half-widths, start this far ahead of the pad, how far a mech's
 // body counts (× radius), drift speed (× speed, at least minRate) and the drift cap when both sides are built up
 export const DETOUR = { pad: { default: 31, howitzer: 36 }, ahead: 60, body: 1.4, rate: 1.3, minRate: 40, gap: 60 };
