@@ -133,6 +133,9 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **H. Smarter play** (independent of the rules): bank energy for a real push instead of a steady trickle; answer the player's composition, e.g. Mortar or Aegis against Seeker hordes (the planned "counter AI").
   - **Proposal:** step 1 = A + B as dev experiments (both small, easy to remove), tested with the balance bot and then on Ash Ridge and Last Bastion. Step 2 = H (counter Seeker hordes, banking), which helps whatever the rules. C, D, E, F, G later, one at a time, if we go all the way to "same rules".
   - **Open questions:** is the goal fairness and readability only, or a PvP mode later (then D is needed)? Which difficulty knobs are fine once the ramp goes (unit level, base HP, starting energy, a plain income handicap)? Specials for the AI: yes or no? Should Intel show the enemy loadout if it gets one?
+  - **Decided (user, 2026-11-17):** "same rules" is too big for single player right now; the user thinks about the options. Liked: **an enemy loadout (C) shown as Intel**, fully or partly. New idea: a **quick match mode** where the enemy picks a random loadout (fully random or rule-based).
+  - **Order (user, 2026-11-17):** 1. half-lane fan-out, 2. new unit types (variety, makes loadouts more meaningful for player and enemy, works without changing the field), 3. the fundamental field change later.
+  - **PvP vs AI:** PvP doesn't depend on the AI (no AI in PvP), but it does depend on rule symmetry: today world.js has player-only rules (team 0: income, Constructor, upgrades, specials, queue, forward deploy). PvP needs those for both sides, plus online sync. That symmetry work is the same as D–G here, so the two topics share the engine work, not the AI work.
 
 ### Under discussion
 - **[ui] Enemy intel** (user, 2026-11-16: "I have no idea what level his units are"; pre-game info? before or after the loadout? or a surprise?)
