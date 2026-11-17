@@ -112,6 +112,27 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 
 ### Enemy AI
 - **[feature] Enemy AI later:** D, stage personalities (e.g. "swarm": many light units; "siege": Lancer, Mortar, Breacher; "armored": Brawler, Aegis) for variety between stages; and the agreed "counter AI" (real counter-picking against your army). *(A + B + C built in step 5, see CHANGELOG.)*
+- **[balance] Enemy AI: toward the player's rules** (user, 2026-11-17: next after the experiments, maybe before the half-lane fan-out; bounty 40% only together with this). Options, not decided:
+  - **Today, player vs AI:**
+
+    | | Player | AI |
+    |---|---|---|
+    | Income | 8 + Power Grid + 2 per Reactor level, kill bounty 25% | stage regen (5–12.4) doubling over 7 min, +15% per Reactor, up to +10% under pressure; no bounty |
+    | Mechs | loadout of 5, card cooldowns, queue, forward deploy | whole roster, no cooldowns, groups and split attacks, base only |
+    | Turrets | built and rebuilt with the Constructor | fixed per stage, free, never rebuilt |
+    | Base upgrades | bought in battle | fixed per stage |
+    | Specials | Bombing, EMP, Surge | none |
+    | Levels | Workshop | one level per stage |
+  - **A. Enemy kill bounty.** The AI gets the same bounty (25%, later maybe 40% for both). Small change. Makes won trades pay on both sides: a pacing tool, not a player buff. Risk: the defender wins trades near its turrets and gets the refund; it could swing back and forth (fun) or snowball. Check with the balance bot first.
+  - **B. Enemy forward deploy.** The AI deploys from its forward-most turret in the lane, like the player. Small change, as its turrets are already placed. Shortens its walk and makes its turrets matter more.
+  - **C. Enemy loadout and card cooldowns.** The AI picks 5 mechs from its roster per battle and obeys the same cooldowns. Fairer, and the Intel screen could show its loadout. Makes it weaker: needs compensation elsewhere.
+  - **D. Player income formula for the enemy.** Replace stage regen and ramp with 8 + Reactor steps + bounty. Difficulty then comes from the enemy's "account": unit levels, base HP, starting energy, base upgrades. The biggest step toward "same rules". Every stage needs retuning (balance bot).
+  - **E. Enemy buys base upgrades in battle** (Reactor timing as a decision) instead of fixed ones; replaces the income ramp in a readable way.
+  - **F. Enemy builds and rebuilds turrets** with its own Constructor. Larger: placement logic and a second Constructor.
+  - **G. Enemy specials** (Bombing, EMP, Surge on cooldowns). Strong, can feel unfair; needs warnings (e.g. a jet sound or marker before the bomb hits).
+  - **H. Smarter play** (independent of the rules): bank energy for a real push instead of a steady trickle; answer the player's composition, e.g. Mortar or Aegis against Seeker hordes (the planned "counter AI").
+  - **Proposal:** step 1 = A + B as dev experiments (both small, easy to remove), tested with the balance bot and then on Ash Ridge and Last Bastion. Step 2 = H (counter Seeker hordes, banking), which helps whatever the rules. C, D, E, F, G later, one at a time, if we go all the way to "same rules".
+  - **Open questions:** is the goal fairness and readability only, or a PvP mode later (then D is needed)? Which difficulty knobs are fine once the ramp goes (unit level, base HP, starting energy, a plain income handicap)? Specials for the AI: yes or no? Should Intel show the enemy loadout if it gets one?
 
 ### Under discussion
 - **[ui] Enemy intel** (user, 2026-11-16: "I have no idea what level his units are"; pre-game info? before or after the loadout? or a surprise?)
@@ -243,6 +264,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - **Play-test, overtime ×1.5 from 9:00 + Kill bounty 40%, Last Bastion (row 28, 2026-11-17; rows 26–27 were losses to ignore, a distraction):** win in **12:39**, 3★, own base 100%, one turret lost. Minutes 0–7 normal BW+SE pairs in L2–L4, ~10 deploys per minute. From minute 8 the SE-GU rotation over all five lanes, rising to ~22 deploys per minute in overtime. Mechs lost minutes 9–11: enemy 69, player 48; player mechs on the field 8 → 27, enemy's down to 1. Enemy base untouched until 11:00, then fell in about 70 s. Compare row 24 (same stage, ×1.5 from 10:00, normal bounty): 22:10, 12 minutes after overtime started, also ending with an SE-GU rotation. Here it took 3:39 after overtime. Caveat: one round each, and the rotation was used earlier here (learned in row 25), so bounty and strategy can't be separated.
       - Note: spreading the wave over all lanes also avoids the queuing behind a fighting friendly (one mech per lane at a time). A new strategy the user hadn't used before (a "cycle" across lanes), enabled by more income.
     - **Direction (user, 2026-11-17):** forward deploy and overtime add excitement and fun, but the game needs fundamental changes, "dare I say a bit more like Clash Royale" (not a copy): a **shorter field** (4a; also more of the battle on screen) and **more role/type variety** so more than 1–3 strategies work (idea H). A bigger change, to plan separately.
+    - **Decided (user, 2026-11-17):** kill bounty stays 25%; 40% only reconsidered together with "same rules for the enemy" (see Enemy AI). Enemy ramp experiments: skipped.
     - **For later: same rules for the enemy as for a player ("PvP rules")** (user, 2026-11-16: wouldn't that be auto-balancing, except AI strategy tuning?)
       - Side vs side becomes fair by construction: same income, bounty, costs, turrets built with a Constructor, paid upgrades. What stays: units must be balanced against each other, and difficulty must come from somewhere.
       - Difficulty then comes from (a) the enemy's "account": unit levels, loadout, base upgrades, like facing another player's progress, and (b) AI skill. Today the AI is simple and its income ramp and free turrets make up for it; with equal rules the AI must play well: build and rebuild turrets, upgrade, use specials, time pushes.
