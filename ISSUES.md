@@ -231,6 +231,7 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
       - Recommendation between (a) and (b): **(b) ×1.5 for both**. Fair (keeps today's balance), and less hectic than now (player about 17 → 25/s instead of 32), while the enemy gains more in absolute terms (about +15/s). Proposed entries: "Overtime ×1.5 from 10 min" and "Overtime: bases ×2 damage from 10 min" (c), replacing "Overtime from 15 min". Base HP in general: a step-6 question.
     - **Built (2026-11-17):** "Overtime ×1.5 from 10 min" (b) and "Overtime: bases ×2 damage from 10 min" (c); "Overtime from 15 min" removed. User plays stage 12 with "Overtime from 8 min" first, then compares (b)/(c) on Ash Ridge and stage 12.
     - **Play-test, Overtime from 8 min, Last Bastion (row 21, 2026-11-17):** win in **13:29**, 2★ (own base 80%: hit once in minute 1–2). Same loadout, forward turrets on rows 6–7 (2 Sentries lost, both to Lancers). Front at 54–77% from minute 3 to 11; overtime from minute 8 (deploys about 11 → 18 per minute for the player, 13 → 20–27 for the enemy); break at minute 12 (86% → 99%); the enemy base went from 96% to 0 in about 30 s. Same pattern as row 19: the stalemate breaks about 3–4 minutes after overtime starts. 3 of 3 overtime battles won.
+    - **User on row 21 (2026-11-17):** the early base hit came from deploying the first mech a bit late. Turrets helped against the bigger numbers, but around the start of overtime the enemy pushed with many Brawlers and the user "almost drowned": felt harder. The base falls fast once reached because the player's main mechs (Seeker, Gunner) prefer mechs and only shoot the base when no enemy mech is left.
     - **For later: same rules for the enemy as for a player ("PvP rules")** (user, 2026-11-16: wouldn't that be auto-balancing, except AI strategy tuning?)
       - Side vs side becomes fair by construction: same income, bounty, costs, turrets built with a Constructor, paid upgrades. What stays: units must be balanced against each other, and difficulty must come from somewhere.
       - Difficulty then comes from (a) the enemy's "account": unit levels, loadout, base upgrades, like facing another player's progress, and (b) AI skill. Today the AI is simple and its income ramp and free turrets make up for it; with equal rules the AI must play well: build and rebuild turrets, upgrade, use specials, time pushes.
@@ -416,6 +417,17 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Roster size:** 10 mechs with a loadout of 5 is still manageable, and more choice makes the loadout matter. I'd stop there, though: every further mech should fill a clear gap.
   - **Sound and look:** a deep cannon boom (the new cannon sound, heavier, with recoil), a visible recoil step, and a bright, short tracer for the shell, the opposite of the Lancer's long streak.
   - **Name ideas:** Goliath, Juggernaut, Rhino, Mauler, Warhound. **Recommendation: Goliath** (big, slow and heavy, and it doesn't clash with Bastion or Breacher). **Shortlist (user, 2026-11-14): Goliath or Warhound.**
+
+- **[idea/gameplay] Half-lane fan-out ("flank positions")** (user, 2026-11-17; not decided)
+  - **Problem:** in big fights (e.g. overtime) many mechs queue behind a fighting friendly, because a fan-out is limited to ±1 lane and those lanes fill up. Only the front mechs fight; the rest wait.
+  - **Idea:** a mech may also step halfway to the next lane, onto the strip between two lanes, and fight from there. Two more fighting spots per front, so more of a group fights at once and fights end sooner (also helps battle length).
+  - **Open questions:**
+    - After the fight: return to its home lane, or finish the move into the neighbor lane?
+    - Reach from a half-lane spot: does it count as both lanes (e.g. between L2 and L3 → reaches L1–L4), or only its home lane ±1?
+    - Blocking: does a mech on the strip block enemies in either lane, both, or neither?
+    - Who may use it: all roles, or only Line/Artillery (shooters), not Tanks (which should hold the lane)?
+    - Same for the enemy (yes, if it's a movement rule).
+  - **First thought:** simplest version: the strip is a fighting spot only (no blocking, reach of its home lane ±1), used only when ±1 lanes are full, and the mech returns home when the fight ends. Size: medium (movement, spacing, tests).
 
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
