@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { EXPERIMENTS, OVERTIME_BONUS, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { EXPERIMENTS, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -682,7 +682,8 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('experiment: enemy ramp ×1.5', Math.abs(income('ramp15') - 1.5 * r) < 1e-6, income('ramp15'));
   check('experiment: no enemy ramp', Math.abs(income('noramp') - r) < 1e-6, income('noramp'));
 
-  // overtime: +OVERTIME_BONUS for both from the set minute, logged once
+  // overtime: +15/s for both from 8 min (ot8), logged once
+  const OVERTIME_BONUS = EXPERIMENTS.ot8.otBonus;
   const w = mk([], 0, 'ot8'); w.energy = 0; w.maxEnergy = 1e6;
   w.time = 479; w.update(0.5);
   check('no overtime before 8 min', !w.overtime && w.energy < 1);
@@ -729,6 +730,29 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     // first tap on another lane only selects it
     const o = mk([]); o.placeTurret(0, 'sentry', 1, 4);
     check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && o.laneFwd(1));
+  }
+  // overtime ×1.5 from 10 min: the current income (after upgrades) for both
+  {
+    const p = mk([], 0, 'otx15'); p.energy = 0; p.maxEnergy = 1e6; p.regen = 14;
+    p.time = 599; p.update(0.5);
+    check('×1.5 overtime not before 10 min', !p.overtime);
+    p.time = 600; p.update(0.01); const e1 = p.energy; p.update(1);
+    check('×1.5 overtime: player income ×1.5', p.overtime && Math.abs(p.energy - e1 - 21) < 1e-6, p.energy - e1);
+    const q = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp: 'otx15' });
+    q.time = 650; q.overtime = true; q.ai.energy = -1e9; q.updateAI(1);
+    check('×1.5 overtime: enemy income ×1.5', Math.abs(q.ai.energy + 1e9 - 3 * r) < 1e-6, q.ai.energy + 1e9);
+  }
+  // overtime bases ×2 damage
+  {
+    const b = mk([], 0, 'otbase'), base = b.bases[1];
+    const h0 = base.hp; b.damage(base, 100, null, 0);
+    check('bases ×2: normal damage before overtime', Math.abs(h0 - base.hp - 100) < 1e-6);
+    b.overtime = true; const h1 = base.hp; b.damage(base, 100, null, 0);
+    check('bases ×2: double damage in overtime', Math.abs(h1 - base.hp - 200) < 1e-6);
+    const m = mech(b, 'brawler', 1, 2, 1500), mh = m.hp; b.damage(m, 10, null, 0);
+    check('bases ×2: mechs take normal damage', Math.abs(mh - m.hp - 10) < 1e-6);
+    const own = b.bases[0], o0 = own.hp; b.damage(own, 100, null, 1);
+    check('bases ×2: the player base too', Math.abs(o0 - own.hp - 200) < 1e-6);
   }
   check('every experiment has a name', Object.values(EXPERIMENTS).every((x) => x.name));
 }

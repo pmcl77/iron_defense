@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, EXPERIMENTS, OVERTIME_BONUS, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, EXPERIMENTS, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -341,6 +341,9 @@ export class World {
     return true;
   }
 
+  // overtime (dev experiment): the current income (after upgrades, ramp, pressure) ×otMult, +otBonus
+  otIncome(r) { return this.overtime ? r * (this.exp.otMult || 1) + (this.exp.otBonus || 0) : r; }
+
   // ---------- simulation ----------
   update(dt) {
     this.time += dt;
@@ -350,7 +353,7 @@ export class World {
         this.ev('overtime');
         this.fx.push({ t: 'overtime' });
       }
-      this.energy = Math.min(this.maxEnergy, this.energy + (this.regen + (this.overtime ? OVERTIME_BONUS : 0)) * dt);
+      this.energy = Math.min(this.maxEnergy, this.energy + this.otIncome(this.regen) * dt);
       for (const k in this.deployCd) this.deployCd[k] -= dt;
       for (const k in this.specialCd) this.specialCd[k] = Math.max(0, this.specialCd[k] - dt);
       this.updateQueue(dt);
@@ -878,6 +881,7 @@ export class World {
       const d = f.kind === 'base' ? Math.abs(s.y - f.y) : Math.hypot(s.x - f.x, s.y - f.y);
       if (d <= s.def.aura) { amount *= 1 - s.def.auraDR; if (f.kind !== 'base') this.fx.push({ t: 'shield', src: s, dst: f }); break; }
     }
+    if (f.kind === 'base' && this.overtime && this.exp.otBaseDmg) amount *= this.exp.otBaseDmg;
     f.hp -= amount;
     f.hurt = 0.12;
     if (f.hp > 0) {
@@ -981,7 +985,7 @@ export class World {
       if (e.team === 0 && e.kind === 'mech' && !e.dead && e.y > face - 900) { pressure += e.def.cost; laneP[Math.max(0, e.lane)] += e.def.cost; }
     }
     if (pressure > 0) regen *= 1 + Math.min(AI.pressureBonus, pressure / 1500);
-    if (this.overtime) regen += OVERTIME_BONUS;
+    regen = this.otIncome(regen);
     ai.energy += regen * dt;
 
     if (!ai.next) ai.next = this.aiOrder(pressure);

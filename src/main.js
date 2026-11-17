@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, EXPERIMENTS, OVERTIME_BONUS, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, EXPERIMENTS, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -619,9 +619,10 @@ function updateHud() {
   $('#energy-fill').style.width = `calc(${(100 * w.energy / w.maxEnergy).toFixed(1)}% - 2px)`;
   setText($('#energy-text'), 'en', `${Math.floor(w.energy)}/${w.maxEnergy}`);
   { const t = Math.floor(w.result ? w.endTime : w.time); setText($('#clock'), 'clk', `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`); }
-  setText($('#regen'), 'rg', w.overtime ? `+${w.regen}+${OVERTIME_BONUS}/s` : `+${w.regen}/s`);
+  const ot = w.overtime ? w.exp : {};
+  setText($('#regen'), 'rg', `+${w.regen}${ot.otMult ? `×${ot.otMult}` : ''}${ot.otBonus ? `+${ot.otBonus}` : ''}/s`);
   $('#clock').classList.toggle('ot', !!w.overtime);
-  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', `+${OVERTIME_BONUS} energy/s for both sides`); }
+  if (w.overtime && !game.ui.otShown) { game.ui.otShown = true; banner('OVERTIME', ot.otBonus ? `+${ot.otBonus} energy/s for both sides` : ot.otMult ? `Income ×${ot.otMult} for both sides` : `Bases take ×${ot.otBaseDmg} damage`); }
   laneEls.forEach((b, i) => {
     b.classList.toggle('on', i === w.activeLane);
     b.classList.toggle('fwd', w.laneFwd(i));
