@@ -223,6 +223,10 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
       - Row 18 was largely decided before overtime (front at 83% by minute 6, base first hit at minute 7); overtime sped up the end (base 89% → 0 in about 2 minutes).
       - Row 19 is the clearer case: front stuck at 54–67% until minute 11, then broke within 3 minutes of overtime (71 → 86 → 93%), base 100 → 0 in about 1½ minutes.
       - Two battles; the effect looks large. Open: how it feels (a satisfying final phase or chaos), and Overtime from 15 for comparison.
+    - **User on overtime (2026-11-17):** row 18 held back on purpose to reach overtime. "It did feel a bit hectic": busy keeping the queue filled, lane/unit choice less deliberate, less time to watch the field; maybe +15/s is too much. Feels like the player would almost always win overtime; to test on a harder stage.
+      - Why it favours the player: +15/s is +88% for the player (about 17 → 32/s) but +50% for the enemy (about 30 → 45/s).
+      - Why hectic: more income = more taps; the player's attention is the limit, the AI has none.
+      - Proposed variants to compare (to decide): (a) **smaller bonus**, e.g. +8/s; (b) **same ratio for both**, e.g. ×1.5 income each (keeps today's balance, still more units); (c) **no extra income, bases take double damage** in overtime: ends battles without more tapping. (c) addresses the hectic feel directly.
     - **For later: same rules for the enemy as for a player ("PvP rules")** (user, 2026-11-16: wouldn't that be auto-balancing, except AI strategy tuning?)
       - Side vs side becomes fair by construction: same income, bounty, costs, turrets built with a Constructor, paid upgrades. What stays: units must be balanced against each other, and difficulty must come from somewhere.
       - Difficulty then comes from (a) the enemy's "account": unit levels, loadout, base upgrades, like facing another player's progress, and (b) AI skill. Today the AI is simple and its income ramp and free turrets make up for it; with equal rules the AI must play well: build and rebuild turrets, upgrade, use specials, time pushes.
