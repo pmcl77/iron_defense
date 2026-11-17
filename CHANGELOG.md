@@ -7,7 +7,7 @@ All notable changes to Iron Defense. The newest version is at the top.
 
 Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev` suffix.
 
-## [Unreleased]: 0.4.0-dev
+## [0.4.0]: 2026-11-17
 
 ### Gameplay: forward deploy
 - **Forward deploy** (tested as a dev experiment, kept by the user: "more engaging and easier to react"): your turrets double as deploy points for their own lane. Forward is the default: a lane switches to forward on its own when its first turret is finished (button shows **FWD**; a further turret keeps the lane's setting). Tap the selected lane button again to switch between forward and base; each lane remembers its choice, and Shift+1–5 works the same. New mechs appear just behind the lane's frontmost turret; if it falls, the next one back. When a lane's last turret is destroyed or sold, the lane switches back to the base (FWD disappears). Queued orders keep their own choice (▲ in the queue). Tapping the field near the base selects that lane at the base. Player only.
@@ -15,10 +15,8 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ### Gameplay: overtime
 - **Overtime from minute 9:** both sides' income ×1.5 (your regeneration after perks and Reactor upgrades, the enemy's after its ramp and pressure bonus); kill bounty and Energy Surge unchanged. A pulsing OVERTIME banner announces it, and the battle clock and the income display turn yellow (the display shows the new rate, e.g. "+26/s"). Tested as dev experiments (+15/s from 8 min: decisive but hectic and in the player's favour; ×1.5 from 10 min: calmer and fair); kept by the user at 9 minutes. It makes the end of a stalemate bigger, not always shorter (Last Bastion: 8 more minutes); see ISSUES.md.
 
-### Dev experiments (dev build only)
-- **Experiment list** in Settings (dev only, one at a time, default Off = the normal game): tests for battle length (ISSUES.md "Battles are too long"). The DEV tag shows the active one ("DEV: Kill bounty 40%"), and each battle's stats record it (`exp`).
-  - **Kill bounty 40% / 60%:** energy back per enemy mech killed (normal 25%; the enemy gets no bounty).
-  - **Enemy ramp ×1.5 / none:** the enemy's income normally doubles over the first 7 minutes.
+### Dev experiments (removed before release)
+- A dev-only experiment list in Settings tested battle length (kill bounty 40% / 60%, enemy income ramp ×1.5 / none, and the forward deploy and overtime variants above). Decided and removed for 0.4.0: kill bounty stays 25%, the enemy ramp stays as it was; forward deploy and overtime ×1.5 from 9:00 are kept as normal rules.
 - Branch previews (`<branch>.iron-defense.pages.dev`) now count as dev builds.
 
 ### Gameplay

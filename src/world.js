@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, EXPERIMENTS, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -49,8 +49,6 @@ export class World {
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
-    this.expKey = EXPERIMENTS[opts.exp] ? opts.exp : 'off';
-    this.exp = EXPERIMENTS[this.expKey];
     this.overtime = false;
     this.activeLane = 2;
     this.fwd = Array(LANES).fill(false); // per lane: deploy forward at the frontmost own turret
@@ -907,7 +905,7 @@ export class World {
     }
     if (team === 0 && f.team === 1) {
       this.stats.kills++;
-      this.energy = Math.min(this.maxEnergy, this.energy + (f.def.cost || 0) * (this.exp.bounty ?? ENERGY.bounty));
+      this.energy = Math.min(this.maxEnergy, this.energy + (f.def.cost || 0) * ENERGY.bounty);
     }
     this.fx.push({ t: 'die', x: f.x, y: f.y, kind: f.kind, type: f.type, team: f.team, r: f.radius });
   }
@@ -977,7 +975,7 @@ export class World {
   // ---------- enemy AI ----------
   updateAI(dt) {
     const ai = this.ai, st = this.stage, face = BASE_FACE[1];
-    let regen = st.regen * (1 + (this.exp.ramp ?? 1) * Math.min(1, this.time / 420)) * (1 + 0.15 * this.enemyBase.reactor);
+    let regen = st.regen * (1 + Math.min(1, this.time / 420)) * (1 + 0.15 * this.enemyBase.reactor);
     let pressure = 0;
     const laneP = Array(LANES).fill(0);
     for (const e of this.entities) {

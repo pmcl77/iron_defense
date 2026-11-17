@@ -187,17 +187,6 @@ export const QUEUE = { max: 6, wait: 1.5 };
 export const OVERTIME = { at: 540, mult: 1.5 };
 export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart: 50, perkCap: 40, perkRegen: 1 };
 
-// Dev experiments (ISSUES.md "Battles are too long"): one at a time, chosen in Settings on the dev build only;
-// 'off' is the normal game. Each battle's stats record the key. Remove an entry (and its rule in world.js) when decided.
-//   bounty:   player kill bounty share (normal ENERGY.bounty)
-//   ramp:     how much the enemy income grows over the first 7 minutes (normal 1 = doubles)
-export const EXPERIMENTS = {
-  off: { name: 'Off' },
-  bounty40: { name: 'Kill bounty 40%', bounty: 0.4 },
-  bounty60: { name: 'Kill bounty 60%', bounty: 0.6 },
-  ramp15: { name: 'Enemy ramp ×1.5', ramp: 0.5 },
-  noramp: { name: 'No enemy ramp', ramp: 0 },
-};
 export const MAX_UNIT_LEVEL = 5;
 export const BASE_MAX_ENERGY = 300;
 export const upgradeCost = (def, lvl) => Math.min(BASE_MAX_ENERGY, Math.round(def.cost * 0.9 * (lvl + 1)));

@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { EXPERIMENTS, OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -10,9 +10,9 @@ function check(name, cond, info = '') {
 }
 // A quiet test world: no enemy income, no player regen, plenty of energy.
 // march: the march pace (MARCH.pace by default); 0 = off, for tests of the rules at combat pace
-function mk(turrets = [], march, exp) {
+function mk(turrets = [], march) {
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets, base: {} };
-  const w = new World(st, defaultSave(), ALL, { seed: 7, march, exp });
+  const w = new World(st, defaultSave(), ALL, { seed: 7, march });
   w.ai.energy = -1e9; w.regen = 0; w.energy = 5000; w.maxEnergy = 5000;
   return w;
 }
@@ -657,30 +657,18 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   console.log(`  (10-minute test battle: ${E.length} events, ${(size / 1024).toFixed(1)} KB)`);
 }
 
-// ---- dev experiments (EXPERIMENTS in data.js)
+// ---- kill bounty, enemy income ramp, overtime, forward deploy
 {
-  const bountyGain = (exp) => {
-    const w = mk([], 0, exp); w.energy = 0;
-    const e = mech(w, 'brawler', 1, 2, 1500);
-    w.damage(e, 1e6, null, 0);
-    return w.energy;
-  };
-  check('normal kill bounty', Math.abs(bountyGain() - MECHS.brawler.cost * ENERGY.bounty) < 1e-6);
-  check('experiment: kill bounty 40%', Math.abs(bountyGain('bounty40') - MECHS.brawler.cost * 0.4) < 1e-6);
-  check('experiment: kill bounty 60%', Math.abs(bountyGain('bounty60') - MECHS.brawler.cost * 0.6) < 1e-6);
-  check('unknown experiment = off', new World(stageDef(0), defaultSave(), ALL, { exp: 'nope' }).expKey === 'off');
-
-  // enemy income after 7 minutes: doubles normally, ×1.5 or flat with the ramp experiments
-  const income = (exp) => {
-    const w = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1, exp });
-    w.time = 600; w.ai.energy = -1e9; // never affords anything: only the income counts
-    w.updateAI(1);
+  const w0 = mk([], 0); w0.energy = 0;
+  w0.damage(mech(w0, 'brawler', 1, 2, 1500), 1e6, null, 0);
+  check('kill bounty', Math.abs(w0.energy - MECHS.brawler.cost * ENERGY.bounty) < 1e-6);
+  const income = () => {
+    const w = new World({ ...stageDef(0), turrets: [], base: {} }, defaultSave(), ALL, { seed: 1 });
+    w.time = 600; w.ai.energy = -1e9; w.updateAI(1);
     return w.ai.energy + 1e9;
   };
   const r = stageDef(0).regen;
   check('enemy income doubles by 7 min', Math.abs(income() - 2 * r) < 1e-6, income());
-  check('experiment: enemy ramp ×1.5', Math.abs(income('ramp15') - 1.5 * r) < 1e-6, income('ramp15'));
-  check('experiment: no enemy ramp', Math.abs(income('noramp') - r) < 1e-6, income('noramp'));
 
   // overtime (normal rule): from minute 9 both sides' current income ×1.5, logged once
   {
@@ -734,7 +722,6 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     const o = mk([]); o.placeTurret(0, 'sentry', 1, 4);
     check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && o.laneFwd(1));
   }
-  check('every experiment has a name', Object.values(EXPERIMENTS).every((x) => x.name));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
