@@ -9,10 +9,20 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.5.0-dev
 
-Dev builds since 0.4.0: dev.1 half-lane fan-out, dev.2 damage stats, dev.3 Flanker trait (Gunner only) and dev build numbers.
+Dev builds since 0.4.0: dev.1 half-lane fan-out, dev.2 damage stats, dev.3 Flanker trait (Gunner only) and dev build numbers, dev.4 columns fan out (A) and dev switches.
 
 ### Stats
 - Battle stats now include **damage per unit type**, not only kills (final blows): damage dealt per side and attacker type, split into mechs, turrets, base and Constructor (`dmg`, Bombing as `bomb`); damage taken per type (`taken`); and the HP the **Aegis field saved** per side (`shield`). Also strip use per side (`strip`: times a mech stepped onto a strip, damage dealt from strips). Only HP actually removed counts (no overkill). About 0.7 KB per battle.
+
+### Gameplay: columns behind a fight (dev.4)
+- A mech with no shot now also fans out (or takes a strip, or passes, by its role) behind a friendly that has **stopped** for half a second, not only behind one that is fighting. Before, only the first mech of a column behind a fight fanned out and the rest waited in line (screenshots: long Gunner columns from the forward deploy point). A marching column still stays together.
+
+### Dev switches (dev build only, dev.4)
+- Settings → Dev switches, and in the pause menu during a battle for the live ones:
+  - **Diagonal lane changes** (on): a mech keeps walking forward while it changes lanes, so it moves diagonally instead of sideways; live.
+  - **Return delay** (off): a passing mech whose passed friendly dies stays 2 s in the passing lane before returning; live.
+  - **Gunners: strip before lane** (off): a Flanker prefers a free strip spot over a free neighbour lane; from the next battle.
+- Stats record the switch values (`dev`) and live changes (event `dev`).
 
 ### Gameplay: half-lane fan-out
 - In a big fight, a **Gunner** with no shot and both neighbouring lanes taken now steps onto the **strip between two lanes** and fights from there, so more of a crowd fights at once (test scene with 18 Gunners: 9 fighting instead of 5). This is the Gunner's new trait, **Flanker**; no other mech uses strips (first built for every ranged mech, narrowed after a play-test because it made Seeker hordes too strong). The strip blocks nobody, reach stays the mech's lane ±1, it never goes further than level with the fight beside it, one mech per spot (first come, first served), and it returns to its own lane when the fight is over, ahead of the mechs behind it. Same rules for the enemy.

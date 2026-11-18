@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -140,7 +140,7 @@ function launch(i) {
   const u = unlocked();
   game.stageIndex = i;
   game.mode = 'play';
-  game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials });
+  game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { dev: devSettings() });
   game.world.battleId = randomHex(8);
   game.paused = false;
   game.resultShown = false;
@@ -179,7 +179,7 @@ function summary(result, stars = 0) {
     id: w.battleId, device: deviceId(), ...(save.settings.name ? { name: save.settings.name } : {}),
     // fmt 3: stage, lanes, rows and groups count from 1; in events side 1 = player, 0 = enemy; per-side data is named.
     // (fmt 2: player/enemy as [player, enemy] lists and event side 0 = player; fmt 1, the first dev battles: also 0-based.)
-    fmt: 3, v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
+    fmt: 3, ...(IS_DEV ? { dev: w.log.dev } : {}), v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
@@ -442,6 +442,17 @@ function cycleAegis() {
   save.settings.aegis = AEGIS_LINK_MODES[(i + 1) % AEGIS_LINK_MODES.length];
   setAegisLinks(save.settings.aegis); writeSave(save);
 }
+// dev switches (DEV_SWITCHES in data.js): dev builds only; release builds always use the defaults
+const devSettings = () => (IS_DEV ? Object.fromEntries(Object.entries(DEV_SWITCHES).map(([k, d]) => [k, save.settings.dev?.[k] ?? d.def])) : {});
+const devRows = (live) => Object.entries(DEV_SWITCHES).filter(([, d]) => !live || d.live).map(([k, d]) => {
+  const on = live ? game.world.dev[k] : devSettings()[k];
+  return `<div class="toggle"><span>${d.name}${d.live ? '' : ' <small class="sub">(next battle)</small>'}<br><small class="sub">${d.desc}</small></span><button class="btn small" data-a="dev" data-k="${k}">${on ? 'On' : 'Off'}</button></div>`;
+}).join('');
+function toggleDev(el, live) {
+  const k = el.dataset.k, on = !(live ? game.world.dev[k] : devSettings()[k]);
+  save.settings.dev = { ...(save.settings.dev || {}), [k]: on }; writeSave(save);
+  if (live) game.world.setDev(k, on);
+}
 function showSettings() {
   screen.className = '';
   screen.innerHTML = `
@@ -454,6 +465,7 @@ function showSettings() {
       <div class="toggle"><span>Player name <small class="sub">(stats, optional) · device #${deviceId().slice(0, 4)}</small></span><input id="pname" class="name-input" maxlength="20" placeholder="none" autocomplete="off" spellcheck="false"></div>
       <div class="toggle"><span>Fullscreen</span><button class="btn small" data-a="fs">Toggle</button></div>
       <div class="toggle"><span>Reset all progress</span><button class="btn small danger" data-a="reset">Reset</button></div>
+      ${IS_DEV ? `<h3 style="margin-top:14px">Dev switches</h3>${devRows(false)}` : ''}
       <p class="sub" style="margin-top:12px">Iron Defense v${VERSION}</p>
     </div>`;
   bind({
@@ -461,6 +473,7 @@ function showSettings() {
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showSettings(); },
     fs: () => { if (document.fullscreenElement) document.exitFullscreen(); else tryFullscreen(true); },
     aegis: () => { cycleAegis(); showSettings(); },
+    dev: (el) => { toggleDev(el, false); showSettings(); },
     stats: () => { save.settings.stats = !save.settings.stats; writeSave(save); showSettings(); },
     gfx: async () => { save.settings.graphics = save.settings.graphics === 'simple' ? 'voxel' : 'simple'; writeSave(save); showSettings(); await applyGraphics(); },
     reset: (el) => { if (el.dataset.confirm) { const name = save.settings.name; save = resetSave(); save.settings.name = name; writeSave(save); setSound(true); showSettings(); } else { el.dataset.confirm = '1'; el.textContent = 'Tap again to confirm'; } },
@@ -481,11 +494,12 @@ function showPause() {
         <button class="btn" data-a="sound">Sound: ${save.settings.sound ? 'On' : 'Off'}</button>
         <button class="btn" data-a="aegis">Aegis links: ${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button>
         <button class="btn" data-a="quit">Quit to stages</button>
-      </div></div>`;
+      </div>${IS_DEV ? `<div style="margin-top:12px">${devRows(true)}</div>` : ''}</div>`;
   bind({
     resume, restart: () => { sendStats('quit'); startStage(game.stageIndex); },
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showPause(); },
     aegis: () => { cycleAegis(); showPause(); },
+    dev: (el) => { toggleDev(el, true); showPause(); },
     quit: () => quitToMenu('stages'),
   });
 }

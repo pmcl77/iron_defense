@@ -57,7 +57,17 @@ export const STOP_AT = 0.95; // ranged units stop at this share of their range
 // fight sooner. It eases into it (`ramp` per s) and drops back quickly (`brake` per s) on contact. Legs take
 // longer strides rather than only faster steps. pace 0 = off.
 export const MARCH = { pace: 60, clear: 420, ramp: 30, brake: 120 };
-export const LANE_CHANGE = { side: 1.0, fwd: 0.6 };
+// drift: while changing lanes a mech that would stand still (target in range) keeps walking forward at this share of its
+// speed, unless something is right in front of it, so lane changes look diagonal (dev switch 'drift').
+// returnDelay: seconds a passing mech stays in the passing lane when the friendly it was passing dies (dev switch).
+export const LANE_CHANGE = { side: 1.0, fwd: 0.6, drift: 0.4, returnDelay: 2 };
+// Dev switches (dev builds only, Settings; live ones also in the pause menu during a battle). def = value on release
+// builds and when never set. Each battle's stats record the values at the start (dev) and every live change as an event.
+export const DEV_SWITCHES = {
+  drift: { name: 'Diagonal lane changes', desc: 'keep walking forward while changing lanes', def: true, live: true },
+  returnDelay: { name: 'Return delay', desc: `stay ${2} s in the passing lane if the passed friendly dies`, def: false, live: true },
+  stripFirst: { name: 'Gunners: strip before lane', desc: 'a Flanker takes a free strip before a free neighbour lane', def: false, live: false },
+};
 // half-lane fan-out (gameplay.md §5.2): a fighting spot on the strip between two lanes. It blocks nobody and is in no
 // lane (reach stays its lane ± 1). It walks up at most level with the fighting friendly it joins (within `front`
 // ahead), one mech per spot (`gap` between mechs on the same strip, any team), and returns to its lane when it has

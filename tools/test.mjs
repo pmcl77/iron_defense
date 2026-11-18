@@ -10,9 +10,9 @@ function check(name, cond, info = '') {
 }
 // A quiet test world: no enemy income, no player regen, plenty of energy.
 // march: the march pace (MARCH.pace by default); 0 = off, for tests of the rules at combat pace
-function mk(turrets = [], march) {
+function mk(turrets = [], march, dev) {
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets, base: {} };
-  const w = new World(st, defaultSave(), ALL, { seed: 7, march });
+  const w = new World(st, defaultSave(), ALL, { seed: 7, march, dev });
   w.ai.energy = -1e9; w.regen = 0; w.energy = 5000; w.maxEnergy = 5000;
   return w;
 }
@@ -710,6 +710,60 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const c = setup(); c.n[1].dead = true; c.w.entities = c.w.entities.filter((e) => !e.dead);
   run(c.w, 8);
   check('strip: a free neighbouring lane comes first', !c.g2.strip && c.g2.lane === 3, `lane ${c.g2.lane} strip ${c.g2.strip}`);
+}
+
+// ---- rule A: the decision order behind a stopped (waiting) friendly, not only a fighting one
+{
+  // a column of Gunners behind a fighting Brawler in L3: the ones further back (behind a *waiting* Gunner) fan out too
+  const colScene = (A = true) => {
+    const w = mk([], 0);
+    const foe = mech(w, 'brawler', 1, 2, 1400, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+    const bw = mech(w, 'brawler', 0, 2, 1300, 1e9); bw.def = { ...bw.def, dmg: 0 };
+    const col = [1240, 1180, 1120, 1060].map((y) => { const g = mech(w, 'gunner', 0, 2, y, 1e9); g.def = { ...g.def, range: 120, dmg: 0 }; return g; });
+    run(w, 15);
+    return col;
+  };
+  const col = colScene();
+  check('A: every Gunner of a column gets out of line (fan-out or strip)', col.filter((g) => g.lane !== 2 || g.strip).length >= 3, col.map((g) => `L${g.lane + 1}${g.strip ? 's' : ''}`).join(' '));
+  // a marching column stays together (nobody is stopped)
+  const w2 = mk([], 0);
+  const lead = mech(w2, 'brawler', 0, 2, 900, 1e9), g2 = mech(w2, 'gunner', 0, 2, 840, 1e9), g3 = mech(w2, 'gunner', 0, 2, 780, 1e9);
+  run(w2, 6);
+  check('A: a marching column stays in its lane', g2.lane === 2 && g3.lane === 2 && !g3.strip, `L${g2.lane + 1} L${g3.lane + 1}`);
+}
+// ---- dev switches
+{
+  check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.log.dev.drift === true; })());
+  const w = mk([], 0, { drift: false }); w.setDev('drift', true); w.setDev('drift', true);
+  check('dev switches: live change logged once', w.dev.drift && w.log.events.filter((e) => e[1] === 'dev').length === 1 && w.log.dev.drift === false);
+  // drift: a Gunner with a target in range keeps walking forward while it changes lane (only with drift on)
+  const lane = (drift) => {
+    const v = mk([], 0, { drift });
+    const foe = mech(v, 'brawler', 1, 1, 560, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+    const g = mech(v, 'gunner', 0, 1, 330, 1e9); run(v, 1); const y0 = g.y;
+    v.shiftTo(g, 0); run(v, 1.5);
+    return g.y - y0;
+  };
+  check('dev switch drift: diagonal lane change', lane(true) > 15 && lane(false) < 1, `${lane(true).toFixed(0)} / ${lane(false).toFixed(0)}`);
+  // returnDelay: the passed friendly dies -> stays in the passing lane for a while
+  const pass = (returnDelay) => {
+    const v = mk([], 0, { returnDelay });
+    const g = mech(v, 'gunner', 0, 2, 900, 1e9), m = mech(v, 'mortar', 0, 2, 960, 1e9);
+    v.startPass(g, m, 2, 3); run(v, 3); // in L4 now
+    m.hp = 0; v.damage(m, 1e12, null, 1);
+    run(v, 1);
+    return g.lane === 3 && !g.shift;
+  };
+  check('dev switch returnDelay: stays a moment after the passed friendly died', pass(true) && !pass(false), `${pass(true)} ${pass(false)}`);
+  // stripFirst: a Flanker takes a free strip although a neighbour lane is free
+  const sf = (stripFirst) => {
+    const v = mk([], 0, { stripFirst });
+    const foe = mech(v, 'brawler', 1, 2, 1400, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+    mech(v, 'gunner', 0, 2, 1150, 1e9); const g = mech(v, 'gunner', 0, 2, 1090, 1e9);
+    run(v, 8);
+    return g.strip ? 'strip' : g.lane !== 2 ? 'lane' : 'none';
+  };
+  check('dev switch stripFirst: strip before a free lane', sf(true) === 'strip' && sf(false) === 'lane', `${sf(true)} / ${sf(false)}`);
 }
 
 // ---- kill bounty, enemy income ramp, overtime, forward deploy

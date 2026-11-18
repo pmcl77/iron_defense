@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
@@ -12,6 +12,7 @@ let nextId = 1;
 const TAU = Math.PI * 2;
 const AIM_TOL = (10 * Math.PI) / 180;
 const PAUSE_TO_FIRE = 0.4;
+const STOPPED_FOR = 0.5;   // s a friendly must have stood still before mechs behind it treat it as stopped (rule A)
 const GAP = 4;            // spacing kept between friendly mechs in a lane
 
 export function mulberry32(a) {
@@ -53,6 +54,9 @@ export class World {
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
+    // dev switches (DEV_SWITCHES): opts.dev overrides the defaults; live ones can change during the battle (setDev)
+    this.dev = Object.fromEntries(Object.entries(DEV_SWITCHES).map(([k, d]) => [k, opts.dev?.[k] ?? d.def]));
+    this.log.dev = { ...this.dev }; // values at the start (live changes: 'dev' events)
     this.overtime = false;
     this.activeLane = 2;
     this.fwd = Array(LANES).fill(false); // per lane: deploy forward at the frontmost own turret
@@ -111,6 +115,12 @@ export class World {
   //   [t, 'special', kind, x, y]
   //   [t, 'upgrade', key, new level]                    key = unit type or base.armor / base.gun / base.reactor
   //   [t, 'overtime']                                   overtime started
+  //   [t, 'dev', key, 0|1]                              a live dev switch changed during the battle (dev builds)
+  setDev(k, on) {
+    if (!(k in this.dev) || this.dev[k] === !!on) return;
+    this.dev[k] = !!on;
+    this.ev('dev', k, on ? 1 : 0);
+  }
   ev(...a) { this.log.events.push([Math.round(this.time * 10) / 10, ...a]); }
   side(team) { return team === 0 ? 1 : 0; }
   progress(e) {
@@ -468,12 +478,13 @@ export class World {
       const vx = e.bx + (e.detour || 0) - px, vy = e.y - py;
       e.body = turnTo(e.body, Math.abs(vx) > 1e-4 ? Math.atan2(vx, vy) : home, BODY_TURN * dt);
     };
-    if (!this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.blocker = null; e.mb = 0; done(); return; }
+    const drift = e.shift && this.dev.drift && !(R.fireOnMove && e.pause > 0); // keep a lane change diagonal
+    if (!drift && !this.wantsToMove(e, t, R)) { e.moving = !!e.shift; e.still = e.moving ? 0 : (e.still || 0) + dt; e.blocker = null; e.mb = 0; done(); return; }
     // march pace: extra speed while nothing is near (see MARCH)
     const want = this.march > speed && !t && !this.enemyNear(e, MARCH.clear) ? this.march - speed : 0;
     e.mb = e.mb || 0;
     e.mb = want > e.mb ? Math.min(want, e.mb + MARCH.ramp * dt) : Math.max(want, e.mb - MARCH.brake * dt);
-    const sp = (speed + e.mb) * (e.shift ? LANE_CHANGE.fwd : 1);
+    const sp = !this.wantsToMove(e, t, R) ? speed * LANE_CHANGE.drift : (speed + e.mb) * (e.shift ? LANE_CHANGE.fwd : 1);
     let ny = e.y + dir * sp * dt, block = null;
     for (const f of this.entities) {
       if (f.dead || f === e) continue;
@@ -517,11 +528,12 @@ export class World {
     e.y = ny;
     done();
     e.moving = moved > 1e-6 || !!e.shift;
+    e.still = e.moving ? 0 : (e.still || 0) + dt;
     e.phase += moved / (e.radius * 0.9 * Math.sqrt((speed + e.mb) / speed)); // marching: longer strides, not just faster steps
     e.blocker = block && block.team !== e.team ? block : null;
     if (block && !e.shift) this.onBlocked(e, block, R);
     // after passing someone, return to the home lane once it's clear
-    if (!e.shift && e.homeLane != null && e.homeLane !== e.lane && this.passed(e)) {
+    if (!e.shift && e.homeLane != null && e.homeLane !== e.lane && this.passed(e) && !this.holdReturn(e)) {
       const next = e.lane + Math.sign(e.homeLane - e.lane); // one lane at a time
       if (this.laneFree(e, next)) this.shiftTo(e, next);
     }
@@ -610,12 +622,19 @@ export class World {
       if (R.goal === 'structure' && f.kind === 'mech') this.tryOvertake(e, f, true); // Chargers slip past mechs
       return; // everything else fights what blocks it
     }
-    if (this.fighting(f)) {
+    // behind a fighting friendly, or (decided 2026-11-18, "A") behind a friendly that has stopped for a while (e.g.
+    // waiting in a column behind a fight) when this mech has no shot itself: the same decision order
+    const stopped = !f.moving && (f.still || 0) >= STOPPED_FOR && !e.target;
+    if (this.fighting(f) || stopped) {
       // a fighting friendly it may pass is passed; otherwise the role's rule for this situation
       // passing to get into the fight: the side is chosen like a fan-out, toward a shot (proposal H); Chargers just go around
       if (this.canPass(R, f, e) && !R.noPassFighting) { if (!this.tryOvertake(e, f, true, !R.goal) && !e.target) this.tryStrip(e); return; }
       if (R.behindFight === 'join') this.fanOut(e, true);
-      else if (R.behindFight === 'fanout') { if (!e.target && !this.fanOut(e, false)) this.tryStrip(e); }
+      else if (R.behindFight === 'fanout') {
+        if (e.target) return;
+        if (this.dev.stripFirst && this.tryStrip(e, true)) return; // dev switch: a free strip before a free lane
+        if (!this.fanOut(e, false)) this.tryStrip(e);
+      }
       else if (!e.target) this.tryStrip(e);
       else if (R.behindFight === 'around') this.tryOvertake(e, f, true);
       return;
@@ -655,10 +674,10 @@ export class World {
     return true;
   }
   // only when both neighbouring lanes are taken (otherwise the normal fan-out or pass applies); first come, first served
-  tryStrip(e) {
+  tryStrip(e, evenIfLaneFree = false) {
     const R = e.def.rules;
     if (!R.strip || e.strip || e.shift || e.target || this.time < (e.stripAgain || 0)) return false;
-    if ([e.lane - 1, e.lane + 1].some((l) => this.laneAllowed(e, l) && this.laneFree(e, l))) return false;
+    if (!evenIfLaneFree && [e.lane - 1, e.lane + 1].some((l) => this.laneAllowed(e, l) && this.laneFree(e, l))) return false;
     const opts = [-1, 1].filter((s) => this.laneAllowed(e, e.lane + s) && this.stripFree(e, this.stripId(e.lane, s)));
     if (!opts.length) return false;
     // the side whose strip spot is closest to an enemy it can reach, then toward the center
@@ -835,7 +854,14 @@ export class World {
     opts.sort((a, b) => prot(b) - prot(a) || (shot(a) - shot(b) || 0) || (toShot ? 0 : foe(a) - foe(b)) || Math.abs(a - home) - Math.abs(b - home) || ahead(a) - ahead(b) || Math.abs(a - 2) - Math.abs(b - 2));
     return this.startPass(e, blocker, home, opts[0]);
   }
+  // dev switch returnDelay: if the friendly it was passing died, stay LANE_CHANGE.returnDelay s in the passing lane first
+  holdReturn(e) {
+    if (!this.dev.returnDelay || !e.passing?.dead) return false;
+    e.backAt ??= this.time + LANE_CHANGE.returnDelay;
+    return this.time < e.backAt;
+  }
   startPass(e, blocker, home, lane) {
+    e.backAt = null;
     e.homeLane = home;
     if (blocker) e.passing = blocker;
     this.shiftTo(e, lane);

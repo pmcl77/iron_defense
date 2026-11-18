@@ -120,13 +120,15 @@ There is **no stance switch**. A mech's behavior comes from its type alone, and 
 **Charger goal:** the first structure in its path: the nearest enemy turret ahead within ±1 lane (it steps over toward it), otherwise the base.
 
 **Decision order behind a friendly** (the table and the rules below in short; example: a Seeker, role Line):
-1. **Friendly ahead marching or waiting:** passing rules. Pass it if the role allows (Line: only Support and Artillery), otherwise follow at a 4-unit gap.
-2. **Friendly ahead stopped and fighting:**
+1. **Friendly ahead marching:** passing rules. Pass it if the role allows (Line: only Support and Artillery), otherwise follow at a 4-unit gap. A marching column stays together.
+2. **Friendly ahead stopped and fighting, or stopped for at least 0.5 s without a fight of its own (e.g. waiting in a column behind a fight) while this mech has no shot** *(the second case added in 0.5.0-dev.4, "A": before, only the mech directly behind the fight fanned out and the rest of a column waited)*:
    1. it has a target in reach from where it stands → **shoots from behind**;
    2. otherwise, the friendly ahead has a longer range → **passes** it (it can't reach that fight from behind);
    3. otherwise → **fans out ±1 lane** into a free neighbor lane;
    4. no free neighbor lane → **half-lane fan-out** onto the strip between two lanes, if a strip spot is free (only with the Flanker trait: Gunner);
    5. otherwise → **waits** without a shot.
+
+*Dev switches (dev builds, Settings; the live ones also in the pause menu during a battle; 0.5.0-dev.4):* **Diagonal lane changes** (on by default): while changing lanes a mech keeps walking forward at 40% of its speed even if it would stop to shoot, unless something is right in front of it, so lane changes look diagonal instead of a sideways crab walk; live. **Return delay** (off): if the friendly it was passing dies, a mech stays 2 s in the passing lane before it returns home; live. **Gunners: strip before lane** (off): a Flanker takes a free strip spot before a free neighbour lane (it then stays close to its lane and returns home after the fight); from the next battle. Battle stats record the values at the start (`dev`) and each live change (event `dev`).
 
 **Shared rules (all roles):**
 - **Passing:** applies to marching, waiting *and* fighting friendlies: a friendly a mech may pass is passed, and only otherwise does the "stopped and fighting" row apply. Tank passes anyone who isn't a tank, even if that one is only slightly slower (other roles pass only friendlies at least 8 slower). Line passes Support and Artillery, and a *fighting* friendly with a longer range than its own (GU behind SE.f passes; two of the same type, or SE behind GU.f, fan out). Support passes only Artillery, and never a friendly that's fighting. Artillery passes nobody. Charger passes anyone. Otherwise a mech keeps a 4-unit gap behind the friendly in front.
