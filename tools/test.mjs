@@ -752,6 +752,15 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('life stat: a death counts the time from first contact', g.dead && met > 1 && l[0] === 1 && Math.abs(l[1] - (w.time - met)) < 0.05, JSON.stringify(l) + ' met ' + met);
   check('life stat: survivors only after contact (lifeLog), not in the log', !all[0].mortar && all[1].seeker?.[2] === 1 && all[1].seeker[3] > 0 && !w.log.life[1].seeker, JSON.stringify(all));
 }
+// ---- stepping out to pass (ISSUES.md 2026-11-18): once clear of the friendly it leaves behind, it walks on diagonally
+{
+  const w = mk([], 0);
+  const m = mech(w, 'mortar', 0, 2, 700); m.def = { ...m.def, speed: 0 };
+  const g = mech(w, 'gunner', 0, 2, 600);
+  let y0 = null, yEnd = null;
+  for (let i = 0; i < 60 * 8; i++) { w.update(1 / 60); if (g.shift && y0 == null) y0 = g.y; if (y0 != null && !g.shift && yEnd == null) yEnd = g.y; }
+  check('pass: steps out, then walks on diagonally (gains ground during the lane change)', y0 != null && yEnd - y0 > 30, `gained ${(yEnd - y0).toFixed(0)}`);
+}
 // ---- dev switches
 {
   check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.dev.stripPassLonger === true && w.log.dev.drift === true; })());

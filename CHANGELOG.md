@@ -10,6 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.6.0-dev
 
 ### Movement
+- **Stepping out to pass is diagonal** (0.6.0-dev.3): a mech changing lanes is no longer held back by the friendly in the lane it's leaving once the two are clear of each other sideways. A passing Gunner steps out, then walks on diagonally, like on its way back (before: straight sideways; user report, stage 12).
 - **Strip: walk past longer guns** (0.6.0-dev.2, dev switch, on by default): a Gunner on a strip no longer stops level with a fighting Seeker or Lancer beside it (they fight from beyond its range). It walks on until it has its own target, or steps back into its lane once past. Before, it could stand idle out of range until something in front died (user report, stage 10). To test; switch it off for the old rule.
 
 ### Enemy loadouts

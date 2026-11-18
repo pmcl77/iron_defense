@@ -28,6 +28,7 @@ export const headingTo = (a, b) => Math.atan2(b.x - a.x, b.y - a.y);
 const BODY_TURN = 3;      // rad/s: how fast a mech's legs turn toward where it walks
 const turnTo = (a, b, step) => { const d = angDiff(a, b); return a + Math.max(-step, Math.min(step, d)); };
 const isStructure = (f) => f.kind === 'turret' || f.kind === 'base';
+const STEP_OUT = 4; // extra sideways clearance before a lane-changing mech may walk on past a friendly in the lane it leaves
 
 const bump = (o, k) => { o[k] = (o[k] || 0) + 1; };
 
@@ -509,7 +510,10 @@ export class World {
       let s;
       if (f.team === e.team) {
         if (f.kind !== 'mech') continue;
-        if (this.shareLane(e, f)) s = f.y - dir * (f.radius + e.radius + GAP); // keep a gap behind friendly mechs
+        // keep a gap behind friendly mechs. While changing lanes, a friendly in the lane it is leaving blocks only
+        // while the two still overlap sideways (ISSUES.md 2026-11-18 "stepping out to pass"): it steps out, then
+        // walks on diagonally instead of straight sideways.
+        if (this.shareLane(e, f) && !(e.shift && e.shift.to !== e.shift.from && !this.inLane(f, e.shift.to) && Math.abs(f.x - e.x) >= f.radius + e.radius + STEP_OUT)) s = f.y - dir * (f.radius + e.radius + GAP);
         // while passing in another lane, never get ahead of a *marching* friendly in the home lane it may not
         // pass; hang back far enough that the home lane counts as free behind it (laneFree: radii + 10).
         // If that friendly has stopped to fight, the pass becomes a fan-out: stay in this lane and walk on.
