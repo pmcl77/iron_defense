@@ -147,6 +147,28 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **6. Quick match:** a menu entry next to the campaign. Questions: which map/turret layout (random campaign stage up to the highest reached, or a chosen one)? difficulty (chosen: easy/normal/hard as enemy level and regen, or matched to the player's progress)? player loadout from the unlocked types (as now)? rewards (none, or a small Workshop credit; no stars)? Proposal: random layout from the reached stages, chosen difficulty, no rewards at first.
   - **7. Stats and tools:** the summary gets the enemy loadout (and `mode: 'quick'`); the bot matrix can loop over enemy loadouts (which player strategy beats which enemy loadout: shows whether loadouts make different games).
   - **Decided (user, 2026-11-18): proposals 1–7 agreed.** Remarks: 6 quick match difficulty as a free choice for now, maybe tied to the Workshop level later. 5: the campaign "surprise" stays (types never fought show as '?' in the intel, as built), otherwise the intel shows the enemy loadout and levels. Open: see the questions below (who drafts the 12 stage loadouts, in-battle icons, build order, roster vs loadout).
+  - **User answers (2026-11-18):** 1 I draft the 12 stage loadouts (a stage that brings a new unit includes it; adjust later). 2 the '?' only makes sense for a type the player doesn't have yet, so the enemy would have to be the frontrunner; or skip the '?' until there are more than 5 choices and make it a "surprise slot". 3 the pre-battle intel is enough (no icons in battle). 4 enemy loadout + intel first. 5 quick match difficulty by Workshop level: Easy = enemy level below the player's, Medium = same, Hard = stronger; income and ramp unchanged, base HP not a knob; stats tell campaign (stage) and quick (difficulty) apart. 6 Endless gets a rule-based random loadout every battle.
+    - **On 2 (proposal):** today the enemy is never ahead: the player owns every type before the enemy fields it (Brawler unlocked after stage 1, enemy from stage 3; Lancer after 5, enemy from 7), so the '?' only marks owned types not yet fought. **Frontrunner:** stage n's enemy brings the unit you unlock by clearing stage n ("beat it, then own it"); the '?' then marks something really new, and future unit types arrive the same way. Unlock timing unchanged, enemy introductions move ~2 stages earlier (needs re-tuning of the early stages). **Surprise slot** from stage 8 (all unlocked): one of the 5 slots shows '?' until the enemy deploys it. Both together: frontrunner '?' in stages 1–6, surprise slot in 8–12 and Endless/quick (quick: option).
+    - **On 5:** enemy level = the player's Workshop level of the chosen loadout (average, rounded) −1 / ±0 / +1, clamped to 0..max; at Workshop 0 Easy = Medium (maybe later: Easy also drops the enemy's base upgrades). Turret layout from the chosen/random stage.
+    - **Draft stage loadouts** (with frontrunner; **new** = unlocked by clearing that stage):
+
+      | Stage | Personality | Enemy loadout |
+      |---|---|---|
+      | 1 Scrubline | first contact | Scout, Gunner, **Brawler** |
+      | 2 Dry Ford | first shells | Scout, Gunner, Brawler, **Mortar** |
+      | 3 Quarry Road | hunters | Scout, Gunner, Brawler, Mortar, **Seeker** |
+      | 4 Dust Belt | armored | Brawler, **Aegis**, Gunner, Seeker, Mortar |
+      | 5 Saltpan | long guns | **Lancer**, Mortar, Gunner, Brawler, Scout |
+      | 6 Red Cut | wall breakers | **Breacher**, Brawler, Aegis, Gunner, Mortar |
+      | 7 Pylon Field | swarm (no tanks) | Scout, Gunner, Seeker, Aegis, Mortar |
+      | 8 Gravel Sea | siege | Lancer, Mortar, Breacher, Brawler, Gunner |
+      | 9 Ironwood | iron wall | Brawler, Aegis, Seeker, Gunner, Breacher |
+      | 10 Ash Ridge | artillery line | Lancer, Mortar, Seeker, Gunner, Brawler |
+      | 11 Breakwater | rush | Scout, Breacher, Brawler, Gunner, Seeker |
+      | 12 Last Bastion | elite | Brawler, Aegis, Seeker, Lancer, Mortar |
+      | Endless / quick | random | rule-based: a Line type, a Tank or Artillery, at most one Charger |
+
+      Every loadout has a Line type, so the AI's group templates always work; a loadout without a role drops those templates (stage 7: no Tank groups). Stages 1–6 get harder (new types earlier), later ones different rather than weaker; all re-tuned with the fixed bot.
   - **Questions for the user:** 1 size, 2 fixed per stage for the campaign (and then: design the 12 loadouts together, or I draft them from the personalities), 5 full or partial intel, 6 quick match details and rewards. Order of building: enemy loadout + intel first, quick match second?
 
 ### Under discussion
