@@ -25,14 +25,17 @@ function makeSave(variant) {
 // 3-unit variation (BW-SE-MO, BW-GU-SE, BW-GU-MO), alternating lanes 2 and 4)
 // 'horde' (the user's horde): saves up, then one mech in every lane at once, BW-SE-SE-SE-BW from lane 1 to 5
 // (a Gunner stands in for a Seeker that isn't unlocked or is on cooldown)
+// 'gunners': like 'train' but always a Brawler followed by 4 Gunners (BW-GU-GU-GU-GU), alternating lanes 2 and 4
+// (the user's dev.5 Gunner hordes led by a tank; exercises fan-outs, strips and the return home behind the tank)
 const HORDE = ['brawler', 'seeker', 'seeker', 'seeker', 'brawler'];
+const GUNNER_TRAIN = ['brawler', 'gunner', 'gunner', 'gunner', 'gunner'];
 const TRAINS = [['brawler', 'gunner', 'seeker', 'mortar'], ['brawler', 'seeker', 'mortar'], ['brawler', 'gunner', 'seeker'], ['brawler', 'gunner', 'mortar']];
-export function play(i, seed, variant, strat = 'mixed', probe = null) {
+export function play(i, seed, variant, strat = 'mixed', probe = null, dev = undefined) {
   const u = unlockedSet(Math.min(i, 6));
   const pref = strat === 'mortar' ? ['mortar', 'brawler', 'gunner', 'aegis', 'seeker', 'lancer', 'breacher', 'scout']
-    : strat === 'train' || strat === 'horde' ? ['brawler', 'gunner', 'seeker', 'mortar', 'aegis', 'scout', 'lancer', 'breacher'] : PREF;
+    : strat === 'train' || strat === 'horde' || strat === 'gunners' ? ['brawler', 'gunner', 'seeker', 'mortar', 'aegis', 'scout', 'lancer', 'breacher'] : PREF;
   const loadout = pref.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
-  const w = new World(stageDef(i), makeSave(variant), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed });
+  const w = new World(stageDef(i), makeSave(variant), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed, dev });
   // wall plan: row 2 sentries center-out, then support turrets
   const plan = [[2, 2, 'sentry'], [1, 2, 'sentry'], [3, 2, 'sentry']];
   if (u.turrets.includes('howitzer')) plan.push([2, 0, 'howitzer']);
@@ -81,9 +84,9 @@ export function play(i, seed, variant, strat = 'mixed', probe = null) {
         if (w.canDeploy(t)) { w.setLane(l); w.deploy(t); horde.shift(); }
         else if (w.time - hordeT > 25) horde = []; // a line costs more than max energy: finish it as energy comes in, give up after 25 s
       }
-    } else if (strat === 'train') {
+    } else if (strat === 'train' || strat === 'gunners') {
       if (!train.length) {
-        const opts = TRAINS.map((t) => t.filter((x) => loadout.includes(x))).filter((t) => t.length >= 2);
+        const opts = strat === 'gunners' ? [GUNNER_TRAIN] : TRAINS.map((t) => t.filter((x) => loadout.includes(x))).filter((t) => t.length >= 2);
         const pickT = opts.length ? opts[Math.floor(rnd() * opts.length)] : loadout.slice(0, 3);
         const cost = pickT.reduce((c, t) => c + MECHS[t].cost, 0);
         if (w.energy >= Math.min(w.maxEnergy - 20, cost)) { train = [...pickT]; waveLane = waveNo++ % 2 ? 3 : 1; }
