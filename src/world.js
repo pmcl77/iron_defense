@@ -50,8 +50,10 @@ export class World {
     // attacker 'bomb' = Bombing. taken[team][type] = HP lost. shield[team] = HP the Aegis field saved its side.
     // strip[team] = [times a mech stepped onto a strip, damage dealt from strips]
     // wait[team][type] = seconds its mechs stood still with nothing to shoot (summed over all mechs of that type)
+    // life[team][type] = [deaths, combat seconds of those, survivors, combat seconds of those so far]: combat time runs
+    // from a mech's first encounter (it has a target or was hit) to its death; survivors are added by lifeLog()
     this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [],
-      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]], wait: [{}, {}] };
+      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]], wait: [{}, {}], life: [{}, {}] };
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
@@ -121,6 +123,16 @@ export class World {
     if (!(k in this.dev) || this.dev[k] === !!on) return;
     this.dev[k] = !!on;
     this.ev('dev', k, on ? 1 : 0);
+  }
+  lifeOf(team, type) { return (this.log.life[team][type] ||= [0, 0, 0, 0]); }
+  // combat lifetime per type with the mechs still alive added as survivors (a copy; for the battle summary)
+  lifeLog() {
+    const out = this.log.life.map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, [...v]])));
+    for (const e of this.entities) {
+      if (e.kind !== 'mech' || e.dead || e.contact == null) continue;
+      const l = (out[e.team][e.type] ||= [0, 0, 0, 0]); l[2]++; l[3] += this.time - e.contact;
+    }
+    return out;
   }
   ev(...a) { this.log.events.push([Math.round(this.time * 10) / 10, ...a]); }
   side(team) { return team === 0 ? 1 : 0; }
@@ -447,6 +459,7 @@ export class World {
       this.move(e, dt, t);
       // waiting: standing still with nothing to shoot (walking and fighting don't count)
       if (!e.moving && !t) this.log.wait[e.team][e.type] = (this.log.wait[e.team][e.type] || 0) + dt;
+      if (e.contact == null && (t || e.hp < e.maxHp)) e.contact = this.time;
     }
     if (t && aimed && e.cool <= 0) {
       e.cool = this.stat(e, 'reload');
@@ -1036,6 +1049,7 @@ export class World {
       if (f.team === 0) this.dropFwd(f.lane);
     }
     if (f.team === 0 && f.kind === 'mech') this.stats.lost++;
+    if (f.kind === 'mech') { const l = this.lifeOf(f.team, f.type); l[0]++; l[1] += this.time - (f.contact ?? this.time); }
     if (f.kind === 'mech' || f.kind === 'turret') {
       bump(this.log.lost[f.team], f.type);
       this.ev('death', this.side(f.team), f.type, f.lane + 1, f.kind === 'mech' ? this.progress(f) : null, src ? src.type : 'bomb');

@@ -50,6 +50,9 @@ The simulation never draws. It emits `fx` events that `render.js` turns into par
 node tools/test.mjs            # headless rule tests
 node tools/test_stats.mjs      # battle statistics function (functions/api/stats.js)
 node tools/balance.mjs [runs] [stages…]   # bot plays the campaign and reports win rates
+node tools/matrix.mjs [seeds] [stages…]   # every bot strategy on the same seeds: outcome and kind of game
+node tools/profile.mjs <stats.json> [row] # strategy profile of real battles (JSON from GET /api/stats)
+node tools/lifetime.mjs [seeds]          # stage 10 bot rounds, strip-first off vs on, combat lifetime
 node tools/shots.cjs <outdir>  # headless browser smoke test with screenshots (needs Playwright)
 node tools/make_icons.cjs      # render icons/icon.svg to PNG
 ```

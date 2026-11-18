@@ -740,6 +740,18 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   run(w, 5);
   check('wait stat: standing without a target counts, fighting does not', (w.log.wait[0].mortar || 0) > 4 && (w.log.wait[0].gunner || 0) < 2, JSON.stringify(w.log.wait[0]));
 }
+// ---- combat lifetime stat
+{
+  const w = mk([], 0);
+  const foe = mech(w, 'seeker', 1, 2, 1500, 1e9); foe.def = { ...foe.def, speed: 0 }; // shoots, never dies
+  const g = mech(w, 'gunner', 0, 2, 700); // walks up, meets the Seeker, dies
+  const far = mech(w, 'mortar', 0, 4, 300, 1e9); far.def = { ...far.def, speed: 0 }; // never meets anyone
+  let met = null;
+  for (let i = 0; i < 60 * 90 && !g.dead; i++) { w.update(1 / 60); if (met == null && g.contact != null) met = w.time; }
+  const l = w.log.life[0].gunner || [0, 0, 0, 0], all = w.lifeLog();
+  check('life stat: a death counts the time from first contact', g.dead && met > 1 && l[0] === 1 && Math.abs(l[1] - (w.time - met)) < 0.05, JSON.stringify(l) + ' met ' + met);
+  check('life stat: survivors only after contact (lifeLog), not in the log', !all[0].mortar && all[1].seeker?.[2] === 1 && all[1].seeker[3] > 0 && !w.log.life[1].seeker, JSON.stringify(all));
+}
 // ---- dev switches
 {
   check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.log.dev.drift === true; })());

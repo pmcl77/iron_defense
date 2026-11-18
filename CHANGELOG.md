@@ -9,10 +9,10 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.5.0-dev
 
-Dev builds since 0.4.0: dev.1 half-lane fan-out, dev.2 damage stats, dev.3 Flanker trait (Gunner only) and dev build numbers, dev.4 columns fan out (A) and dev switches, dev.5 waiting time in the stats.
+Dev builds since 0.4.0: dev.1 half-lane fan-out, dev.2 damage stats, dev.3 Flanker trait (Gunner only) and dev build numbers, dev.4 columns fan out (A) and dev switches, dev.5 waiting time in the stats, dev.6 combat lifetime in the stats.
 
 ### Stats
-- Battle stats now include **damage per unit type**, not only kills (final blows): damage dealt per side and attacker type, split into mechs, turrets, base and Constructor (`dmg`, Bombing as `bomb`); damage taken per type (`taken`); and the HP the **Aegis field saved** per side (`shield`). Also strip use per side (`strip`: times a mech stepped onto a strip, damage dealt from strips). From dev.5: **waiting time** per side and type (`wait`: seconds its mechs stood still with nothing to shoot; walking and fighting don't count). Only HP actually removed counts (no overkill). About 0.7 KB per battle.
+- Battle stats now include **damage per unit type**, not only kills (final blows): damage dealt per side and attacker type, split into mechs, turrets, base and Constructor (`dmg`, Bombing as `bomb`); damage taken per type (`taken`); and the HP the **Aegis field saved** per side (`shield`). Also strip use per side (`strip`: times a mech stepped onto a strip, damage dealt from strips). From dev.5: **waiting time** per side and type (`wait`: seconds its mechs stood still with nothing to shoot; walking and fighting don't count). From dev.6: **combat lifetime** per side and type (`life`: [deaths, combat seconds of those, survivors, combat seconds of those]; the clock starts at a mech's first encounter, when it has a target or is hit, so walking to the front doesn't count). Only HP actually removed counts (no overkill). About 0.7 KB per battle.
 
 ### Gameplay: columns behind a fight (dev.4)
 - A mech with no shot now also fans out (or takes a strip, or passes, by its role) behind a friendly that has **stopped** for half a second, not only behind one that is fighting. Before, only the first mech of a column behind a fight fanned out and the rest waited in line (screenshots: long Gunner columns from the forward deploy point). A marching column still stays together.

@@ -84,7 +84,7 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 | `src/audio.js` | Synthesized sound bus (pan, distance, reverb, compressor) |
 | `src/save.js` | localStorage key `iron-defense-save-v1` |
 | `art_samples/` | Art studies. `sample.html?style=1…7`, renders saved as `style-N.png`, comparisons `comparison.png` and `comparison-2.png`. `fine.js` (ray-traced voxels, primitive-based models) is the start of the final renderer |
-| `tools/` | `serve.py`, `test.mjs`, `balance.mjs`, `shots.cjs`, `sound.cjs`, `make_icons.cjs`, `bake_voxel.cjs` + `voxel/` (voxel models and bake code) |
+| `tools/` | `serve.py`, `test.mjs`, `balance.mjs` (bot), `matrix.mjs` (bot strategy matrix), `profile.mjs` (strategy profile of a battle), `lifetime.mjs`, `synth_howitzer.mjs`, `shots.cjs`, `sound.cjs`, `make_icons.cjs`, `bake_voxel.cjs` + `voxel/` (voxel models and bake code) |
 | `assets/voxel/` | Baked voxel sprite sheets, ground tiles and `meta.json` (generated, committed) |
 | `src/render_voxel.js` | Voxel renderer: extends the flat `Renderer`, draws the baked sheets in the angled view |
 
@@ -121,6 +121,8 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 python3 tools/serve.py                      # http://localhost:8767 (preview config "iron-defense" in .claude/launch.json)
 node tools/test.mjs                         # rule tests
 node tools/balance.mjs [runs] [stage…]      # bot balance report
+node tools/matrix.mjs [seeds] [stage…]      # bot strategy matrix (does the strategy change the kind of game?)
+node tools/profile.mjs <stats.json> [row]   # strategy profile of real battles
 node tools/shots.cjs <outdir>               # headless phone + desktop smoke test with screenshots
 node tools/sound.cjs [moduleUrl] [prefix]   # render every sound to WAV (tmp_files/sound/) + level/band report; needs serve.py
 node tools/bake_voxel.cjs [part …]          # re-bake voxel sprites/ground into assets/voxel/ (~15 s); parts: mech types, sentry, howitzer, arc, constructor, base, ground
