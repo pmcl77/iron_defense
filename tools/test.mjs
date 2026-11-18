@@ -754,7 +754,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
 }
 // ---- dev switches
 {
-  check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.log.dev.drift === true; })());
+  check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.dev.stripPassLonger === true && w.log.dev.drift === true; })());
   const w = mk([], 0, { drift: false }); w.setDev('drift', true); w.setDev('drift', true);
   check('dev switches: live change logged once', w.dev.drift && w.log.events.filter((e) => e[1] === 'dev').length === 1 && w.log.dev.drift === false);
   // drift: a Gunner with a target in range keeps walking forward while it changes lane (only with drift on)
@@ -785,6 +785,19 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     return g.strip ? 'strip' : g.lane !== 2 ? 'lane' : 'none';
   };
   check('dev switch stripFirst: strip before a free lane', sf(true) === 'strip' && sf(false) === 'lane', `${sf(true)} / ${sf(false)}`);
+  // stripPassLonger (ISSUES.md 2026-11-18): a Gunner on the strip beside a Seeker that fights from far back walks on
+  // until it has its own target; without the switch it stays level with the Seeker, out of range
+  const spl = (stripPassLonger) => {
+    const v = mk([], 0, { stripPassLonger });
+    const foe = mech(v, 'brawler', 1, 2, 1700, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+    const se = mech(v, 'seeker', 0, 2, 1150, 1e9), g = mech(v, 'gunner', 0, 2, 1090, 1e9);
+    for (const l of [1, 3]) { const m = mech(v, 'gunner', 0, l, 1230, 1e9); m.def = { ...m.def, speed: 0, dmg: 0 }; } // neighbour lanes taken
+    let onStrip = false;
+    for (let i = 0; i < 60 * 15; i++) { v.update(1 / 60); onStrip ||= !!g.strip; }
+    return { onStrip, shoots: g.target === foe, ahead: Math.round(g.y - se.y) };
+  };
+  const on = spl(true), off = spl(false);
+  check('dev switch stripPassLonger: walks past a longer-range friendly on the strip until it can shoot', on.onStrip && on.shoots && on.ahead > 50 && off.onStrip && !off.shoots && off.ahead <= 1, JSON.stringify({ on, off }));
 }
 
 // ---- kill bounty, enemy income ramp, overtime, forward deploy

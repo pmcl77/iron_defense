@@ -67,6 +67,7 @@ export const DEV_SWITCHES = {
   drift: { name: 'Diagonal lane changes', desc: 'keep walking forward while changing lanes', def: true, live: true },
   returnDelay: { name: 'Return delay', desc: `stay ${2} s in the passing lane if the passed friendly dies`, def: false, live: true },
   stripFirst: { name: 'Gunners: strip before lane', desc: 'a Flanker takes a free strip before a free neighbour lane', def: false, live: false },
+  stripPassLonger: { name: 'Strip: walk past longer guns', desc: 'on a strip, a fighting friendly with a longer range doesn\'t stop it; it walks on until it has a target', def: true, live: true },
 };
 // half-lane fan-out (gameplay.md §5.2): a fighting spot on the strip between two lanes. It blocks nobody and is in no
 // lane (reach stays its lane ± 1). It walks up at most level with the fighting friendly it joins (within `front`

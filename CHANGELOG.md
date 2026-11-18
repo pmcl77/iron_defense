@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.6.0-dev
 
+### Movement
+- **Strip: walk past longer guns** (0.6.0-dev.2, dev switch, on by default): a Gunner on a strip no longer stops level with a fighting Seeker or Lancer beside it (they fight from beyond its range). It walks on until it has its own target, or steps back into its lane once past. Before, it could stand idle out of range until something in front died (user report, stage 10). To test; switch it off for the old rule.
+
 ### Enemy loadouts
 - **Every stage has its own enemy loadout** of up to 5 mech types instead of the whole roster, and the AI fields only those. Each stage gets a personality: armored, long guns, wall breakers, swarm without tanks, siege, iron wall, artillery line, rush, elite (gameplay.md §stages).
 - **Frontrunner:** stage n's enemy brings the unit you unlock by clearing stage n ("beat it, then own it"). In the intel it shows as "?" (New unit) until you've fought it. Enemy introductions move up to 2 stages earlier; the stages are not re-tuned yet (that comes with the Workshop decision, ISSUES.md).

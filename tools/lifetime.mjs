@@ -1,6 +1,6 @@
 // Combat lifetime (ISSUES.md 2026-11-18): time from a mech's first encounter (it has a target, or it was hit)
 // to its death; mechs alive at the end are counted separately (time until the end, "censored").
-// Run: node tools/lifetime.mjs [seeds=10]  plays stage 10 with the balance bot, strip-first off vs on, same seeds.
+// Run: node tools/lifetime.mjs [seeds=10] [dev switch=stripFirst]  plays stage 10 with the balance bot, that switch off vs on, same seeds.
 import { play } from './balance.mjs';
 
 export function lifeTracker() {
@@ -29,14 +29,14 @@ export function lifeTracker() {
 }
 
 function main() {
-  const seeds = +(process.argv[2] || 10);
+  const seeds = +(process.argv[2] || 10), sw = process.argv[3] || 'stripFirst'; // the dev switch to compare off/on
   for (const [strat, variant] of [['gunners', 'max'], ['gunners', 'mid'], ['train', 'max']]) {
     console.log(`\nstage 10, bot '${strat}', Workshop ${variant}, ${seeds} seeds`);
-    for (const stripFirst of [false, true]) {
+    for (const on of [false, true]) {
       const S = { win: 0, time: 0, n: 0, died: 0, lifeSum: 0, strips: 0, stripN: 0, stripLife: 0, stripDied: 0, laneLife: 0, laneDied: 0, dmg: 0, hw: 0, hwN: 0, eb: 0, pb: 0 };
       for (let seed = 1; seed <= seeds; seed++) {
         const tr = lifeTracker(); let W;
-        const r = play(9, seed, variant, strat, (w) => { W = w; tr.step(w); }, { stripFirst, drift: true, returnDelay: true });
+        const r = play(9, seed, variant, strat, (w) => { W = w; tr.step(w); }, { stripFirst: false, stripPassLonger: false, drift: true, returnDelay: true, [sw]: on });
         const g = tr.report(W, 0, 'gunner'), gs = tr.report(W, 0, 'gunner', (x) => x.strip), gl = tr.report(W, 0, 'gunner', (x) => !x.strip);
         S.win += r.win; S.time += r.time; S.n += g.n; S.died += g.died; S.lifeSum += g.died * (g.life || 0);
         S.stripN += gs.n; S.stripDied += gs.died; S.stripLife += gs.died * (gs.life || 0); S.laneDied += gl.died; S.laneLife += gl.died * (gl.life || 0);
@@ -46,7 +46,7 @@ function main() {
         S.hw += hd.reduce((a, e) => a + e[0], 0); S.hwN += hd.length;
       }
       const f = (x, d = 1) => (Number.isFinite(x) ? x.toFixed(d) : '-');
-      console.log(`  strip first ${stripFirst ? 'ON ' : 'OFF'}: wins ${S.win}/${seeds}, avg ${f(S.time / seeds / 60)} min, Gunners ${f(S.n / seeds, 0)}/round, `
+      console.log(`  ${sw} ${on ? 'ON ' : 'OFF'}: wins ${S.win}/${seeds}, avg ${f(S.time / seeds / 60)} min, Gunners ${f(S.n / seeds, 0)}/round, `
         + `combat life ${f(S.lifeSum / S.died)} s (strip users ${f(S.stripLife / S.stripDied)} s, ${f(100 * S.stripN / S.n, 0)}% of Gunners; others ${f(S.laneLife / S.laneDied)} s), `
         + `damage per Gunner ${f(S.dmg / S.n, 0)}, strip entries ${f(S.strips / seeds)}, `
         + `Howitzers down ${S.hwN}/${2 * seeds} (avg ${f(S.hw / S.hwN / 60)} min), base HP left ours ${f(100 * S.pb / seeds, 0)}% / enemy ${f(100 * S.eb / seeds, 0)}%`);

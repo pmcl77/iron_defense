@@ -727,28 +727,39 @@ export class World {
     }
     return true;
   }
-  // the frontmost fighting friendly in the two lanes beside the strip, within STRIP.front ahead (or level)
+  // the frontmost fighting friendly in the two lanes beside the strip, within STRIP.front ahead (or level). With the
+  // dev switch stripPassLonger (ISSUES.md 2026-11-18), a friendly with a longer range doesn't cap it (like passLonger
+  // in a lane: it fights from too far back for this one to reach its fight); it only counts as a reason to walk on
+  // (`longer`).
   stripFront(e) {
-    const dir = FWD[e.team], lanes = [e.lane, e.lane + e.strip];
-    let front = null;
+    const dir = FWD[e.team], lanes = [e.lane, e.lane + e.strip], range = this.stat(e, 'range');
+    let front = null, longer = false;
     for (const f of this.entities) {
       if (f.dead || f === e || f.team !== e.team || f.kind !== 'mech' || f.strip || !lanes.includes(f.lane) || !this.fighting(f)) continue;
       const d = (f.y - e.y) * dir;
       if (d < -(f.radius + e.radius) || d > STRIP.front) continue;
+      if (this.dev.stripPassLonger && this.stat(f, 'range') > range) { longer = true; continue; }
       if (!front || (f.y - front.y) * dir > 0) front = f;
     }
+    this.stripLonger = longer && !front;
     return front;
   }
   // on the strip: fight from here; walk up at most level with the fight; step back into the lane when done
   moveStrip(e, dt, t, R, speed, px, py) {
     const dir = FWD[e.team];
     e.detour = 0; e.x = e.bx;
-    const front = this.stripFront(e);
+    const front = this.stripFront(e), longer = this.stripLonger; // longer: only longer-range fighters beside it
     let moved = 0, block = null;
-    if (this.wantsToMove(e, t, R) && front) {
+    if (this.wantsToMove(e, t, R) && (front || longer)) {
       let ny = e.y + dir * speed * dt;
-      const cap = front.y - dir * (R.follow ? front.radius + e.radius + R.follow : 0);
-      if ((ny - cap) * dir > 0) ny = cap;
+      const cap = front ? front.y - dir * (R.follow ? front.radius + e.radius + R.follow : 0) : null;
+      if (cap != null && (ny - cap) * dir > 0) ny = cap;
+      for (const f of this.entities) { // walking on past the fight: enemy mechs and turrets ahead in the two lanes block
+        if (front || f.dead || f.team === e.team || (f.kind !== 'mech' && f.kind !== 'turret' && f.kind !== 'base') || (f.y - e.y) * dir <= 0) continue;
+        if (f.kind !== 'base' && f.lane !== e.lane && f.lane !== e.lane + e.strip) continue;
+        const s = f.y - dir * (f.kind === 'base' ? e.radius : f.radius + e.radius);
+        if ((ny - s) * dir > 0) { ny = s; block = f; }
+      }
       const id = this.stripOf(e);
       for (const f of this.entities) { // other mechs on the same strip, either team
         if (f.dead || f === e || f.kind !== 'mech' || this.stripOf(f) !== id || (f.y - e.y) * dir <= 0) continue;
@@ -761,7 +772,7 @@ export class World {
     }
     e.blocker = block && block.team !== e.team ? block : null;
     // done here: no target and no closer spot, or the fight beside it is over
-    e.stripWait = !t && (!front || moved < 1e-3);
+    e.stripWait = !t && ((!front && !longer) || moved < 1e-3);
     if (e.stripWait && this.stripBackFree(e)) {
       e.shift = { from: e.lane, to: e.lane, x0: e.bx, x1: laneX(e.lane) + e.jitter * 0.5 };
       e.strip = null; e.stripWait = false; e.stripAgain = this.time + STRIP.again;
