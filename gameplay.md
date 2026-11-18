@@ -9,25 +9,25 @@ It's a sister game to **Ironline** (`../mech_defense/`). The economy, units, upg
 Numbers marked *(tune)* are starting values carried over from Ironline or picked as a first guess. They're expected to change once the game is playable.
 
 ### Glossary (agreed 2026-11-18)
-Words we use in this file, ISSUES.md and discussions, with one meaning each:
+Words we use in this file, ISSUES.md and discussions, with one meaning each. Acronyms are optional shorthand (written out on first use in a message); they don't collide with the unit type codes.
 
-| Word | Meaning |
-|---|---|
-| **Unit type** | one kind of mech: Scout, Gunner, Brawler, Mortar, Seeker, Aegis, Breacher, Lancer (short: SC GU BW MO SE AE BE LA) |
-| **Role** | what a unit type does and how it moves: Tank, Line, Artillery, Support, Charger |
-| **Trait** | one extra rule a unit type has on top of its role (e.g. Flanker) |
-| **Loadout** | the 5 unit types a side brings into a battle |
-| **Building the loadout** | *before* the battle: which unit types go into a loadout (yours on the loadout screen; the enemy's fixed per stage, or random in Endless/quick match) |
-| **Sending** | *during* the battle: which unit(s) from its loadout the enemy deploys next |
-| **Personality** | the theme of an enemy loadout: siege, swarm, artillery line, … |
-| **Focus types** | the 1–2 unit types of a personality the enemy sends more often (siege: Breacher and Lancer) |
-| **Single** | the enemy sends one unit |
-| **Group** | the enemy sends a few units together in one lane, in a fixed order by role (tank in front, artillery or Aegis at the back) |
-| **Defensive pick** | when your mechs are near its base, the enemy sends a single defender |
-| **Intel** | the enemy's loadout, level, turrets and base upgrades shown on the loadout screen |
-| **Frontrunner** | the unit type a campaign stage's enemy brings that you unlock by clearing that stage ("?", New unit) |
-| **Surprise** | from stage 7 and in Endless, one enemy unit type hidden in the intel ("?") |
-| **Fan-out / strip / pass** | movement terms, see §5.2 |
+| Word | Short | Meaning |
+|---|---|---|
+| **Unit type** | UT | one kind of mech: Scout, Gunner, Brawler, Mortar, Seeker, Aegis, Breacher, Lancer (codes SC GU BW MO SE AE BE LA) |
+| **Role** | RO | what a unit type does and how it moves: Tank, Line, Artillery, Support, Charger |
+| **Trait** | | one extra rule a unit type has on top of its role (e.g. Flanker) |
+| **Loadout** | LO | the 5 unit types a side brings into a battle |
+| **Building the loadout** | BL | *before* the battle: which unit types go into a loadout (yours on the loadout screen; the enemy's fixed per stage, or random in Endless/quick match) |
+| **Deployment** | DEP | *during* the battle: placing units from the loadout on the field, either side (stats event `deploy`). The enemy's **deploy choice** is its decision what to deploy next |
+| **Personality** | PE | the theme of an enemy loadout: siege, swarm, artillery line, … |
+| **Focus types** | FT | the 1–2 unit types of a personality the enemy deploys more often (siege: Breacher and Lancer) |
+| **Single** | SG | the enemy deploys one unit |
+| **Group** | GR | the enemy deploys a few units together in one lane, in a fixed order by role (tank in front, artillery or Aegis at the back) |
+| **Defensive pick** | DP | when your mechs are near its base, the enemy deploys a single defender |
+| **Intel** | | the enemy's loadout, level, turrets and base upgrades shown on the loadout screen |
+| **Frontrunner** | FR | the unit type a campaign stage's enemy brings that you unlock by clearing that stage ("?", New unit) |
+| **Surprise** | SU | from stage 7 and in Endless, one enemy unit type hidden in the intel ("?") |
+| **Fan-out / strip / pass** | | movement terms, see §5.2 |
 
 ## 1. Differences from Ironline
 
