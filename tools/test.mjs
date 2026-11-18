@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE } from '../src/data.js';
+import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout } from '../src/data.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -852,6 +852,25 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
     const o = mk([]); o.placeTurret(0, 'sentry', 1, 4);
     check('forward: first tap on another lane only selects it', o.setLane(1) === 'lane' && o.laneFwd(1));
   }
+}
+
+// enemy loadouts (ISSUES.md 2026-11-18): at most 5 types per stage, stage n brings the unit cleared stage n unlocks,
+// random loadouts follow the rules, the AI fields only its loadout
+{
+  check('enemy loadouts: at most 5 different types per stage', STAGES.every((st) => st.roster.length <= LOADOUT_SIZE && new Set(st.roster).size === st.roster.length && st.roster.every((t) => MECHS[t])));
+  const front = UNLOCKS.slice(1).map((u, n) => (u.mechs || []).every((t) => STAGES[n].roster.includes(t)));
+  check('enemy loadouts: stage n brings the unit unlocked by clearing it (frontrunner)', front.every(Boolean), front.join());
+  let r = 7; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const role = (t) => MECHS[t].role, draws = Array.from({ length: 500 }, () => randomLoadout(rnd));
+  const ok = draws.every((d) => d.length === LOADOUT_SIZE && new Set(d).size === LOADOUT_SIZE && d.some((t) => role(t) === 'line')
+    && d.some((t) => role(t) === 'tank' || role(t) === 'artillery') && d.filter((t) => role(t) === 'charger').length <= 1);
+  check('random loadout: 5 types, a Line, a Tank or Artillery, at most one Charger', ok);
+  check('random loadout: varied', new Set(draws.map((d) => [...d].sort().join())).size > 20 && MECH_TYPES.every((t) => draws.some((d) => d.includes(t))));
+  const lo = ['scout', 'gunner', 'seeker', 'aegis', 'mortar'];
+  const w = new World({ name: 'L', index: 6, baseHp: 1e6, lvl: 0, regen: 0, roster: lo, turrets: [], base: {} }, defaultSave(), ALL, { seed: 21 });
+  const all = [];
+  for (let i = 0; i < 2000; i++) { w.time = i % 400; for (const g of w.aiOrder(i % 4 === 0 ? 800 : 0).groups) all.push(...g); }
+  check('AI fields only its loadout (no Tank in a tankless loadout)', all.every((t) => lo.includes(t)) && lo.every((t) => all.includes(t)), [...new Set(all)].join(','));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

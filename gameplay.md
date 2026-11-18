@@ -80,7 +80,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 - **Forward deploy** *(0.4.0-dev, player only)*: your turrets double as forward bases for their **own lane only** (a turret in L3 serves L3, not L2/L4). **Forward is the default:** when a lane's first turret is finished, the lane switches to forward on its own (button shows **FWD**); a further turret keeps whatever the lane is set to. Tapping the already selected lane button again switches that lane between forward and base (forward only if the lane has a finished turret). Each lane remembers its choice. New mechs appear just behind (base side of) the lane's frontmost turret; a turret under attack still works. If it falls, the next turret back in that lane takes over; when the lane's last turret is destroyed or sold, the lane goes back to the base. Queued orders keep their own choice (▲ in the queue) and fall back the same way. Tapping the field near your base selects that lane at the base. The enemy doesn't deploy forward (it would have to build its turrets like the player; ISSUES.md "same rules for the enemy").
 - Each card has a short cooldown after use, as in Ironline.
 - **Loadout:** you have up to 8 mech types, but the HUD holds 5 mech cards. Before each battle you pick a loadout of 5 unlocked mechs, which keeps hotkeys 1–5. The last loadout is remembered. *(Might later grow to allow all 8 mechs.)*
-- **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. A unit type you've never fought shows as "?" until you meet it. During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
+- **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. From 0.6.0-dev the intel shows the enemy's loadout. A type you neither own nor have fought (the stage's frontrunner) shows as "?" ("New unit"). From stage 7, and in Endless, one slot is the **surprise**: it shows as "?" (always last), a different type of the loadout each battle. During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
 
 ### 5.2 Movement: roles, types and traits
 
@@ -344,28 +344,29 @@ Everything below carries over from Ironline unless noted.
 - **Credits:**
   - Win: `60 + 30 × min(stage index, 14) + 25 × stars`
   - Loss: `15 + 2 × kills`
-- **Campaign:** 12 stages, each harder than the last. Endless mode opens after all 12 are cleared. Enemy turrets are given as (type, lane 1–5, row 0–6 counted from the enemy base). Each stage has fixed enemy base upgrade levels.
+- **Campaign:** 12 stages, each harder than the last. Endless mode opens after all 12 are cleared. Enemy turrets are given as (type, lane 1–5, row 0–6 counted from the enemy base). Each stage has fixed enemy base upgrade levels and a fixed **enemy loadout** of up to 5 mech types (the AI fields only these), which gives each stage its own personality. Stage n's enemy brings the unit you unlock by clearing stage n (in **bold**: the "frontrunner"). *(0.6.0-dev)*
 
-| # | Stage | Enemy base HP | Enemy level | Enemy regen | Enemy roster | Enemy turrets (type lane/row) | Enemy base upgrades |
+| # | Stage | Enemy base HP | Enemy level | Enemy regen | Enemy loadout | Enemy turrets (type lane/row) | Enemy base upgrades |
 |---|---|---|---|---|---|---|---|
-| 1 | Scrubline | 1500 | 0 | 5 | Scout | none | — |
-| 2 | Dry Ford | 1800 | 0 | 6 | Scout, Gunner | none | — |
-| 3 | Quarry Road | 2100 | 0 | 6.5 | + Brawler | Sentry 3/3 | — |
-| 4 | Dust Belt | 2400 | 0 | 7 | + Mortar | Sentry 2/3, 4/3 | Gun 1 |
-| 5 | Saltpan | 2700 | 0 | 7.5 | + Seeker | Sentry 1/3, 5/3; Howitzer 3/1 | Armor 1 |
-| 6 | Red Cut | 3000 | 1 | 8 | Gunner, Brawler, Mortar, Seeker, Aegis | Sentry 2/4, 3/4, 4/4; Howitzer 3/1 | Armor 1, Gun 1 |
-| 7 | Pylon Field | 3300 | 1 | 9.2 | 7 types (no Breacher) | Arc 3/3; Sentry 1/3, 5/3; Howitzer 2/1 | Reactor 1 |
-| 8 | Gravel Sea | 3600 | 1 | 9.7 | 7 types (no Scout) | Sentry 1/4, 2/4, 4/4; Arc 3/4; Howitzer 3/1, 5/2 | Armor 1, Gun 1 |
-| 9 | Ironwood | 4000 | 2 | 10.3 | 7 types (no Scout) | Sentry 1/5, 2/5, 4/5, 5/5; Arc 3/3; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
-| 10 | Ash Ridge | 4400 | 2 | 10.8 | all 8 | Arc 2/4, 4/4; Sentry 3/4, 3/1; Howitzer 1/2, 5/2 | Armor 2, Gun 1, Reactor 1 |
-| 11 | Breakwater | 4800 | 2 | 11.3 | 7 types (no Scout) | Sentry wall 1–5/5; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
-| 12 | Last Bastion | 5400 | 2 | 12.4 | all 8 | Arc 1/5, 3/5, 5/5; Sentry 2/5, 4/5; Howitzer 2/1, 4/1 | Armor 2, Gun 2, Reactor 1 |
+| 1 | Scrubline | 1500 | 0 | 5 | Scout, Gunner, **Brawler** | none | — |
+| 2 | Dry Ford | 1800 | 0 | 6 | Scout, Gunner, Brawler, **Mortar** | none | — |
+| 3 | Quarry Road | 2100 | 0 | 6.5 | Scout, Gunner, Brawler, Mortar, **Seeker** | Sentry 3/3 | — |
+| 4 | Dust Belt | 2400 | 0 | 7 | Brawler, **Aegis**, Gunner, Seeker, Mortar (armored) | Sentry 2/3, 4/3 | Gun 1 |
+| 5 | Saltpan | 2700 | 0 | 7.5 | **Lancer**, Mortar, Gunner, Brawler, Scout (long guns) | Sentry 1/3, 5/3; Howitzer 3/1 | Armor 1 |
+| 6 | Red Cut | 3000 | 1 | 8 | **Breacher**, Brawler, Aegis, Gunner, Mortar (wall breakers) | Sentry 2/4, 3/4, 4/4; Howitzer 3/1 | Armor 1, Gun 1 |
+| 7 | Pylon Field | 3300 | 1 | 9.2 | Scout, Gunner, Seeker, Aegis, Mortar (swarm, no tanks) | Arc 3/3; Sentry 1/3, 5/3; Howitzer 2/1 | Reactor 1 |
+| 8 | Gravel Sea | 3600 | 1 | 9.7 | Lancer, Mortar, Breacher, Brawler, Gunner (siege) | Sentry 1/4, 2/4, 4/4; Arc 3/4; Howitzer 3/1, 5/2 | Armor 1, Gun 1 |
+| 9 | Ironwood | 4000 | 2 | 10.3 | Brawler, Aegis, Seeker, Gunner, Breacher (iron wall) | Sentry 1/5, 2/5, 4/5, 5/5; Arc 3/3; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
+| 10 | Ash Ridge | 4400 | 2 | 10.8 | Lancer, Mortar, Seeker, Gunner, Brawler (artillery line) | Arc 2/4, 4/4; Sentry 3/4, 3/1; Howitzer 1/2, 5/2 | Armor 2, Gun 1, Reactor 1 |
+| 11 | Breakwater | 4800 | 2 | 11.3 | Scout, Breacher, Brawler, Gunner, Seeker (rush) | Sentry wall 1–5/5; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
+| 12 | Last Bastion | 5400 | 2 | 12.4 | Brawler, Aegis, Seeker, Lancer, Mortar (elite) | Arc 1/5, 3/5, 5/5; Sentry 2/5, 4/5; Howitzer 2/1, 4/1 | Armor 2, Gun 2, Reactor 1 |
 
 **Endless wave n** starts just above Last Bastion and ramps up gradually:
 - **Enemy base HP:** 5400 × (1 + 0.06 n)
 - **Enemy level:** 2 + ⌊(n + 1) / 3⌋, max 5
 - **Enemy regen:** 12.4 × (1 + 0.04 n)
-- **Turrets and roster:** the same as Last Bastion
+- **Turrets:** the same as Last Bastion
+- **Enemy loadout:** new and random every battle: 5 different types with at least one Line type, at least one Tank or Artillery, and at most one Charger
 - **Enemy base upgrades:** armor 2 + ⌊n/3⌋, gun 2 + ⌊n/4⌋, reactor 1 + ⌊n/3⌋, each capped at 3
 
 So Endless 1 is about as hard as stage 12, Endless 2 brings level 3, and each further wave adds a little.

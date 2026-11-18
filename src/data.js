@@ -240,49 +240,53 @@ export const LOADOUT_SIZE = 5;
 
 // ---------- stages ----------
 // turrets: [type, lane (0-4), row (0 = nearest the enemy base)]. base: enemy base upgrade levels.
+// roster: the enemy loadout (at most LOADOUT_SIZE types; the AI fields only these). Stage n brings the unit the player
+// unlocks by clearing it (the "frontrunner", ISSUES.md 2026-11-18); from SURPRISE_FROM one slot is hidden in the intel.
+// Personalities: 1 first contact, 2 first shells, 3 hunters, 4 armored, 5 long guns, 6 wall breakers, 7 swarm (no tanks),
+// 8 siege, 9 iron wall, 10 artillery line, 11 rush, 12 elite.
 const S = (name, o) => ({ name, ...o });
 export const STAGES = [
-  S('Scrubline', { baseHp: 1500, lvl: 0, regen: 5, roster: ['scout'], turrets: [], base: {} }),
-  S('Dry Ford', { baseHp: 1800, lvl: 0, regen: 6, roster: ['scout', 'gunner'], turrets: [], base: {} }),
-  S('Quarry Road', { baseHp: 2100, lvl: 0, regen: 6.5, roster: ['scout', 'gunner', 'brawler'], turrets: [['sentry', 2, 3]], base: {} }),
+  S('Scrubline', { baseHp: 1500, lvl: 0, regen: 5, roster: ['scout', 'gunner', 'brawler'], turrets: [], base: {} }),
+  S('Dry Ford', { baseHp: 1800, lvl: 0, regen: 6, roster: ['scout', 'gunner', 'brawler', 'mortar'], turrets: [], base: {} }),
+  S('Quarry Road', { baseHp: 2100, lvl: 0, regen: 6.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker'], turrets: [['sentry', 2, 3]], base: {} }),
   S('Dust Belt', {
-    baseHp: 2400, lvl: 0, regen: 7, roster: ['scout', 'gunner', 'brawler', 'mortar'],
+    baseHp: 2400, lvl: 0, regen: 7, roster: ['brawler', 'aegis', 'gunner', 'seeker', 'mortar'],
     turrets: [['sentry', 1, 3], ['sentry', 3, 3]], base: { gun: 1 },
   }),
   S('Saltpan', {
-    baseHp: 2700, lvl: 0, regen: 7.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker'],
+    baseHp: 2700, lvl: 0, regen: 7.5, roster: ['lancer', 'mortar', 'gunner', 'brawler', 'scout'],
     turrets: [['sentry', 0, 3], ['howitzer', 2, 1], ['sentry', 4, 3]], base: { armor: 1 },
   }),
   S('Red Cut', {
-    baseHp: 3000, lvl: 1, regen: 8, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis'],
+    baseHp: 3000, lvl: 1, regen: 8, roster: ['breacher', 'brawler', 'aegis', 'gunner', 'mortar'],
     turrets: [['sentry', 1, 4], ['sentry', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1]], base: { gun: 1, armor: 1 },
   }),
   S('Pylon Field', {
-    baseHp: 3300, lvl: 1, regen: 9.2, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer'],
+    baseHp: 3300, lvl: 1, regen: 9.2, roster: ['scout', 'gunner', 'seeker', 'aegis', 'mortar'],
     turrets: [['arc', 2, 3], ['sentry', 0, 3], ['sentry', 4, 3], ['howitzer', 1, 1]], base: { reactor: 1 },
   }),
   S('Gravel Sea', {
-    baseHp: 3600, lvl: 1, regen: 9.7, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 3600, lvl: 1, regen: 9.7, roster: ['lancer', 'mortar', 'breacher', 'brawler', 'gunner'],
     turrets: [['sentry', 0, 4], ['sentry', 1, 4], ['arc', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1], ['howitzer', 4, 2]],
     base: { armor: 1, gun: 1 },
   }),
   S('Ironwood', {
-    baseHp: 4000, lvl: 2, regen: 10.3, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4000, lvl: 2, regen: 10.3, roster: ['brawler', 'aegis', 'seeker', 'gunner', 'breacher'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['arc', 2, 3], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Ash Ridge', {
-    baseHp: 4400, lvl: 2, regen: 10.8, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4400, lvl: 2, regen: 10.8, roster: ['lancer', 'mortar', 'seeker', 'gunner', 'brawler'],
     turrets: [['arc', 1, 4], ['arc', 3, 4], ['sentry', 2, 4], ['howitzer', 0, 2], ['howitzer', 4, 2], ['sentry', 2, 1]],
     base: { armor: 2, gun: 1, reactor: 1 },
   }),
   S('Breakwater', {
-    baseHp: 4800, lvl: 2, regen: 11.3, roster: ['gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 4800, lvl: 2, regen: 11.3, roster: ['scout', 'breacher', 'brawler', 'gunner', 'seeker'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 2, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Last Bastion', {
-    baseHp: 5400, lvl: 2, regen: 12.4, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher'],
+    baseHp: 5400, lvl: 2, regen: 12.4, roster: ['brawler', 'aegis', 'seeker', 'lancer', 'mortar'],
     turrets: [['arc', 0, 5], ['sentry', 1, 5], ['arc', 2, 5], ['sentry', 3, 5], ['arc', 4, 5], ['howitzer', 1, 1], ['howitzer', 3, 1]],
     base: { armor: 2, gun: 2, reactor: 1 },
   }),
@@ -296,13 +300,28 @@ export function stageDef(i) {
     name: `Endless ${n}`, index: i, endless: true,
     baseHp: Math.round(last.baseHp * (1 + 0.06 * n)),
     lvl: Math.min(MAX_UNIT_LEVEL, last.lvl + Math.floor((n + 1) / 3)),
-    regen: +(last.regen * (1 + 0.04 * n)).toFixed(1), roster: last.roster, turrets: last.turrets,
+    regen: +(last.regen * (1 + 0.04 * n)).toFixed(1), roster: last.roster, turrets: last.turrets, // the game gives Endless a randomLoadout() per battle
     base: {
       armor: Math.min(3, (last.base.armor || 0) + Math.floor(n / 3)),
       gun: Math.min(3, (last.base.gun || 0) + Math.floor(n / 4)),
       reactor: Math.min(3, (last.base.reactor || 0) + Math.floor(n / 3)),
     },
   };
+}
+
+export const SURPRISE_FROM = 6; // stage index (stage 7): from here one enemy loadout slot shows '?' in the intel
+
+// A rule-based random enemy loadout (Endless, later quick match): LOADOUT_SIZE different types with at least one Line
+// type, at least one Tank or Artillery, and at most one Charger. rnd: () => [0, 1).
+export function randomLoadout(rnd, types = MECH_TYPES) {
+  const role = (t) => MECHS[t].role;
+  for (let n = 0; n < 1000; n++) {
+    const pool = [...types], pick = [];
+    while (pick.length < Math.min(LOADOUT_SIZE, types.length)) pick.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    if (pick.some((t) => role(t) === 'line') && pick.some((t) => role(t) === 'tank' || role(t) === 'artillery')
+      && pick.filter((t) => role(t) === 'charger').length <= 1) return pick;
+  }
+  return STAGES[STAGES.length - 1].roster.slice();
 }
 
 export const stageReward = (i, stars) => 60 + 30 * Math.min(i, 14) + 25 * stars;

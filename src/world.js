@@ -1174,7 +1174,8 @@ export class World {
     // under pressure: half the time a single unit from the defensive set
     if (pressure > 300 && this.rnd() < 0.5) {
       const def = AI.defensive.filter((t) => roster.includes(t));
-      return { groups: [[def.length ? def[Math.floor(this.rnd() * def.length)] : roster[roster.length - 1]]] };
+      const solo = roster.filter((t) => MECHS[t].role !== 'support');
+      return { groups: [[def.length ? def[Math.floor(this.rnd() * def.length)] : solo[solo.length - 1]]] };
     }
     const [g0, g1] = AI.groupChance;
     if (this.rnd() < g0 + late * (g1 - g0)) {

@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, SURPRISE_FROM, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -96,12 +96,24 @@ function demoTick(dt) {
 }
 
 // ---------- stage flow ----------
+// The stage of the next battle: Endless gets a new random enemy loadout every battle; from SURPRISE_FROM one enemy
+// slot (random per battle) is the surprise and shows '?' in the intel.
+function prepareStage(i) {
+  const st = stageDef(i);
+  if (st.endless) st.roster = randomLoadout(Math.random);
+  if (i >= SURPRISE_FROM) st.surprise = st.roster[Math.floor(Math.random() * st.roster.length)];
+  game.next = { i, st };
+  return st;
+}
+const nextStage = (i) => (game.next?.i === i ? game.next.st : prepareStage(i));
 function startStage(i) {
   initAudio();
+  prepareStage(i);
   showLoadout(i); // always: it also shows the enemy intel (with 5 or fewer mechs unlocked, all are picked)
 }
 // ---------- enemy intel ----------
-// Enemy mech types the player has fought at least once; the rest show as '?' in the intel. A save from before the
+// Enemy mech types the player has fought at least once. The intel shows '?' for a type the player neither owns nor has
+// fought (the stage's frontrunner) and for the surprise slot. A save from before the
 // intel counts the rosters of all cleared stages as seen.
 function seenSet() {
   if (!Array.isArray(save.seen)) {
@@ -120,10 +132,12 @@ function noteSeen(w) {
   if (s.size !== before) { save.seen = [...s]; writeSave(save); }
 }
 function intelHtml(i) {
-  const st = stageDef(i), seen = seenSet();
-  const units = st.roster.map((t) => seen.has(t)
+  const st = nextStage(i), seen = seenSet(), own = new Set(unlocked().mechs);
+  // the surprise always shows last: in its own slot, the fixed stage order would give it away on a replay
+  const units = [...st.roster.filter((t) => t !== st.surprise), ...(st.surprise ? [st.surprise] : [])].map((t) => t === st.surprise ? '<span class="iu unknown"><i>?</i><small>Surprise</small></span>'
+    : seen.has(t) || own.has(t)
     ? `<span class="iu"><canvas width="72" height="72" data-icon="mech:${t}:1"></canvas><small>${MECHS[t].name}</small></span>`
-    : '<span class="iu unknown"><i>?</i><small>Unknown</small></span>').join('');
+    : '<span class="iu unknown"><i>?</i><small>New unit</small></span>').join('');
   const tc = {};
   for (const [t] of st.turrets || []) tc[t] = (tc[t] || 0) + 1;
   const turrets = Object.entries(tc).map(([t, n]) => `${n}× ${TURRETS[t].name}`).join(', ') || 'none';
@@ -140,7 +154,8 @@ function launch(i) {
   const u = unlocked();
   game.stageIndex = i;
   game.mode = 'play';
-  game.world = new World(stageDef(i), save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { dev: devSettings() });
+  const st = nextStage(i); game.next = null;
+  game.world = new World(st, save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { dev: devSettings() });
   game.world.battleId = randomHex(8);
   game.paused = false;
   game.resultShown = false;
@@ -151,7 +166,6 @@ function launch(i) {
   resize();
   renderer.camY = -20; renderer.clampCam();
   buildHud();
-  const st = stageDef(i);
   $('#stage-no').textContent = st.endless ? 'ENDLESS' : `STAGE ${String(i + 1).padStart(2, '0')}`;
   $('#stage-name').textContent = st.endless ? `WAVE ${i - STAGES.length + 1}` : st.name.toUpperCase();
   $('#foe-lvl').textContent = `L${st.lvl} `;
@@ -183,6 +197,7 @@ function summary(result, stars = 0) {
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
+    mode: st.endless ? 'endless' : 'campaign', enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
     dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)), strip: duo(w.log.strip.map((a) => a.map(Math.round))), wait: duo(w.log.wait.map(rounded)), life: duo(w.lifeLog().map(rounded)),
@@ -361,7 +376,7 @@ function showLoadout(i) {
     screen.className = '';
     screen.innerHTML = `
       <div class="panel">
-        <div class="head"><div><h2>Loadout</h2><p class="sub">${stageDef(i).name}: ${u.length > LOADOUT_SIZE ? `pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE})` : 'your mechs'}.</p></div>
+        <div class="head"><div><h2>Loadout</h2><p class="sub">${nextStage(i).name}: ${u.length > LOADOUT_SIZE ? `pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE})` : 'your mechs'}.</p></div>
           <button class="btn small" data-a="back">Back</button></div>
         ${intelHtml(i)}
         <div class="section-t">YOUR MECHS</div>
