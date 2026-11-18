@@ -49,8 +49,9 @@ export class World {
     // dmg[team][attacker type] = [to mechs, to turrets, to the base, to the Constructor]: HP actually removed (no overkill);
     // attacker 'bomb' = Bombing. taken[team][type] = HP lost. shield[team] = HP the Aegis field saved its side.
     // strip[team] = [times a mech stepped onto a strip, damage dealt from strips]
+    // wait[team][type] = seconds its mechs stood still with nothing to shoot (summed over all mechs of that type)
     this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [],
-      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]] };
+      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]], wait: [{}, {}] };
     this.aiOrders = 0;
     this.nextSample = 0;
     this.march = opts.march ?? MARCH.pace;
@@ -442,7 +443,11 @@ export class World {
       e.aim += Math.max(-step, Math.min(step, d));
       aimed = !!t && Math.abs(angDiff(e.aim, want)) < AIM_TOL;
     }
-    if (e.kind === 'mech') this.move(e, dt, t);
+    if (e.kind === 'mech') {
+      this.move(e, dt, t);
+      // waiting: standing still with nothing to shoot (walking and fighting don't count)
+      if (!e.moving && !t) this.log.wait[e.team][e.type] = (this.log.wait[e.team][e.type] || 0) + dt;
+    }
     if (t && aimed && e.cool <= 0) {
       e.cool = this.stat(e, 'reload');
       this.fire(e, t);

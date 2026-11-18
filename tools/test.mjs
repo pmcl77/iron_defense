@@ -731,6 +731,15 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   run(w2, 6);
   check('A: a marching column stays in its lane', g2.lane === 2 && g3.lane === 2 && !g3.strip, `L${g2.lane + 1} L${g3.lane + 1}`);
 }
+// ---- waiting time stat
+{
+  const w = mk([], 0);
+  const foe = mech(w, 'brawler', 1, 2, 1400, 1e9); foe.def = { ...foe.def, dmg: 0, speed: 0 };
+  const g1 = mech(w, 'gunner', 0, 2, 1150, 1e9); // fights: no waiting
+  const m = mech(w, 'mortar', 0, 4, 300, 1e9); m.def = { ...m.def, speed: 0 }; // stands with nothing to shoot
+  run(w, 5);
+  check('wait stat: standing without a target counts, fighting does not', (w.log.wait[0].mortar || 0) > 4 && (w.log.wait[0].gunner || 0) < 2, JSON.stringify(w.log.wait[0]));
+}
 // ---- dev switches
 {
   check('dev switches: defaults', (() => { const w = mk(); return w.dev.drift === true && w.dev.returnDelay === false && w.dev.stripFirst === false && w.log.dev.drift === true; })());
