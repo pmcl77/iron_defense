@@ -971,6 +971,15 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const noTank = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 2 });
   const st2 = new Set(); for (let i = 0; i < 40; i++) { noTank.aiBuildWave(); st2.add(noTank.ai.waveStyle); }
   check('waves: no tank-led wave without a tank (stage 7)', !st2.has('tank') && st2.size === 2);
+  // lane sets never repeat back to back; waves use 1–3 neighbouring lanes of the set (mostly 2)
+  { const v = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 5 }); let rep = 0, prev = null;
+    for (let i = 0; i < 200; i++) { v.time = i * 200; const s = v.laneSet(); if (s === prev) rep++; prev = s; }
+    check('lane sets: never the same set twice in a row', rep === 0, `${rep} repeats`);
+    const wn = [0, 0, 0, 0]; let neigh = true;
+    for (let i = 0; i < 400; i++) { v.time = 300 + i; const wv = v.aiBuildWave(), ls = [...new Set(wv.map((u) => u.lane))].sort((a, b) => a - b);
+      wn[ls.length]++; const set = [...v.ai.set].sort((a, b) => a - b), ix = ls.map((l) => set.indexOf(l));
+      if (ix.some((x, j) => x < 0 || (j && x !== ix[j - 1] + 1))) neigh = false; }
+    check('waves: mostly 2 neighbouring lanes of the set, sometimes 1 or all 3', neigh && wn[2] > wn[1] && wn[1] > wn[3] && wn[3] > 20, `1 lane ${wn[1]}, 2 lanes ${wn[2]}, 3 lanes ${wn[3]}`); }
   // early waves smaller (budget 400 → 600 over 4 min); extras: every mixed wave, about 1 in 3 plain waves
   const cost = (wv) => wv.reduce((a, u) => a + MECHS[u.type].cost, 0);
   const rw = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 3 });

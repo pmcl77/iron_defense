@@ -1235,7 +1235,13 @@ export class World {
     const styles = tanks.length ? ['plain', 'mixed', 'tank'] : ['plain', 'mixed'];
     const style = styles[Math.floor(this.rnd() * styles.length)];
     const set = this.laneSet() || [...Array(LANES).keys()];
-    const lanes = [...set]; const k = Math.floor(this.rnd() * lanes.length); lanes.push(...lanes.splice(0, k)); // random start
+    // width: 1–3 neighbouring lanes of the set (AI.wave.width), then a random start among them
+    const sorted = [...set].sort((a, b) => a - b), wr = this.rnd();
+    let n = 1; for (let c = 0; n < W.width.length && wr >= (c += W.width[n - 1]); n++);
+    n = Math.min(n, sorted.length);
+    const s0 = Math.floor(this.rnd() * (sorted.length - n + 1)), lanes = sorted.slice(s0, s0 + n);
+    const k = Math.floor(this.rnd() * lanes.length); lanes.push(...lanes.splice(0, k));
+    this.ai.waveLanes = lanes.length;
     let budget = this.waveBudget(); const lead = [], body = [], back = [];
     const take = (list, t) => { if (budget < MECHS[t].cost || lead.length + body.length + back.length >= W.max) return false; budget -= MECHS[t].cost; list.push(t); return true; };
     if (style === 'tank') for (let i = 0; i < Math.min(2, lanes.length); i++) take(lead, tanks[Math.floor(this.rnd() * tanks.length)]);
@@ -1245,8 +1251,8 @@ export class World {
     for (let i = 0; i < 40; i++) if (!take(body, style === 'plain' ? one : ft[i % ft.length])) break;
     body.sort((a, b) => MECHS[a].speed - MECHS[b].speed); // slowest first: the fast ones catch up
     this.ai.waveStyle = style;
-    this.ev('wave', 0, style, lead.length + body.length + back.length);
-    // lanes: tanks lead in the first lanes and the rest follows them; otherwise the wave rotates through the set
+    this.ev('wave', 0, style, lead.length + body.length + back.length, lanes.map((l) => l + 1).sort().join(''));
+    // lanes: tanks lead in the first lanes and the rest follows them; otherwise the wave rotates through its lanes
     const use = style === 'tank' ? lanes.slice(0, lead.length) : lanes;
     return [...lead, ...body, ...back].map((type, i) => ({ type, lane: use[i % use.length], gi: (i % use.length) + 1 }));
   }
@@ -1364,7 +1370,8 @@ export class World {
     if (!ai.set || this.time >= ai.setEnd) {
       const cover = this.laneCover(), min = Math.min(...cover);
       const weak = (l) => 1 / (1 + (cover[l] - min) / 800);
-      ai.set = this.weightedBy(sets, (set) => Math.pow(set.reduce((a, l) => a + weak(l), 0) / set.length, 2));
+      const prev = ai.set, cand = sets.filter((s) => s !== prev); // never the same set twice in a row
+      ai.set = this.weightedBy(cand, (set) => Math.pow(set.reduce((a, l) => a + weak(l), 0) / set.length, 2));
       const [p0, p1] = AI.lanePhase;
       ai.setEnd = this.time + p0 + this.rnd() * (p1 - p0);
       this.ev('lanes', 0, ai.set.map((l) => l + 1).join(''));

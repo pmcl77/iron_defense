@@ -149,7 +149,9 @@ export const AI = {
   // tank in the loadout: up to two tanks first, the rest piles up behind them). Under pressure it defends at once with
   // its savings (a defensive pick every `gap` s) instead of saving. Early waves are smaller: the budget grows from
   // budget[0] to budget[1] over the first `ramp` s. `extra`: chance of one other unit type at the back, per style.
-  wave: { budget: [400, 600], ramp: 240, max: 12, gap: [1.0, 1.2], extra: { mixed: 1, plain: 1 / 3, tank: 0.5 } },
+  wave: { budget: [400, 600], ramp: 240, max: 12, gap: [1.0, 1.2], extra: { mixed: 1, plain: 1 / 3, tank: 0.5 },
+    // lanes per wave (chance of 1, 2, 3 neighbouring lanes of the set): a wave arrives as one crowd, not spread thin
+    width: [0.25, 0.6, 0.15] },
   defendOrder: 0.7, // share of defensive picks that follow the situation rule (see aiDefend); the rest: a random defender
   // focus types (PERSONALITIES): each battle draws a target factor in `range`: each FT deployed about that many times as
   // often as each other type, measured on the result. The AI steers on its own count: the boost of an FT grows while it
