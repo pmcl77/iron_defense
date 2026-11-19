@@ -2,6 +2,7 @@
 // Run: node tools/test_stats.mjs
 import { DatabaseSync } from 'node:sqlite';
 import { onRequestPost, onRequestGet } from '../functions/api/stats.js';
+import * as notes from '../functions/api/notes.js';
 
 function d1(setup) {
   const db = new DatabaseSync(':memory:');
@@ -93,5 +94,24 @@ const back = (await (await get('?key=secret-key')).json()).rows.find((r) => r.id
 ok(back && back.events.length === 3000, 'gzipped battle reads back complete');
 ok((await postGz(new Uint8Array([1, 2, 3, 4]))).status === 400, 'broken gzip rejected');
 ok((await postGz(await gz(JSON.stringify({ ...battle, pad: 'x'.repeat(1100000) })))).status === 413, 'gzipped body too large once unpacked rejected');
+// notes (functions/api/notes.js): same database and key
+{
+  const nPost = (body) => notes.onRequestPost({ env, request: new Request('https://x/api/notes', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body) }) });
+  const nGet = (q) => notes.onRequestGet({ env, request: new Request('https://x/api/notes' + q) });
+  const n = { battle: '0123456789abcdef', step: 7200, time: 120, text: 'why do the SEs queue here?', mode: 'replay', v: '0.7.0-dev.7' };
+  ok((await nPost(n)).status === 201, 'note stored');
+  ok((await nPost({ ...n, mode: 'battle', text: 'line1\nline2\u0007' })).status === 201, 'battle note stored');
+  ok((await nPost({ ...n, battle: 'xyz' })).status === 400, 'note: bad battle id rejected');
+  ok((await nPost({ ...n, text: '   ' })).status === 400, 'note: empty text rejected');
+  ok((await nPost({ ...n, step: -1 })).status === 400, 'note: bad step rejected');
+  ok((await nPost({ ...n, mode: 'other' })).status === 400, 'note: bad mode rejected');
+  ok((await nPost('x'.repeat(9000))).status === 413, 'note: oversized rejected');
+  ok((await nGet('')).status === 403, 'notes: read without key forbidden');
+  const nd = await (await nGet('?key=secret-key')).json();
+  ok(nd.rows.length === 2 && nd.rows[0].text === n.text && nd.rows[0].step === 7200 && nd.rows[1].text === 'line1\nline2', 'notes read back (control characters removed, newlines kept)');
+  const nd2 = await (await nGet('?key=secret-key&since=' + nd.rows[0].id)).json();
+  ok(nd2.rows.length === 1, 'notes: since');
+  ok((await get('?key=secret-key')).status === 200, 'stats still readable next to the notes table');
+}
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

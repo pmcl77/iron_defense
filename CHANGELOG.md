@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.7.0-dev
 
+### Play-test notes
+- **Notes** (0.7.0-dev.7, dev builds, user: "build it please"): **Note…** in the pause menu during a battle, and **Note** in the replay bar, open a text field; the note is stored with that battle and moment (step and time) in the stats database (new table `notes`, created on first use; same database and key, nothing to set up). Kept on the device until the server has it. `node tools/notes.mjs <notes.json> <stats.json>` lists them with their battle; `tools/replay.mjs … --at m:ss` shows that moment. Replay files now carry the battle id, so notes work on the Mac too. The replay bar: the time moved next to the slider.
+
 ### Fixes
 - **Silence behind the result screen** (0.7.0-dev.6, user report): after a battle the field keeps running behind the result dialog, and its shots and explosions kept playing until you left the dialog. Battle sounds now stop when the result screen appears (the win/lose sound still plays). Replays now have battle sound too (it was silent; off above 2×).
 

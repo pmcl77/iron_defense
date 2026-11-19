@@ -301,7 +301,7 @@ function showReplays() {
   const input = $('#rp-file');
   input.addEventListener('change', async () => {
     const f = input.files[0]; if (!f) return;
-    try { const d = JSON.parse(await f.text()); const rep = d.replay || d; if (!validReplay(rep)) throw new Error(); startReplay({ title: d.title || f.name, replay: rep }); }
+    try { const d = JSON.parse(await f.text()); const rep = d.replay || d; if (!validReplay(rep)) throw new Error(); startReplay({ id: d.id, title: d.title || f.name, replay: rep }); }
     catch { toast('Not a replay file'); }
   });
   bind({ back: showMenu, rp: (el) => startReplay(list[+el.dataset.n]), file: () => input.click() });
@@ -309,7 +309,7 @@ function showReplays() {
 const rp = { rep: null, k: 0, title: '', seeking: false, speed: 1 };
 function startReplay(entry) {
   if (!entry || !validReplay(entry.replay)) { toast('Replay data missing'); return; }
-  rp.rep = entry.replay; rp.k = 0; rp.title = entry.title; rp.seeking = false;
+  rp.rep = entry.replay; rp.k = 0; rp.title = entry.title; rp.id = entry.id || null; rp.seeking = false;
   game.mode = 'replay';
   game.world = replayWorld(rp.rep);
   game.paused = false; game.resultShown = false; game.ui = freshUi();
@@ -370,6 +370,12 @@ $('#rp-back').addEventListener('click', () => seekTo(game.world.step - 30 / STEP
 $('#rp-fwd').addEventListener('click', () => seekTo(game.world.step + 30 / STEP));
 $('#rp-speed').addEventListener('click', () => { rp.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[rp.speed]; updateReplayBar(); });
 $('#rp-exit').addEventListener('click', exitReplay);
+$('#rp-note').addEventListener('click', () => {
+  if (!rp.rep || rp.seeking) return;
+  game.paused = true; updateReplayBar();
+  const w = game.world;
+  showNote({ battle: rp.id, step: w.step, time: w.time, mode: 'replay', title: rp.title }, () => { screen.innerHTML = ''; });
+});
 $('#rp-seek').addEventListener('input', () => { rp.dragging = true; });
 $('#rp-seek').addEventListener('change', (e) => { rp.dragging = false; if (rp.rep) seekTo(+e.target.value / 1000 * rp.rep.steps); });
 function checkpoint() {
@@ -380,7 +386,58 @@ function checkpoint() {
 }
 // send pending summaries: battles left without a result and results the server hasn't confirmed yet
 // (not the checkpoint of the battle that is still running)
+// ---------- play-test notes (functions/api/notes.js, dev builds) ----------
+// A note is tied to a battle (its id) and a moment (step, time). Kept on the device until the server has it.
+const NOTES_KEY = 'iron-defense-notes';
+function pendingNotes(change) {
+  let n = [];
+  try { n = JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { /* ignore */ }
+  if (change) { n = change(n) || n; try { localStorage.setItem(NOTES_KEY, JSON.stringify(n)); } catch { /* ignore */ } }
+  return n;
+}
+let notesSending = false;
+async function flushNotes() {
+  if (notesSending) return;
+  notesSending = true;
+  for (const n of pendingNotes()) {
+    let ok = false;
+    try { ok = (await fetch('/api/notes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(n) })).ok; } catch { /* offline */ }
+    if (!ok) break;
+    pendingNotes((list) => list.filter((x) => x.key !== n.key));
+  }
+  notesSending = false;
+}
+// the note dialog; ctx: { battle, step, time, mode, title }; done() is called after Save or Cancel
+function showNote(ctx, done) {
+  if (!ctx.battle) { toast('This replay has no battle id: notes need one'); done(); return; }
+  const t = Math.floor(ctx.time), clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  screen.className = '';
+  screen.innerHTML = `
+    <div class="panel"><h2>Note</h2><p class="sub">${ctx.title} · at ${clock} · stored with this moment</p>
+      <textarea id="note-text" class="note-text" maxlength="1000" rows="5" placeholder="What do you see? e.g. why do the Seekers queue here?"></textarea>
+      <div class="btn-row"><button class="btn primary" data-a="save">Save</button><button class="btn" data-a="cancel">Cancel</button></div></div>`;
+  const ta = $('#note-text');
+  setTimeout(() => ta.focus(), 50);
+  bind({
+    save: () => {
+      const text = ta.value.trim();
+      if (text) {
+        const { title: _t, ...n } = ctx;
+        pendingNotes((list) => [...list, { ...n, step: Math.round(n.step), time: Math.round(n.time * 10) / 10, text, device: deviceId(), v: VERSION, key: randomHex(8) }]);
+        flushNotes();
+        toast('Note saved');
+      }
+      done();
+    },
+    cancel: done,
+  });
+}
+function battleTitle(w, i = game.stageIndex) {
+  const st = w.stage;
+  return st.endless ? `Endless ${i - STAGES.length + 1}` : `Stage ${i + 1} ${st.name}`;
+}
 function flushCheckpoints() {
+  flushNotes();
   if (!save.settings.stats) { try { localStorage.removeItem(CP_KEY); } catch { /* ignore */ } return; }
   const cp = checkpoints((c) => { for (const k in c) if (!c[k].body) delete c[k]; }); // drop the old format
   const w = game.world, running = game.mode === 'play' && w && !w.statsSent ? w.battleId : null;
@@ -587,12 +644,14 @@ function showPause() {
         <button class="btn" data-a="restart">Restart</button>
         <button class="btn" data-a="sound">Sound: ${save.settings.sound ? 'On' : 'Off'}</button>
         <button class="btn" data-a="aegis">Aegis links: ${AEGIS_NAMES[save.settings.aegis] || AEGIS_NAMES.hit}</button>
+        ${IS_DEV ? '<button class="btn" data-a="note">Note…</button>' : ''}
         <button class="btn" data-a="quit">Quit to stages</button>
       </div>${IS_DEV ? `<div style="margin-top:12px">${devRows(true)}</div>` : ''}</div>`;
   bind({
     resume, restart: () => { sendStats('quit'); startStage(game.stageIndex); },
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showPause(); },
     aegis: () => { cycleAegis(); showPause(); },
+    note: () => { const w = game.world; showNote({ battle: w.battleId, step: w.step, time: w.time, mode: 'battle', title: battleTitle(w) }, showPause); },
     dev: (el) => { toggleDev(el, true); showPause(); },
     quit: () => quitToMenu('stages'),
   });
@@ -880,6 +939,7 @@ minimap.addEventListener('pointermove', (e) => { if (e.buttons) minimapNav(e); }
 // keyboard
 const keys = new Set();
 window.addEventListener('keydown', (e) => {
+  if (e.target && e.target.closest && e.target.closest('textarea, input')) return; // typing a note
   const k = e.key.toLowerCase();
   keys.add(k);
   if (game.mode === 'replay' && (k === ' ' || k === 'p')) { e.preventDefault(); $('#rp-play').click(); return; }

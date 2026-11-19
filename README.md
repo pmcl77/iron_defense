@@ -52,6 +52,7 @@ node tools/test_stats.mjs      # battle statistics function (functions/api/stats
 node tools/balance.mjs [runs] [stages…]   # bot plays the campaign and reports win rates
 node tools/matrix.mjs [seeds] [stages…]   # every bot strategy on the same seeds: outcome and kind of game
 node tools/profile.mjs <stats.json> [row] # strategy profile of real battles (JSON from GET /api/stats)
+node tools/notes.mjs <notes.json> <stats.json>  # play-test notes (GET /api/notes) with their battle and moment
 node tools/replay.mjs <stats.json> <row> [--at m:ss | --export file] # re-run a real battle exactly (since 0.7.0-dev.4); --at: who stands where; --export: a file for the in-game viewer (Replays → Open file)
 node tools/lifetime.mjs [seeds] [switch] # stage 10 bot rounds, a dev switch off vs on, combat lifetime
 node tools/focus.mjs [target] [pressure]  # enemy focus types: simulated deploy factor per stage / personality

@@ -30,12 +30,12 @@ async function init(db) {
   ready = true;
 }
 
-const json = (o, status = 200) => new Response(JSON.stringify(o), {
+export const json = (o, status = 200) => new Response(JSON.stringify(o), {
   status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
 });
 
 // Compare via SHA-256 digests so the check takes the same time whatever the input.
-async function sameKey(a, b) {
+export async function sameKey(a, b) {
   const enc = new TextEncoder();
   const [x, y] = await Promise.all([a, b].map((s) => crypto.subtle.digest('SHA-256', enc.encode(s))));
   const u = new Uint8Array(x), v = new Uint8Array(y);

@@ -59,7 +59,7 @@ function main() {
   const ei = rest.indexOf('--export');
   if (ei >= 0) {
     const f = rest[ei + 1] || `replay_row${row.row}.json`;
-    writeFileSync(f, JSON.stringify({ title: `Row ${row.row}: stage ${row.stage} ${row.stageName}, ${row.result} ${row.stars || 0}★, ${mmss(row.time)}`, result: row.result, stars: row.stars, time: row.time, at: row.created, replay: row.replay }));
+    writeFileSync(f, JSON.stringify({ id: row.id, title: `Row ${row.row}: stage ${row.stage} ${row.stageName}, ${row.result} ${row.stars || 0}★, ${mmss(row.time)}`, result: row.result, stars: row.stars, time: row.time, at: row.created, replay: row.replay }));
     console.log(`wrote ${f}`);
     return;
   }
