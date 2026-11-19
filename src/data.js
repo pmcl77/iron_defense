@@ -208,8 +208,9 @@ export const CONSTRUCTOR = {
 
 export const BASE = { name: 'Base', hp: 3000, dmg: 12, reload: 0.5, range: 340, proj: 'bullet', radius: 0, guns: [120, 480] };
 
+// in-battle base upgrades (the player's Armor upgrade was removed with the Workshop in 0.7.0-dev.1, ISSUES.md: an
+// emergency QRF may replace it). The enemy base keeps `armor` in its stage data as a base HP knob (+20% per level).
 export const BASE_UPGRADES = {
-  armor: { name: 'Armor', desc: '+20% base HP (and repairs it)', costs: [150, 250, 400] },
   gun: { name: 'Bastion Gun', desc: '+50% base gun damage', costs: [120, 220, 350] },
   reactor: { name: 'Reactor', desc: '+2 energy/s, +60 max energy', costs: [100, 200, 320] },
 };
@@ -226,7 +227,7 @@ export const QUEUE = { max: 6, wait: 1.5 };
 // Overtime (ISSUES.md "Battles are too long", tested as dev experiments, kept by the user 2026-11-17): from minute 9
 // both sides' current income (after upgrades, the enemy's ramp and pressure bonus) ×1.5; kill bounty and Surge unchanged.
 export const OVERTIME = { at: 540, mult: 1.5 };
-export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25, perkStart: 50, perkCap: 40, perkRegen: 1 };
+export const ENERGY = { start: 100, regen: 8, cap: 300, bounty: 0.25 };
 
 export const MAX_UNIT_LEVEL = 5;
 export const BASE_MAX_ENERGY = 300;
@@ -370,15 +371,3 @@ export function randomLoadout(rnd, types = MECH_TYPES, personality = null) {
   return STAGES[STAGES.length - 1].roster.slice();
 }
 
-export const stageReward = (i, stars) => 60 + 30 * Math.min(i, 14) + 25 * stars;
-export const lossReward = (kills) => 15 + 2 * kills;
-
-// ---------- workshop ----------
-export const PERKS = {
-  energy: { name: 'Capacitors', desc: '+50 starting energy and +40 max energy', costs: [150, 300, 500] },
-  armor: { name: 'Reinforced Walls', desc: '+15% base HP', costs: [200, 400, 650] },
-  charge: { name: 'Fast Uplink', desc: 'Specials recharge 10% faster', costs: [200, 400, 650] },
-  regen: { name: 'Power Grid', desc: '+1 energy per second', costs: [200, 400, 650] },
-};
-export const MAX_TECH = 3;
-export const techCost = (lvl) => [120, 260, 450][lvl];

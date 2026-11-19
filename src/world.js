@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, PERSONALITIES, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, PERSONALITIES, levelMult, upgradeCost, MAX_UNIT_LEVEL, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -65,31 +65,30 @@ export class World {
     this.activeLane = 2;
     this.fwd = Array(LANES).fill(false); // per lane: deploy forward at the frontmost own turret
 
-    // unit levels per team
+    // unit levels per team: the player starts every type at 0 (in-battle upgrades), the enemy at the stage level
     this.lvl = [{}, {}];
     for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) {
-      this.lvl[0][t] = Math.min(MAX_TECH, save.tech[t] || 0);
+      this.lvl[0][t] = 0;
       this.lvl[1][t] = stage.lvl;
     }
-    const perks = save.perks;
-    this.baseLvl = { armor: 0, gun: 0, reactor: 0 };
+    this.baseLvl = { gun: 0, reactor: 0 };
     const eb = { armor: 0, gun: 0, reactor: 0, ...(stage.base || {}) };
     this.enemyBase = eb;
     this.gunLvl = [0, eb.gun];
 
     // player economy
-    this.maxEnergy = ENERGY.cap + ENERGY.perkCap * perks.energy;
-    this.energy = Math.min(this.maxEnergy, ENERGY.start + ENERGY.perkStart * perks.energy);
-    this.regen = ENERGY.regen + ENERGY.perkRegen * (perks.regen || 0);
+    this.maxEnergy = ENERGY.cap;
+    this.energy = ENERGY.start;
+    this.regen = ENERGY.regen;
     this.deployCd = {};
     this.queue = []; // [{ type, lane }], strict first in, first out
     this.queueWait = 0;
-    this.specialMult = 1 - 0.1 * perks.charge;
+    this.specialMult = 1;
     this.specialCd = {};
     for (const k of Object.keys(SPECIALS)) this.specialCd[k] = SPECIALS[k].cd * this.specialMult * 0.5;
 
     // bases
-    this.playerBaseHp = BASE.hp * (1 + 0.15 * perks.armor);
+    this.playerBaseHp = BASE.hp;
     this.bases = [
       this.spawn({ kind: 'base', type: 'base', team: 0, x: FIELD.w / 2, y: BASE_FACE[0], hp: this.playerBaseHp }),
       this.spawn({ kind: 'base', type: 'base', team: 1, x: FIELD.w / 2, y: BASE_FACE[1], hp: stage.baseHp * (1 + 0.2 * eb.armor) }),
@@ -343,8 +342,6 @@ export class World {
     this.baseLvl[k]++;
     this.log.upgrades.push([Math.round(this.time), 'base.' + k]);
     this.ev('upgrade', 'base.' + k, this.baseLvl[k]);
-    const b = this.bases[0];
-    if (k === 'armor') { const add = BASE.hp * 0.2; b.maxHp += add; b.hp += add; }
     if (k === 'gun') this.gunLvl[0] = this.baseLvl.gun;
     if (k === 'reactor') { this.regen += 2; this.maxEnergy += 60; }
     this.fx.push({ t: 'upgrade' });
@@ -1141,7 +1138,7 @@ export class World {
       c.body = 0;
       if (occupied) return;
       c.building = true;
-      o.progress += dt / (C.buildTime / (1 + 0.2 * this.lvl[0].builder));
+      o.progress += dt / C.buildTime;
       if (o.progress >= 1) {
         this.orders.shift();
         this.placeTurret(0, o.type, o.lane, o.row);

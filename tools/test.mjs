@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI } from '../src/data.js';
+import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI, BASE_UPGRADES } from '../src/data.js';
 import { focusFactor } from './focus.mjs';
 import { defaultSave } from '../src/save.js';
 
@@ -186,24 +186,18 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   void s;
 }
 
-// 15. Workshop upgrades carry over into battle
+// 15. no Workshop (0.7.0-dev.1): every battle starts the same; in-battle upgrades only, no base Armor
 {
-  const save = defaultSave();
-  save.perks = { energy: 3, armor: 3, charge: 3, regen: 3 };
-  for (const t of [...MECH_TYPES, ...TURRET_TYPES, 'builder']) save.tech[t] = 3;
-  const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets: [], base: {} };
-  const w = new World(st, save, ALL, { seed: 1 });
-  check('Capacitors: starting energy', w.energy === 250, `energy ${w.energy}`);
-  check('Capacitors: max energy', w.maxEnergy === 420, `max ${w.maxEnergy}`);
-  check('Power Grid: energy regen', w.regen === 11, `regen ${w.regen}`);
-  w.energy = 1000; w.upgradeBase('reactor');
-  check('Reactor stacks on top of Capacitors', w.maxEnergy === 480, `max ${w.maxEnergy}`);
-  check('Reinforced Walls: base HP', w.bases[0].maxHp === 4350, `hp ${w.bases[0].maxHp}`);
-  check('Fast Uplink: cooldowns', Math.abs(w.specialMult - 0.7) < 1e-9 && Math.abs(w.specialCd.bomb - 14) < 1e-9);
+  const old = { ...defaultSave(), credits: 900, tech: { gunner: 3 }, perks: { energy: 3, armor: 3, charge: 3, regen: 3 } };
+  const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets: [], base: { armor: 1 } };
+  const w = new World(st, old, ALL, { seed: 1 });
+  check('fresh start: energy 100 of 300, income 8/s', w.energy === 100 && w.maxEnergy === 300 && w.regen === 8, `${w.energy}/${w.maxEnergy}, ${w.regen}/s`);
+  check('fresh start: base HP 3000, specials at half cooldown', w.bases[0].maxHp === 3000 && Math.abs(w.specialCd.bomb - 20) < 1e-9);
   const m = w.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: 300, y: 500 });
-  check('Veteran Training: unit level', w.lvl[0].gunner === 3 && Math.abs(m.maxHp - 230 * 1.45) < 1e-9, `hp ${m.maxHp}`);
-  w.order(2, 1, 'sentry'); w.update(1 / 60);
-  check('Veteran Training: Constructor', w.con && Math.abs(w.con.maxHp - 200 * (1 + 3 * LEVEL_STEP)) < 1e-9, `hp ${w.con && w.con.maxHp}`);
+  check('fresh start: units at level 0 (old Workshop tech ignored)', w.lvl[0].gunner === 0 && m.maxHp === 230, `hp ${m.maxHp}`);
+  w.energy = 1000;
+  check('in-battle upgrades: unit level, Reactor, Bastion Gun; no base Armor', w.upgradeUnit('gunner') && w.lvl[0].gunner === 1 && w.upgradeBase('reactor') && w.regen === 10 && w.upgradeBase('gun') && !BASE_UPGRADES.armor);
+  check('enemy base keeps its stage Armor (+20% HP)', w.bases[1].maxHp === 1.2e6);
 }
 
 // 16. lane reach: own lane ± 1 (Seeker exempt)

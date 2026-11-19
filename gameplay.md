@@ -54,9 +54,10 @@ Each stage is a rectangular battlefield with the two bases on opposite short edg
 The loop is the same as Ironline's:
 1. Pick a stage.
 2. Fight by spending energy on mechs, turrets and upgrades, and use specials.
-3. Earn credits, stars and unlocks.
-4. Spend credits on permanent Workshop upgrades.
-5. Move on to the next, harder stage.
+3. Earn stars and unlocks.
+4. Move on to the next, harder stage.
+
+*(0.7.0-dev.1: the Workshop, credits and perks were removed, decided 2026-11-19. Every battle starts the same; strength inside a battle comes only from in-battle upgrades. Ideas for later in ISSUES.md: a pre-match pick-a-perk, pick 1 of 3 between campaign stages, an emergency QRF.)*
 
 ## 3. The battlefield
 
@@ -80,11 +81,11 @@ The rules are the same as Ironline:
 
 | Property | Value |
 |---|---|
-| Starting energy | 100, +50 per Capacitors perk level |
-| Regeneration | 8 per second, +1 per Power Grid perk level (permanent, Workshop), +2 per Reactor upgrade (in battle) |
-| Energy cap | 300, +40 per Capacitors perk level (permanent, Workshop), +60 per Reactor upgrade (in battle) |
+| Starting energy | 100 |
+| Regeneration | 8 per second, +2 per Reactor upgrade (in battle) |
+| Energy cap | 300, +60 per Reactor upgrade (in battle) |
 | Kill bounty | 25% of the destroyed unit's cost |
-| Overtime *(0.4.0-dev)* | from minute 9, both sides' current income ×1.5 (the player's regeneration after perks and Reactor upgrades; the enemy's after its ramp and pressure bonus). Kill bounty and Energy Surge unchanged. Announced by a pulsing OVERTIME banner; the clock and the income display turn yellow. |
+| Overtime *(0.4.0-dev)* | from minute 9, both sides' current income ×1.5 (the player's regeneration after Reactor upgrades; the enemy's after its ramp and pressure bonus). Kill bounty and Energy Surge unchanged. Announced by a pulsing OVERTIME banner; the clock and the income display turn yellow. |
 | Turret sell refund | 25% (nearly dead) to 50% (full HP) of build cost |
 
 Energy pays for mechs, turrets, Constructor trips (§6.2), unit upgrades and base upgrades.
@@ -312,7 +313,7 @@ Turrets are fixed units with high HP. They attack the first unit they see, using
 
 - When the order queue isn't empty and no Constructor is out, one leaves your base. Each trip costs **20 energy** *(tune)*.
 - It drives to each planned cell in the order the turrets were placed and builds them one at a time. Each build takes **2 s** *(tune)*.
-- **Stats:** 200 HP, speed 80, no weapon *(tune)*. It doesn't block enemies, but enemies can block it, and they target it like any other unit. Its level grows with the Workshop like other units.
+- **Stats:** 200 HP, speed 80, no weapon *(tune)*. It doesn't block enemies, but enemies can block it, and they target it like any other unit. It always has level 0 (no upgrades).
 - A build doesn't start, and pauses, while an enemy mech stands on the cell.
 - **If it's destroyed** before the queue is finished, a new Constructor is sent automatically after **3 s** *(tune)*, at the usual trip cost. Turrets already built stay. A turret that was partly built is lost, but its order stays in the queue (already paid).
 - **If it finishes the queue**, it drives back to the base. When it arrives, the **trip cost is refunded**. If more orders are added while it's still out, it goes back to work instead of returning.
@@ -331,23 +332,22 @@ The two bases work alike: each has an HP bar and is destroyed at 0 HP. Your base
 
 | Upgrade | Effect per level | Costs |
 |---|---|---|
-| Armor | +20% base HP; the added HP also repairs the base | 150 / 250 / 400 |
 | Bastion Gun | +50% base gun damage | 120 / 220 / 350 |
 | Reactor | +2 energy/s, +60 energy cap | 100 / 200 / 320 |
 
-The **enemy base** has a fixed set of upgrade levels per stage (Armor, Gun, Reactor). They're applied when the stage starts and never change during the battle. Here the enemy Reactor raises the AI's income by 15% per level *(tune)*.
+The player's in-battle Armor upgrade was removed in 0.7.0-dev.1 (it was rarely worth it; an emergency QRF may replace it). The **enemy base** has a fixed set of upgrade levels per stage (Armor: +20% base HP per level, Gun, Reactor). They're applied when the stage starts and never change during the battle. Here the enemy Reactor raises the AI's income by 15% per level *(tune)*.
 
-The player base starts with 3000 HP, +15% per Reinforced Walls perk level.
+The player base has 3000 HP.
 
 ## 8. Unit levels and in-battle upgrades
 
 The rules are the same as Ironline. Every mech and turret type has a level from 0 to 5. Each level gives **+15% damage and HP** (`LEVEL_STEP` in data.js). Range, speed and fire rate stay fixed (decided 2026-11-16: the range ladder and the movement rules must not depend on upgrades; until then +25% damage and HP, +4% speed, range and fire rate). Upgrades apply to every unit of that type, including ones already on the field.
 
-The cost to go from level L to L+1 is `min(300, round(unit cost × 0.9 × (L + 1)))`. The Constructor isn't upgraded in battle; its level only comes from the Workshop.
+The cost to go from level L to L+1 is `min(300, round(unit cost × 0.9 × (L + 1)))`. Every type starts each battle at level 0. The Constructor isn't upgraded.
 
 ## 9. Specials
 
-Specials don't cost energy; they only have cooldowns. Each one starts a battle at half its cooldown, and the Fast Uplink perk shortens all cooldowns by 10% per level.
+Specials don't cost energy; they only have cooldowns. Each one starts a battle at half its cooldown.
 
 | Special | Cooldown | Effect |
 |---|---|---|
@@ -379,9 +379,6 @@ The enemy works like Ironline's AI, adapted for lanes:
 Everything below carries over from Ironline unless noted.
 
 - **Stars:** ★ for a win, ★★ if your base has more than 50% HP left, ★★★ if it has more than 85%.
-- **Credits:**
-  - Win: `60 + 30 × min(stage index, 14) + 25 × stars`
-  - Loss: `15 + 2 × kills`
 - **Campaign:** 12 stages, each harder than the last. Endless mode opens after all 12 are cleared. Enemy turrets are given as (type, lane 1–5, row 0–6 counted from the enemy base). Each stage has fixed enemy base upgrade levels and a fixed **enemy loadout** of up to 5 mech types (the AI fields only these), which gives each stage its own personality. Stage n's enemy brings the unit you unlock by clearing stage n (in **bold**: the "frontrunner"). *(0.6.0-dev)*
 
 | # | Stage | Enemy base HP | Enemy level | Enemy regen | Enemy loadout | Enemy turrets (type lane/row) | Enemy base upgrades |
@@ -435,13 +432,7 @@ So Endless 1 is about as hard as stage 12, Endless 2 brings level 3, and each fu
 
 One new mech type per stage, so the full arsenal is available from stage 7. The 5-mech loadout becomes a real choice from stage 5, once 6 mechs are unlocked.
 
-- **Workshop:**
-  - Veteran Training: units start at up to level 3. This includes the Constructor, which gets more HP and builds faster.
-  - Perks (permanent, apply to every battle):
-    - Capacitors: +50 starting energy and +40 max energy per level (150 / 300 / 500 credits).
-    - Reinforced Walls: +15% base HP per level (200 / 400 / 650).
-    - Fast Uplink: specials recharge 10% faster per level (200 / 400 / 650).
-    - Power Grid: +1 energy per second per level (200 / 400 / 650).
+- **Workshop:** removed in 0.7.0-dev.1 (Veteran Training, the four perks and credits). The stages are not re-tuned yet: they were tuned against a mid to max Workshop (first the user plays them untuned, then an interim re-tune).
 
 ## 12. Controls (portrait touch first)
 
@@ -503,10 +494,9 @@ These are the exact values the first build uses that aren't stated in the sectio
 | Missiles | 2 per salvo, launched ±0.6 rad off aim, speed 520, turn 5 rad/s, 3 s life, retarget within 220 |
 | Zap chain | Jumps up to 140 units, 75% damage per jump, never jumps to a base |
 | Base guns | Fire from the gun tower nearest the target (x = 120 or 480). Range is measured from the base face line |
-| Constructor | Starts at the middle of the base front; parks 36 units in front of (south of) the target cell. Build speed × (1 + 0.2 × Workshop level). Its Workshop key is `builder` |
+| Constructor | Starts at the middle of the base front; parks 36 units in front of (south of) the target cell. Its level key is `builder` |
 | Bombing | Bombs land at random points within radius 110, the first after 0.6 s, then every 0.16 s |
 | AI lane choice | 20% random lane; otherwise, if your mechs are within 900 of its base, 20% the lane with the most of them; otherwise the lane with the least player turret HP able to reach it |
-| Workshop | Veteran Training up to level 3 for every unlocked mech, turret and the Constructor: 120 / 260 / 450 credits |
 | Visual scale | Mechs are drawn at 1.3×, turrets at 1.1× and the Constructor at 1.2× their combat radius |
 
 ## 14. Decisions and open questions
@@ -527,7 +517,7 @@ These are the exact values the first build uses that aren't stated in the sectio
 13. **Lane reach:** mechs target their own lane ± 1 (turrets and bases exempt; the Seeker's Long reach trait reaches ± 2 lanes, decided 2026-11-15: from the middle lane it covers everything, but then it has no tank in front of it, which makes its lane a real decision). Trying it out; the user expects lanes 2 + 4 may become the go-to setup and wants to see how it feels.
 14. **Mortar:** stays long-range splash, with slow, inaccurate shells and half damage to structures.
 15. **Friendly collision:** by role: passing rules and fan-out (§5.2). *(Replaced convoy in Hold / overtake in Advance on 2026-11-15.)*
-16. **Capacitors perk:** permanent +40 max energy per level as well as +50 starting energy (Workshop upgrades should be lasting).
+16. **Capacitors perk:** permanent +40 max energy per level as well as +50 starting energy. *(Removed with the Workshop, 0.7.0-dev.1.)*
 
 ### Still open
 1. **New mech numbers:** the Seeker, Breacher and Lancer stats are first guesses. Check them once the game is playable.

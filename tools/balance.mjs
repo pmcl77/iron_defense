@@ -7,18 +7,6 @@ import { defaultSave } from '../src/save.js';
 const PREF = ['gunner', 'brawler', 'seeker', 'lancer', 'mortar', 'aegis', 'breacher', 'scout'];
 const MAX_T = 600;
 
-function makeSave(variant) {
-  const s = defaultSave();
-  if (variant === 'mid') {
-    for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 2;
-    s.perks = { energy: 1, armor: 1, charge: 1, regen: 1 };
-  }
-  if (variant === 'max') {
-    for (const t of [...Object.keys(MECHS), ...Object.keys(TURRETS), 'builder']) s.tech[t] = 3;
-    s.perks = { energy: 3, armor: 3, charge: 3, regen: 3 };
-  }
-  return s;
-}
 
 // strategies: 'mixed' (random loadout units), 'mortar' (Brawler in front, Mortars behind), 'split' (alternate waves on lanes 2 and 4),
 // 'train' (the user's style: saves energy, then sends a train ordered by range, Brawler first, e.g. BW-GU-SE-MO or a
@@ -33,12 +21,12 @@ const HORDE = ['brawler', 'seeker', 'seeker', 'seeker', 'brawler'];
 const FORWARD_TRAINS = [['brawler', 'seeker', 'seeker'], ['brawler', 'gunner', 'seeker', 'mortar'], ['brawler', 'gunner', 'gunner', 'seeker']];
 const GUNNER_TRAIN = ['brawler', 'gunner', 'gunner', 'gunner', 'gunner'];
 const TRAINS = [['brawler', 'gunner', 'seeker', 'mortar'], ['brawler', 'seeker', 'mortar'], ['brawler', 'gunner', 'seeker'], ['brawler', 'gunner', 'mortar']];
-export function play(i, seed, variant, strat = 'mixed', probe = null, dev = undefined) {
+export function play(i, seed, strat = 'mixed', probe = null, dev = undefined) {
   const u = unlockedSet(Math.min(i, 6));
   const pref = strat === 'mortar' ? ['mortar', 'brawler', 'gunner', 'aegis', 'seeker', 'lancer', 'breacher', 'scout']
     : strat === 'train' || strat === 'horde' || strat === 'gunners' || strat === 'forward' ? ['brawler', 'gunner', 'seeker', 'mortar', 'aegis', 'scout', 'lancer', 'breacher'] : PREF;
   const loadout = pref.filter((t) => u.mechs.includes(t)).slice(0, LOADOUT_SIZE);
-  const w = new World(stageDef(i), makeSave(variant), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed, dev });
+  const w = new World(stageDef(i), defaultSave(), { mechs: loadout, turrets: u.turrets, specials: u.specials }, { seed, dev });
   // wall plan: row 2 sentries center-out, then support turrets
   const plan = strat === 'forward' ? [[1, 2, 'sentry'], [3, 2, 'sentry'], [2, 2, 'sentry']] : [[2, 2, 'sentry'], [1, 2, 'sentry'], [3, 2, 'sentry']];
   if (u.turrets.includes('howitzer')) plan.push([2, 0, 'howitzer']);
@@ -130,14 +118,14 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
 function main() {
   const runs = +(process.argv[2] || 6);
   const only = process.argv.slice(3).map((n) => +n - 1);
-  const COLS = [['none', 'mixed'], ['mid', 'mixed'], ['mid', 'mortar'], ['mid', 'split'], ['mid', 'train'], ['mid', 'horde'], ['max', 'mortar'], ['max', 'train'], ['max', 'horde']];
-  console.log('win% / avg time per strategy. Workshop: none = no upgrades, mid = level 2 + perks 1, max = level 3 + perks 3');
-  console.log('stage             | ' + COLS.map(([v, st]) => `${v}/${st}`.padEnd(13)).join('| '));
+  const COLS = ['mixed', 'mortar', 'split', 'train', 'horde', 'gunners', 'forward'];
+  console.log('win% / avg time per bot strategy (T: some runs hit the time limit)');
+  console.log('stage             | ' + COLS.map((st) => st.padEnd(13)).join('| '));
   const total = STAGES.length + 3;
   for (let i = 0; i < total; i++) {
     if (only.length && !only.includes(i)) continue;
-    const cells = COLS.map(([v, st]) => {
-      const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, v, st));
+    const cells = COLS.map((st) => {
+      const res = Array.from({ length: runs }, (_, k) => play(i, 1000 + k * 17, st));
       const wins = res.filter((x) => x.win).length, t = res.reduce((s, x) => s + x.time, 0) / runs;
       return `${String(Math.round((100 * wins) / runs)).padStart(4)}% ${String(Math.round(t)).padStart(4)}s${res.some((x) => x.timeout) ? 'T' : ' '} `;
     });

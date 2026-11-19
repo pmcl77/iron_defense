@@ -7,7 +7,6 @@ import { profile, summaryOf } from './profile.mjs';
 import { STAGES } from '../src/data.js';
 
 const STRATS = ['mixed', 'mortar', 'split', 'train', 'horde', 'gunners', 'forward'];
-const WORKSHOP = (stage) => (stage >= 10 ? 'max' : 'mid'); // stage 10 stalls at 'mid' (tools/lifetime.mjs)
 const seeds = +(process.argv[2] || 6);
 const stages = process.argv.slice(3).map(Number);
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
@@ -15,12 +14,11 @@ const avgObj = (os) => { const k = [...new Set(os.flatMap(Object.keys))]; return
 const o = (x) => Object.entries(x).map(([k, v]) => `${k} ${v}`).join(', ');
 
 for (const stage of stages.length ? stages : [4, 7, 10]) {
-  const variant = WORKSHOP(stage);
-  console.log(`\n== stage ${stage} ${STAGES[stage - 1]?.name ?? ''}, Workshop ${variant}, ${seeds} seeds (same seeds for every strategy)`);
+  console.log(`\n== stage ${stage} ${STAGES[stage - 1]?.name ?? ''}, ${seeds} seeds (same seeds for every strategy)`);
   for (const strat of STRATS) {
     const P = [], R = [];
     for (let k = 0; k < seeds; k++) {
-      const r = play(stage - 1, 1000 + k * 17, variant, strat);
+      const r = play(stage - 1, 1000 + k * 17, strat);
       const s = summaryOf(r.world, r.loadout); R.push({ ...r, enemyHp: s.enemyHp }); P.push(profile(s));
     }
     const f = (k, d = 0) => avg(P.map((p) => p[k])).toFixed(d);

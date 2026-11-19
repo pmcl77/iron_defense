@@ -26,7 +26,7 @@ const srv = http.createServer((q, r) => {
   const shot = (page, n) => page.screenshot({ path: path.join(out, n + '.png') });
   await session('phone', { width: 412, height: 915 }, 2.625, async (page) => {
     await shot(page, '1-menu');
-    await page.evaluate(() => { localStorage.setItem('iron-defense-save-v1', JSON.stringify({ cleared: 6, credits: 1200 })); });
+    await page.evaluate(() => { localStorage.setItem('iron-defense-save-v1', JSON.stringify({ cleared: 6 })); });
     await page.reload(); await page.waitForTimeout(400);
     await page.click('[data-a=play]'); await page.waitForTimeout(200);
     await shot(page, '2-stages');

@@ -1,6 +1,6 @@
 import {
-  FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, STAGES, MAX_UNIT_LEVEL,
+  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, unlockedSet, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -141,7 +141,8 @@ function intelHtml(i) {
   const tc = {};
   for (const [t] of st.turrets || []) tc[t] = (tc[t] || 0) + 1;
   const turrets = Object.entries(tc).map(([t, n]) => `${n}× ${TURRETS[t].name}`).join(', ') || 'none';
-  const base = Object.keys(BASE_UPGRADES).map((k) => `<span class="ib">${BASE_UPGRADES[k].name}${pips((st.base || {})[k] || 0, BASE_UPGRADES[k].costs.length)}</span>`).join('');
+  const EB = { armor: { name: 'Armor', costs: [0, 0, 0] }, ...BASE_UPGRADES }; // the enemy base keeps Armor (stage data)
+  const base = Object.keys(EB).map((k) => `<span class="ib">${EB[k].name}${pips((st.base || {})[k] || 0, EB[k].costs.length)}</span>`).join('');
   // dev builds: a DEV button reveals what the enemy is supposed to do (personality, focus types, the surprise); the
   // battle stats record whether it was revealed (devIntel)
   const pe = PERSONALITIES[st.personality];
@@ -203,7 +204,7 @@ function summary(result, stars = 0) {
     fmt: 3, ...(IS_DEV ? { dev: w.log.dev } : {}), v: VERSION, build: IS_DEV ? 'dev' : 'release', stage: i + 1, stageName: st.name, result, stars,
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
-    loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
+    loadout: w.unlocked.mechs, baseLvl: { ...w.baseLvl },
     mode: st.endless ? 'endless' : 'campaign', enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
     personality: st.personality, focusX: w.focusX, ...(IS_DEV ? { devIntel: !!w.devIntel } : {}),
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
@@ -291,13 +292,11 @@ function finishStage() {
   const w = game.world, win = w.result === 'win', i = game.stageIndex;
   const b = w.bases[0], hpK = b.hp / b.maxHp;
   const stars = win ? 1 + (hpK > 0.5 ? 1 : 0) + (hpK > 0.85 ? 1 : 0) : 0;
-  const reward = win ? stageReward(i, stars) : lossReward(w.stats.kills);
   const before = unlocked();
   if (win) {
     if (i < STAGES.length) { save.cleared = Math.max(save.cleared, i + 1); save.stars[i] = Math.max(save.stars[i] || 0, stars); }
     else save.endlessBest = Math.max(save.endlessBest, i - STAGES.length + 1);
   }
-  save.credits += reward;
   writeSave(save);
   const after = unlocked(), fresh = [];
   for (const k of ['mechs', 'turrets', 'specials']) for (const t of after[k]) if (!before[k].includes(t)) fresh.push((MECHS[t] || TURRETS[t] || SPECIALS[t]).name);
@@ -310,19 +309,16 @@ function finishStage() {
       <p class="result-title ${win ? 'win' : 'lose'}">${win ? 'VICTORY' : 'DEFEAT'}</p>
       <div class="stars">${[1, 2, 3].map((n) => `<span class="${n <= stars ? '' : 'off'}">★</span>`).join('')}</div>
       <p class="result-stats">${stageDef(i).name} · ${w.stats.kills} kills · ${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}</p>
-      <p class="result-stats">+<span class="credits">${reward}</span> credits</p>
       ${fresh.length ? `<p class="unlock">Unlocked: ${fresh.join(', ')}</p>` : ''}
       <div class="btn-row">
         ${win ? '<button class="btn primary" data-a="next">Next</button>' : ''}
         <button class="btn" data-a="retry">Retry</button>
-        <button class="btn" data-a="workshop">Workshop</button>
         <button class="btn" data-a="stages">Stages</button>
       </div>
     </div>`;
   bind({
     next: () => startStage(i + 1),
     retry: () => startStage(i),
-    workshop: () => { quitToMenu('none'); showWorkshop(); },
     stages: () => quitToMenu('stages'),
   });
 }
@@ -348,13 +344,12 @@ function showMenu() {
       <p class="tagline">Hold the line. Break theirs.</p>
       <div class="menu-btns">
         <button class="btn primary" data-a="play">${save.cleared ? 'Campaign' : 'Start campaign'}</button>
-        <button class="btn" data-a="workshop">Workshop · <span class="credits">${save.credits}¢</span></button>
         <button class="btn" data-a="how">How to play</button>
         <button class="btn" data-a="settings">Settings</button>
       </div>
       <p class="version">v${VERSION}</p>
     </div>`;
-  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), workshop: showWorkshop, how: showHelp, settings: showSettings });
+  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), how: showHelp, settings: showSettings });
 }
 function showStages() {
   screen.className = '';
@@ -372,10 +367,9 @@ function showStages() {
       </div>
       <div class="btn-row">
         <button class="btn ${endlessOpen ? 'primary' : ''}" data-a="endless" ${endlessOpen ? '' : 'disabled'}>Endless ${endlessOpen ? `· wave ${eFrom}` : '· clear all 12'}</button>
-        <button class="btn" data-a="workshop">Workshop · <span class="credits">${save.credits}¢</span></button>
       </div>
     </div>`;
-  bind({ back: showMenu, go: (el) => startStage(+el.dataset.i), endless: () => startStage(STAGES.length + eFrom - 1), workshop: showWorkshop });
+  bind({ back: showMenu, go: (el) => startStage(+el.dataset.i), endless: () => startStage(STAGES.length + eFrom - 1) });
 }
 function showLoadout(i) {
   const u = unlocked().mechs;
@@ -403,39 +397,6 @@ function showLoadout(i) {
     });
   };
   render();
-}
-function showWorkshop() {
-  screen.className = '';
-  const u = unlocked();
-  const types = [...u.mechs.map((t) => ['mech', t, MECHS[t]]), ...u.turrets.map((t) => ['turret', t, TURRETS[t]]), ['constructor', 'builder', { ...CONSTRUCTOR, desc: 'More HP and faster building.' }]];
-  screen.innerHTML = `
-    <div class="panel">
-      <div class="head"><div><h2>Workshop</h2><p class="sub">Permanent upgrades, paid with credits from every battle.</p></div>
-        <div><span class="credits">${save.credits}¢</span> <button class="btn small" data-a="back">Back</button></div></div>
-      <div class="section-t">VETERAN TRAINING: UNITS START AT A HIGHER LEVEL</div>
-      <div class="list">
-        ${types.map(([k, t, def]) => {
-          const lv = save.tech[t] || 0, c = lv < MAX_TECH ? techCost(lv) : null;
-          return `<div class="item"><canvas width="92" height="92" data-icon="${k}:${t}"></canvas>
-            <div class="info"><b>${def.name}${pips(lv, MAX_TECH)}</b><small>${def.desc}</small></div>
-            <button class="btn small" data-a="tech" data-t="${t}" ${c == null || save.credits < c ? 'disabled' : ''}>${c == null ? 'MAX' : c + '¢'}</button></div>`;
-        }).join('')}
-      </div>
-      <div class="section-t">COMMAND PERKS</div>
-      <div class="list">
-        ${Object.entries(PERKS).map(([k, p]) => {
-          const lv = save.perks[k], c = p.costs[lv];
-          return `<div class="item"><div class="info"><b>${p.name}${pips(lv, p.costs.length)}</b><small>${p.desc}</small></div>
-            <button class="btn small" data-a="perk" data-k="${k}" ${c == null || save.credits < c ? 'disabled' : ''}>${c == null ? 'MAX' : c + '¢'}</button></div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  drawIcons(screen);
-  bind({
-    back: showMenu,
-    tech: (el) => { const t = el.dataset.t, lv = save.tech[t] || 0, c = techCost(lv); if (lv < MAX_TECH && save.credits >= c) { save.credits -= c; save.tech[t] = lv + 1; writeSave(save); playSfx('upgrade'); } showWorkshop(); },
-    perk: (el) => { const k = el.dataset.k, lv = save.perks[k], c = PERKS[k].costs[lv]; if (c != null && save.credits >= c) { save.credits -= c; save.perks[k]++; writeSave(save); playSfx('upgrade'); } showWorkshop(); },
-  });
 }
 function showHelp() {
   screen.className = '';

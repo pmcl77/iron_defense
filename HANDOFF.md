@@ -69,7 +69,7 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
   - Headless browser run (`tools/shots.cjs`): no console errors.
   - **Not yet played by hand or on the real phone.**
 - **Balance:** a bot-tuned first draft. Stage table and bot results are in gameplay.md §11.
-  - Without Workshop upgrades the bot wins stages 1–3. With mid-level upgrades it wins stages 1–8, and stages 9–11 about a third of the time. Stage 12 is very hard.
+  - The Workshop was removed in 0.7.0-dev.1; the stages are not re-tuned for that yet (before: without upgrades the bot won stages 1–3, with mid-level upgrades stages 1–8). The bot tools now run without Workshop variants.
   - Many bot losses are stalemates against turret walls (the 600 s cap in the bot). Watch whether battles drag for a human player.
 - **Not done yet:** mech footstep and servo sounds, a stage 1 tutorial, the voxel renderer, GitHub/Pages, real-device testing.
 
@@ -77,10 +77,10 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 | Path | What's in it |
 |---|---|
 | `gameplay.md` | Full spec (§1–14). §13c lists the exact implementation values |
-| `src/data.js` | All numbers: field, units, specials, unlocks, STAGES, perks |
+| `src/data.js` | All numbers: field, units, specials, unlocks, STAGES |
 | `src/world.js` | Simulation. Key parts: `move`/`trySidestep`, `pickTarget`, `fire`/`updateProjectiles`, `updateConstructor`, `updateAI`/`aiLane`. Emits `fx` events |
 | `src/render.js` | Flat vector renderer: unit shapes (`LEGS`/`TOPS`), turrets, base, particles, minimap, `renderIcon` |
-| `src/main.js` | Loop, HUD, screens (menu, stages, loadout, workshop, help, settings, pause, upgrades, result), input, debug hooks |
+| `src/main.js` | Loop, HUD, screens (menu, stages, loadout, help, settings, pause, upgrades, result), input, debug hooks |
 | `src/audio.js` | Synthesized sound bus (pan, distance, reverb, compressor) |
 | `src/save.js` | localStorage key `iron-defense-save-v1` |
 | `art_samples/` | Art studies. `sample.html?style=1…7`, renders saved as `style-N.png`, comparisons `comparison.png` and `comparison-2.png`. `fine.js` (ray-traced voxels, primitive-based models) is the start of the final renderer |
@@ -130,11 +130,11 @@ node art_samples/shoot.cjs [styles…]        # re-render art samples
 ```
 - Playwright is installed globally. Scripts load it from `/usr/local/share/npm-global/lib/node_modules/playwright`, and its browsers live in `/ms-playwright`.
 - Node 22 is available. There's no npm project; `package.json` only sets `"type": "module"`.
-- Seed a save in the browser: `localStorage.setItem('iron-defense-save-v1', JSON.stringify({cleared: 6, credits: 1200}))`, then reload.
+- Seed a save in the browser: `localStorage.setItem('iron-defense-save-v1', JSON.stringify({cleared: 6}))`, then reload.
 - Browser console: `__game`, `__step(seconds)`, `__save()`.
 
 ## Gotchas
-- `constructor` is a built-in property of every JavaScript object, so the Constructor's tech/level key is `builder`. The entity kind is still `'constructor'`.
+- `constructor` is a built-in property of every JavaScript object, so the Constructor's level key is `builder`. The entity kind is still `'constructor'`.
 - `World.canDeploy` only allows mechs in `world.unlocked.mechs`, which in a battle is the 5-mech loadout.
 - Service worker: when adding files, update `SHELL` in `sw.js` and bump `CACHE`. It registers only on HTTPS.
 - Shadows and the ground image in `render.js` are cached per resize and stage. Call `renderer.resize(...)` after layout changes (`main.js` `resize()` does this).

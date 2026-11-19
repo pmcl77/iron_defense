@@ -30,13 +30,13 @@ export function lifeTracker() {
 
 function main() {
   const seeds = +(process.argv[2] || 10), sw = process.argv[3] || 'stripFirst'; // the dev switch to compare off/on
-  for (const [strat, variant] of [['gunners', 'max'], ['gunners', 'mid'], ['train', 'max']]) {
-    console.log(`\nstage 10, bot '${strat}', Workshop ${variant}, ${seeds} seeds`);
+  for (const strat of ['gunners', 'train']) {
+    console.log(`\nstage 10, bot '${strat}', ${seeds} seeds`);
     for (const on of [false, true]) {
       const S = { win: 0, time: 0, n: 0, died: 0, lifeSum: 0, strips: 0, stripN: 0, stripLife: 0, stripDied: 0, laneLife: 0, laneDied: 0, dmg: 0, hw: 0, hwN: 0, eb: 0, pb: 0 };
       for (let seed = 1; seed <= seeds; seed++) {
         const tr = lifeTracker(); let W;
-        const r = play(9, seed, variant, strat, (w) => { W = w; tr.step(w); }, { stripFirst: false, stripPassLonger: false, drift: true, returnDelay: true, [sw]: on });
+        const r = play(9, seed, strat, (w) => { W = w; tr.step(w); }, { stripFirst: false, stripPassLonger: false, drift: true, returnDelay: true, [sw]: on });
         const g = tr.report(W, 0, 'gunner'), gs = tr.report(W, 0, 'gunner', (x) => x.strip), gl = tr.report(W, 0, 'gunner', (x) => !x.strip);
         S.win += r.win; S.time += r.time; S.n += g.n; S.died += g.died; S.lifeSum += g.died * (g.life || 0);
         S.stripN += gs.n; S.stripDied += gs.died; S.stripLife += gs.died * (gs.life || 0); S.laneDied += gl.died; S.laneLife += gl.died * (gl.life || 0);

@@ -34,7 +34,7 @@ Both are hosted on Cloudflare Pages, which deploys automatically on every push. 
 
 | File | Purpose |
 |---|---|
-| `src/data.js` | All stats, upgrade curves, stages, unlocks and perks (tune balance here) |
+| `src/data.js` | All stats, upgrade curves, stages and unlocks (tune balance here) |
 | `src/world.js` | Simulation: lanes, movement and blocking, Hold/Advance, sidestepping, targeting, projectiles, the Constructor, specials, enemy AI. No DOM, so it also runs in Node |
 | `src/render.js` | All drawing (flat vector development art), particles, minimap, card icons |
 | `src/main.js` | Game loop, HUD, screens, touch/mouse/keyboard input |

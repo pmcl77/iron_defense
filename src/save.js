@@ -6,9 +6,6 @@ export function defaultSave() {
     cleared: 0,                 // campaign stages cleared
     stars: [],                  // best stars per stage
     endlessBest: 0,             // highest endless stage reached
-    credits: 0,
-    tech: {},                   // Workshop starting level per unit type (incl. 'builder' = Constructor)
-    perks: { energy: 0, armor: 0, charge: 0, regen: 0 },
     loadout: ['scout', 'gunner'],
     seen: null,                 // enemy mech types fought at least once (enemy intel shows '?' for the rest); null = not set up yet
     settings: { sound: true, speed: 1, graphics: 'voxel', aegis: 'hit', stats: true, name: '', dev: {} },
@@ -20,7 +17,8 @@ export function loadSave() {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(KEY);
     if (!raw) return defaultSave();
     const d = defaultSave(), s = JSON.parse(raw);
-    return { ...d, ...s, perks: { ...d.perks, ...s.perks }, settings: { ...d.settings, ...s.settings } };
+    delete s.credits; delete s.tech; delete s.perks; // the Workshop was removed in 0.7.0-dev.1
+    return { ...d, ...s, settings: { ...d.settings, ...s.settings } };
   } catch {
     return defaultSave();
   }
