@@ -39,6 +39,11 @@ export class World {
     this.unlocked = unlocked;
     this.rnd = opts.seed != null ? mulberry32(opts.seed) : Math.random;
     this.time = 0;
+    // replays (ISSUES.md 2026-11-19): simulation steps done, and every player input with the step it came before
+    // ([step, method, ...args], see INPUTS at the end of this file). With the same seed and inputs a battle replays exactly.
+    this.step = 0;
+    this.inputs = [];
+    this.replaying = false;
     this.entities = [];
     this.projectiles = [];
     this.bombs = [];
@@ -275,6 +280,12 @@ export class World {
   }
   // Lane button: select a lane. Tapping the selected lane again switches it between base and
   // forward (each lane remembers its choice). Returns 'fwd' | 'base' | 'noturret' (forward wanted, no turret) | 'lane'.
+  // tap near your own base: select the lane and deploy there at the base (not forward)
+  setBaseDeploy(l) {
+    if (l < 0 || l >= LANES) return false;
+    this.activeLane = l; this.fwd[l] = false;
+    return true;
+  }
   setLane(l, toggle = true) {
     if (l < 0 || l >= LANES) return false;
     if (toggle && l === this.activeLane) {
@@ -374,6 +385,7 @@ export class World {
 
   // ---------- simulation ----------
   update(dt) {
+    this.step++;
     this.time += dt;
     if (!this.result) {
       if (!this.overtime && this.time >= OVERTIME.at) {
@@ -1410,4 +1422,16 @@ export class World {
     for (let i = 0; i < lanes.length; i++) { k -= wts[i]; if (k <= 0) return lanes[i]; }
     return lanes[lanes.length - 1];
   }
+}
+
+// player inputs recorded for replays: every call is logged as [step, method, ...args] before it runs (also calls that
+// fail: they fail the same way in the replay). Not logged while replaying.
+export const INPUTS = ['request', 'cancelQueued', 'clearQueue', 'setLane', 'setBaseDeploy', 'order', 'cancel', 'sell',
+  'upgradeUnit', 'upgradeBase', 'special', 'setDev'];
+for (const m of INPUTS) {
+  const f = World.prototype[m];
+  World.prototype[m] = function (...a) {
+    if (!this.replaying) this.inputs.push([this.step, m, ...a]);
+    return f.apply(this, a);
+  };
 }

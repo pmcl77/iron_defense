@@ -2,6 +2,7 @@
 import { World } from '../src/world.js';
 import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI, BASE_UPGRADES } from '../src/data.js';
 import { focusFactor } from './focus.mjs';
+import { runReplay, checkReplay } from './replay.mjs';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -1004,6 +1005,27 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   v.ai.door[1].push({ type: 'lancer', order: 1, gi: 1, wait: 0 });
   let t = 0; while (!v.log.events.some((e) => e[1] === 'deploy') && t < 5) { v.update(1 / 60); t += 1 / 60; }
   check('enemy door: an occupied door delays a deploy by at most 1.5 s', t > 1.4 && t < 1.6, `${t.toFixed(2)} s`);
+}
+// replays: same seed, setup and inputs give the same battle
+{
+  const st = { ...stageDef(8) };
+  const unl = { mechs: ['brawler', 'gunner', 'seeker', 'aegis', 'mortar'], turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
+  const setup = JSON.parse(JSON.stringify({ seed: 12345, stage: st, unlocked: unl, dev: {} }));
+  const w = new World(st, defaultSave(), unl, { seed: 12345, dev: {} });
+  let r = 7; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  for (let i = 0; i < 60 * 200; i++) {
+    if (i % 90 === 0) { w.setLane(Math.floor(rnd() * 5), rnd() < 0.2); w.request(unl.mechs[Math.floor(rnd() * 5)]); }
+    if (i % 1500 === 700) w.order(Math.floor(rnd() * 5), 6, 'howitzer');
+    if (i % 2000 === 1000) w.special('bomb', 300, 1500 + rnd() * 300);
+    if (i === 3000) w.upgradeBase('reactor');
+    if (i === 5000) w.setBaseDeploy(2);
+    w.update(1 / 60);
+  }
+  const row = { timeline: [...w.log.timeline, w.sample(false)], events: w.log.events, replay: { ...setup, steps: w.step, inputs: w.inputs } };
+  const v = runReplay(row.replay);
+  const diff = checkReplay(row, v);
+  check('replay: same seed, setup and inputs give the same battle', !diff && w.inputs.length > 100 && v.log.events.length === w.log.events.length, diff ? JSON.stringify(diff) : `${w.inputs.length} inputs, ${w.log.events.length} events`);
+  check('replay: inputs are not logged again while replaying', v.inputs.length === 0);
 }
 // defensive pick (the user's order, followed about 70% of the time)
 {

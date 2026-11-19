@@ -162,7 +162,12 @@ function launch(i) {
   game.stageIndex = i;
   game.mode = 'play';
   const st = nextStage(i); game.next = null;
-  game.world = new World(st, save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { dev: devSettings() });
+  // replays: a seed per battle, and the exact setup (stage as played, units, dev switches), sent with the stats
+  const seed = Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, dev = devSettings();
+  const { devIntel: _di, ...stCopy } = st;
+  const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev })); // before the battle can touch st
+  game.world = new World(st, save, unl, { dev, seed });
+  game.world.setup = setup;
   game.world.battleId = randomHex(8);
   game.world.devIntel = !!st.devIntel;
   game.paused = false;
@@ -211,6 +216,7 @@ function summary(result, stars = 0) {
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
     dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)), strip: duo(w.log.strip.map((a) => a.map(Math.round))), wait: duo(w.log.wait.map(rounded)), life: duo(w.lifeLog().map(rounded)),
     upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
+    replay: { ...w.setup, steps: w.step, inputs: w.inputs }, // tools/replay.mjs
   };
   return body;
 }
@@ -756,7 +762,7 @@ function onTap(px, py) {
     renderer.consume(w.fx, sfx);
     return;
   }
-  if (p.y > 0 && p.y < BASE_FACE[0] + 150) { w.setLane(lane, false); w.fwd[lane] = false; playSfx('click'); }
+  if (p.y > 0 && p.y < BASE_FACE[0] + 150) { w.setBaseDeploy(lane); playSfx('click'); }
 }
 
 // minimap: tap or drag to move the camera
