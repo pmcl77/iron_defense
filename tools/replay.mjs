@@ -1,31 +1,21 @@
 // Replays (ISSUES.md 2026-11-19 "Exact replays"): re-run a battle from its stats row (seed, setup and every player
 // input with its exact simulation step, sent since 0.7.0-dev.4) and check it against what the phone recorded.
-// Run: node tools/replay.mjs <stats.json> <row> [--at m:ss]
+// Run: node tools/replay.mjs <stats.json> <row> [--at m:ss | --export file]
 //   stats.json: the GET /api/stats answer (or a file with { rows: [...] }); row: its "row" number
 //   --at m:ss   stop there and print where every unit stands (lane, distance, HP, target, waiting/strip)
+//   --export f  write a replay file for the in-game viewer (Replays → Open file, dev builds)
 import { readFileSync } from 'node:fs';
-import { World } from '../src/world.js';
-import { defaultSave } from '../src/save.js';
+import { replayWorld, replayStep, STEP } from '../src/replay.js';
 import { BASE_FACE } from '../src/data.js';
+import { writeFileSync } from 'node:fs';
 
-export const STEP = 1 / 60;
-
-// a World for this replay, ready to run
-export function replayWorld(rep) {
-  const w = new World(JSON.parse(JSON.stringify(rep.stage)), defaultSave(), rep.unlocked, { seed: rep.seed, dev: rep.dev });
-  w.replaying = true;
-  return w;
-}
+export { replayWorld, STEP };
 // run until step `until` (default: the end of the recorded battle), applying the inputs on the way.
 // onStep(w) after every step (optional). Returns the world.
-export function runReplay(rep, { until = rep.steps, onStep = null, w = replayWorld(rep), from = 0 } = {}) {
-  let k = from;
-  while (w.step < until) {
-    while (k < rep.inputs.length && rep.inputs[k][0] <= w.step) { const [, m, ...a] = rep.inputs[k++]; w[m](...a); }
-    w.update(STEP);
-    if (onStep) onStep(w);
-    if (w.result && w.step >= until) break;
-  }
+export function runReplay(rep, { until = rep.steps, onStep = null } = {}) {
+  const w = replayWorld(rep);
+  let k = 0;
+  while (w.step < until) { k = replayStep(w, rep, k); if (onStep) onStep(w); }
   return w;
 }
 // compare the replay's timeline samples (every 30 s) and events with the recorded ones; first difference or null
@@ -41,7 +31,7 @@ export function checkReplay(row, w) {
   if (re.length !== ge.length) return { at: null, events: [re.length, ge.length] };
   return null;
 }
-const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+const mmss = (t) => { t = Math.round(t); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 // what stands where: one line per unit, by lane, front first
 export function describe(w) {
   const out = [`${mmss(w.time)}  energy ${Math.round(w.energy)}/${w.maxEnergy}  base ${Math.round(w.bases[0].hp)} / enemy ${Math.round(w.bases[1].hp)}  queue ${w.queue.map((q) => q.type).join(' ') || '-'}`];
@@ -66,6 +56,13 @@ function main() {
   const row = rows.find((r) => String(r.row) === rowArg);
   if (!row) { console.log(`row ${rowArg} not found`); return; }
   if (!row.replay) { console.log(`row ${rowArg} (${row.v}) has no replay data (sent since 0.7.0-dev.4)`); return; }
+  const ei = rest.indexOf('--export');
+  if (ei >= 0) {
+    const f = rest[ei + 1] || `replay_row${row.row}.json`;
+    writeFileSync(f, JSON.stringify({ title: `Row ${row.row}: stage ${row.stage} ${row.stageName}, ${row.result} ${row.stars || 0}★, ${mmss(row.time)}`, result: row.result, stars: row.stars, time: row.time, at: row.created, replay: row.replay }));
+    console.log(`wrote ${f}`);
+    return;
+  }
   const ai = rest.indexOf('--at');
   if (ai >= 0) {
     const [m, s] = rest[ai + 1].split(':').map(Number);

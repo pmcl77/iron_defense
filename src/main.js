@@ -3,6 +3,7 @@ import {
   LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, unlockedSet, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
+import { replayWorld, replayStep, validReplay } from './replay.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
 import { VoxelRenderer } from './render_voxel.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
@@ -264,12 +265,112 @@ function sendStats(result, stars = 0) {
   if (game.mode === 'play' && w && w.battleId) noteSeen(w);
   if (game.mode !== 'play' || !w || !w.battleId || w.statsSent) return;
   w.statsSent = true;
+  storeReplay(w, result, stars);
   const id = w.battleId;
   if (!save.settings.stats || (result === 'quit' && w.time < MIN_TIME)) { checkpoints((cp) => { delete cp[id]; }); return; }
   const body = summary(result, stars);
   checkpoints((cp) => { cp[id] = { at: Date.now(), body }; });
   deliver(id, body);
 }
+// ---------- replays (src/replay.js, ISSUES.md "Exact replays") ----------
+// The last REPLAY_KEEP battles of this device are kept for the replay viewer (dev builds); the stats carry them too.
+const REPLAY_KEY = 'iron-defense-replays', REPLAY_KEEP = 10;
+function storedReplays() { try { return JSON.parse(localStorage.getItem(REPLAY_KEY)) || []; } catch { return []; } }
+function storeReplay(w, result, stars) {
+  if (!w.setup || w.time < MIN_TIME) return;
+  const i = game.stageIndex, st = w.stage, t = Math.round(w.time);
+  const title = `${st.endless ? `Endless ${i - STAGES.length + 1}` : `Stage ${i + 1} ${st.name}`}: ${result}${stars ? ' ' + '★'.repeat(stars) : ''}, ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  const list = storedReplays().filter((e) => e.id !== w.battleId);
+  list.push({ id: w.battleId, at: Date.now(), title, replay: { ...w.setup, steps: w.step, inputs: w.inputs } });
+  while (list.length > REPLAY_KEEP) list.shift();
+  try { localStorage.setItem(REPLAY_KEY, JSON.stringify(list)); } catch { /* storage full: skip */ }
+}
+function showReplays() {
+  screen.className = '';
+  const list = storedReplays().slice().reverse();
+  const when = (t) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  screen.innerHTML = `
+    <div class="panel">
+      <div class="head"><div><h2>Replays</h2><p class="sub">Your last ${REPLAY_KEEP} battles on this device (since v0.7.0-dev.4), or a replay file.</p></div>
+        <button class="btn small" data-a="back">Back</button></div>
+      <div class="replay-list">${list.length ? list.map((e, n) => `<button class="btn" data-a="rp" data-n="${n}">${e.title}<small>${when(e.at)}</small></button>`).join('') : '<p class="sub">No replays yet.</p>'}</div>
+      <div class="btn-row"><button class="btn" data-a="file">Open file…</button></div>
+      <input id="rp-file" type="file" accept=".json,application/json" hidden>
+    </div>`;
+  const input = $('#rp-file');
+  input.addEventListener('change', async () => {
+    const f = input.files[0]; if (!f) return;
+    try { const d = JSON.parse(await f.text()); const rep = d.replay || d; if (!validReplay(rep)) throw new Error(); startReplay({ title: d.title || f.name, replay: rep }); }
+    catch { toast('Not a replay file'); }
+  });
+  bind({ back: showMenu, rp: (el) => startReplay(list[+el.dataset.n]), file: () => input.click() });
+}
+const rp = { rep: null, k: 0, title: '', seeking: false, speed: 1 };
+function startReplay(entry) {
+  if (!entry || !validReplay(entry.replay)) { toast('Replay data missing'); return; }
+  rp.rep = entry.replay; rp.k = 0; rp.title = entry.title; rp.seeking = false;
+  game.mode = 'replay';
+  game.world = replayWorld(rp.rep);
+  game.paused = false; game.resultShown = false; game.ui = freshUi();
+  renderer.particles = [];
+  screen.innerHTML = ''; screen.className = '';
+  hud.hidden = false; hud.classList.add('replay'); $('#replay-bar').hidden = false;
+  buildHud();
+  const st = game.world.stage;
+  $('#stage-no').textContent = 'REPLAY';
+  $('#stage-name').textContent = (st.endless ? st.name : st.name).toUpperCase();
+  $('#foe-lvl').textContent = `L${st.lvl} `;
+  resize();
+  renderer.camY = -20; renderer.clampCam();
+  updateReplayBar();
+}
+function exitReplay() {
+  rp.rep = null; rp.seeking = false;
+  hud.classList.remove('replay'); $('#replay-bar').hidden = true;
+  $('#btn-speed').textContent = game.speed + '×'; last.rps2 = null;
+  game.mode = 'menu'; game.paused = false;
+  hud.hidden = true;
+  resize();
+  startDemo();
+  showReplays();
+}
+const clockOf = (s) => { const t = Math.floor(s * STEP); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+function updateReplayBar() {
+  if (!rp.rep) return;
+  const w = game.world;
+  setText($('#rp-time'), 'rpt', rp.seeking ? `seeking… ${clockOf(rp.seeking.at)}` : `${clockOf(w.step)} / ${clockOf(rp.rep.steps)}`);
+  setText($('#rp-play'), 'rpp', game.paused ? '▶' : '❚❚');
+  setText($('#rp-speed'), 'rps', rp.speed + '×');
+  setText($('#btn-speed'), 'rps2', rp.speed + '×');
+  if (!rp.dragging) $('#rp-seek').value = String(Math.round(1000 * w.step / rp.rep.steps));
+}
+// jump to a step: forward from here, or from the start when going back; computed in slices so the page stays responsive
+function seekTo(target) {
+  if (!rp.rep) return;
+  target = Math.max(0, Math.min(rp.rep.steps, Math.round(target)));
+  let w = game.world;
+  if (target < w.step) { w = replayWorld(rp.rep); rp.k = 0; }
+  const job = { at: w.step };
+  rp.seeking = job;
+  const slice = () => {
+    if (rp.seeking !== job || !rp.rep) return; // replaced by a newer seek or exit
+    const end = Math.min(target, w.step + 2400);
+    while (w.step < end) { rp.k = replayStep(w, rp.rep, rp.k); w.fx.length = 0; }
+    job.at = w.step;
+    updateReplayBar();
+    if (w.step < target) { setTimeout(slice, 0); return; }
+    game.world = w; renderer.particles = []; rp.seeking = false; acc = 0;
+    updateReplayBar();
+  };
+  slice();
+}
+$('#rp-play').addEventListener('click', () => { if (rp.rep && game.world.step >= rp.rep.steps) seekTo(0); game.paused = !game.paused; updateReplayBar(); });
+$('#rp-back').addEventListener('click', () => seekTo(game.world.step - 30 / STEP));
+$('#rp-fwd').addEventListener('click', () => seekTo(game.world.step + 30 / STEP));
+$('#rp-speed').addEventListener('click', () => { rp.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[rp.speed]; updateReplayBar(); });
+$('#rp-exit').addEventListener('click', exitReplay);
+$('#rp-seek').addEventListener('input', () => { rp.dragging = true; });
+$('#rp-seek').addEventListener('change', (e) => { rp.dragging = false; if (rp.rep) seekTo(+e.target.value / 1000 * rp.rep.steps); });
 function checkpoint() {
   const w = game.world;
   if (!save.settings.stats || game.mode !== 'play' || !w || !w.battleId || w.statsSent || w.result || w.time < MIN_TIME) return;
@@ -352,10 +453,11 @@ function showMenu() {
         <button class="btn primary" data-a="play">${save.cleared ? 'Campaign' : 'Start campaign'}</button>
         <button class="btn" data-a="how">How to play</button>
         <button class="btn" data-a="settings">Settings</button>
+        ${IS_DEV ? '<button class="btn" data-a="replays">Replays</button>' : ''}
       </div>
       <p class="version">v${VERSION}</p>
     </div>`;
-  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), how: showHelp, settings: showSettings });
+  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), how: showHelp, settings: showSettings, replays: showReplays });
 }
 function showStages() {
   screen.className = '';
@@ -706,9 +808,10 @@ $('#sell-pop').addEventListener('click', () => {
   if (t && !t.dead) { game.world.sell(t.lane, t.row); renderer.consume(game.world.fx, sfx); }
   hideSell();
 });
-$('#btn-pause').addEventListener('click', () => { if (!game.world.result) showPause(); });
+$('#btn-pause').addEventListener('click', () => { if (game.mode === 'replay') { $('#rp-play').click(); return; } if (!game.world.result) showPause(); });
 $('#btn-upg').addEventListener('click', () => { initAudio(); playSfx('click'); showUpgrades(); });
 $('#btn-speed').addEventListener('click', () => {
+  if (game.mode === 'replay') { $('#rp-speed').click(); return; }
   game.speed = game.speed === 1 ? 2 : 1;
   save.settings.speed = game.speed; writeSave(save);
   $('#btn-speed').textContent = game.speed + '×';
@@ -727,7 +830,7 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   const p = local(e);
   if (game.ui.targeting) game.ui.aim = renderer.screenToWorld(p.x, p.y);
-  if (drag.id !== e.pointerId || game.mode !== 'play') return;
+  if (drag.id !== e.pointerId || (game.mode !== 'play' && game.mode !== 'replay')) return;
   if (Math.abs(p.y - drag.sy) > 10) drag.moved = true;
   if (drag.moved) { renderer.camY += (p.y - drag.ly) / renderer.ys; renderer.clampCam(); hideSell(); }
   drag.ly = p.y;
@@ -739,7 +842,7 @@ canvas.addEventListener('pointerup', (e) => {
 });
 canvas.addEventListener('pointercancel', () => { drag.id = null; });
 canvas.addEventListener('wheel', (e) => {
-  if (game.mode !== 'play') return;
+  if (game.mode !== 'play' && game.mode !== 'replay') return;
   renderer.camY -= e.deltaY / renderer.ys; renderer.clampCam(); e.preventDefault();
 }, { passive: false });
 
@@ -778,6 +881,7 @@ const keys = new Set();
 window.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   keys.add(k);
+  if (game.mode === 'replay' && (k === ' ' || k === 'p')) { e.preventDefault(); $('#rp-play').click(); return; }
   if (game.mode !== 'play') return;
   const w = game.world;
   if (k === ' ' || k === 'escape' || k === 'p') {
@@ -819,9 +923,9 @@ function tryFullscreen(force) {
 }
 function resize() {
   const r = app.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 3);
-  const playing = game.mode === 'play' && !hud.hidden;
+  const playing = (game.mode === 'play' || game.mode === 'replay') && !hud.hidden;
   const top = playing ? $('.top').getBoundingClientRect().bottom - r.top + 4 : 0;
-  const bottom = playing ? $('.bottom').getBoundingClientRect().top - r.top : r.height;
+  const bottom = playing ? $(game.mode === 'replay' ? '#replay-bar' : '.bottom').getBoundingClientRect().top - r.top : r.height;
   renderer.resize(r.width, r.height, dpr, top, bottom);
   const mr = minimap.getBoundingClientRect();
   minimap.width = Math.max(1, Math.round(mr.width * dpr)); minimap.height = Math.max(1, Math.round(mr.height * dpr));
@@ -846,7 +950,18 @@ function frame(now) {
   lastT = now;
   const w = game.world;
   let simDt = 0;
-  if (w && !game.paused) {
+  if (w && game.mode === 'replay') {
+    if (!game.paused && !rp.seeking) {
+      acc += dtReal * rp.speed;
+      let steps = 0;
+      while (acc >= STEP && steps < 12) {
+        if (w.step >= rp.rep.steps) { game.paused = true; acc = 0; break; } // the end of the recorded battle
+        rp.k = replayStep(w, rp.rep, rp.k);
+        acc -= STEP; steps++; simDt += STEP;
+      }
+      if (steps >= 12) acc = 0;
+    }
+  } else if (w && !game.paused) {
     acc += dtReal * (game.mode === 'play' ? game.speed : 1);
     let steps = 0;
     while (acc >= STEP && steps < 12) {
@@ -856,8 +971,9 @@ function frame(now) {
     }
     if (steps >= 12) acc = 0;
   }
-  if (game.mode === 'play' && !game.paused) keyPan(dtReal);
-  if (w) { renderer.consume(w.fx, sfx); renderer.draw(w, simDt, game.ui); }
+  if ((game.mode === 'play' && !game.paused) || game.mode === 'replay') keyPan(dtReal);
+  if (w) { renderer.consume(w.fx, game.mode === 'replay' && rp.speed > 2 ? () => {} : sfx); renderer.draw(w, simDt, game.ui); }
+  if (game.mode === 'replay') { updateHud(); updateReplayBar(); }
   if (game.mode === 'play') { updateHud(); checkResult(); noteSeen(w); if (w.cpAt !== w.log.timeline.length) checkpoint(); }
   requestAnimationFrame(frame);
 }
@@ -876,6 +992,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.se
 
 // debug hooks
 window.__game = game;
+window.__replay = (entry) => startReplay(entry.replay ? entry : { title: 'replay', replay: entry }); // tools: start a replay (row.replay or a replay file)
 window.__save = () => save;
 window.__step = (seconds) => {
   const w = game.world;
