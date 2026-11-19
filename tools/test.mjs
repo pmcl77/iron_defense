@@ -971,6 +971,16 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const noTank = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 2 });
   const st2 = new Set(); for (let i = 0; i < 40; i++) { noTank.aiBuildWave(); st2.add(noTank.ai.waveStyle); }
   check('waves: no tank-led wave without a tank (stage 7)', !st2.has('tank') && st2.size === 2);
+  // early waves smaller (budget 400 → 600 over 4 min); extras: every mixed wave, about 1 in 3 plain waves
+  const cost = (wv) => wv.reduce((a, u) => a + MECHS[u.type].cost, 0);
+  const rw = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 3 });
+  rw.time = 0; const c0 = cost(rw.aiBuildWave()); rw.time = 300; const c1 = cost(rw.aiBuildWave());
+  check('waves: early waves smaller (budget grows over the first 4 minutes)', c0 <= 400 && c1 > 450 && c1 <= 600, `${c0} → ${c1}`);
+  const ex = { plain: [0, 0], mixed: [0, 0] };
+  for (let seed = 1; seed <= 10; seed++) { const v = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed }); v.time = 300;
+    for (let i = 0; i < 60; i++) { const wv = v.aiBuildWave(), s = v.ai.waveStyle; ex[s][0]++; if (!v.focus.includes(wv[wv.length - 1].type)) ex[s][1]++; } }
+  const pr = (s) => ex[s][1] / ex[s][0];
+  check('waves: an extra unit type at the back of every mixed wave and about 1 in 3 plain waves', pr('mixed') === 1 && pr('plain') > 0.25 && pr('plain') < 0.42, `mixed ${pr('mixed').toFixed(2)}, plain ${pr('plain').toFixed(2)}`);
   const d = runWaves(sw, 15, (v) => { for (let i = 0; i < 5; i++) { const m = v.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: laneX(2), y: BASE_FACE[1] - 400 - i * 50 }); m.hp = m.maxHp = 1e9; m.def = { ...m.def, speed: 0, dmg: 0 }; } });
   const dd = d.log.events.filter((e) => e[1] === 'deploy' && e[2] === 0);
   check('waves: under pressure it defends at once instead of saving', dd.length >= 2 && dd[0][0] < 12, dd.map((e) => `${e[0]}s ${e[3]}`).join(', '));

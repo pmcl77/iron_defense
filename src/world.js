@@ -1221,7 +1221,12 @@ export class World {
       ai.waveT = gap();
       return;
     }
-    if (ai.energy >= W.budget) { ai.waveNo = ++this.aiOrders; ai.wave = this.aiBuildWave(); }
+    if (ai.energy >= this.waveBudget()) { ai.waveNo = ++this.aiOrders; ai.wave = this.aiBuildWave(); }
+  }
+  // wave size in energy: grows from AI.wave.budget[0] to [1] over the first AI.wave.ramp s
+  waveBudget() {
+    const [b0, b1] = AI.wave.budget;
+    return b0 + (b1 - b0) * Math.min(1, this.time / AI.wave.ramp);
   }
   // the units of the next wave in deploy order, each with its lane; ai.waveStyle: the style drawn
   aiBuildWave() {
@@ -1231,11 +1236,11 @@ export class World {
     const style = styles[Math.floor(this.rnd() * styles.length)];
     const set = this.laneSet() || [...Array(LANES).keys()];
     const lanes = [...set]; const k = Math.floor(this.rnd() * lanes.length); lanes.push(...lanes.splice(0, k)); // random start
-    let budget = W.budget; const lead = [], body = [], back = [];
+    let budget = this.waveBudget(); const lead = [], body = [], back = [];
     const take = (list, t) => { if (budget < MECHS[t].cost || lead.length + body.length + back.length >= W.max) return false; budget -= MECHS[t].cost; list.push(t); return true; };
     if (style === 'tank') for (let i = 0; i < Math.min(2, lanes.length); i++) take(lead, tanks[Math.floor(this.rnd() * tanks.length)]);
     const others = roster.filter((t) => !ft.includes(t) && MECHS[t].role !== 'tank');
-    if (style !== 'plain' && others.length && this.rnd() < W.extra) take(back, others[Math.floor(this.rnd() * others.length)]);
+    if (others.length && this.rnd() < (W.extra[style] ?? 0)) take(back, others[Math.floor(this.rnd() * others.length)]);
     const one = ft[Math.floor(this.rnd() * ft.length)];
     for (let i = 0; i < 40; i++) if (!take(body, style === 'plain' ? one : ft[i % ft.length])) break;
     body.sort((a, b) => MECHS[a].speed - MECHS[b].speed); // slowest first: the fast ones catch up
