@@ -278,6 +278,13 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Questions for the user:** 1 size, 2 fixed per stage for the campaign (and then: design the 12 loadouts together, or I draft them from the personalities), 5 full or partial intel, 6 quick match details and rewards. Order of building: enemy loadout + intel first, quick match second?
 
 ### Under discussion
+- **[feature] New unit types and roles: candidates** (collected 2026-11-19; the next big topic after quick match, see the suggested order under Enemy AI). Not decided; one list to start the design from.
+  - **Raider** (user, 2026-11-16, "hog cycle"): a cheap, fast unit that goes only for structures and ends battles if nobody answers it; maybe a vehicle. Row 55 (stage 11, 16 min grind through a Breacher wall) shows the gap.
+  - **Kamikaze / martyr** (user, 2026-11-19): a fast charger (vehicle or airborne) that heads for a structure and deals heavy damage on impact, dying in the process. If it is shot down on the way while close to enemies, it still explodes and damages them. Counter-play: kill it early, away from your own units and structures. Open: damage and radius, cost, whether it targets only structures or also big groups of mechs, how it reads on the field (a warning marker?).
+  - **Vehicles** (user, 2026-11-16): heavy, slow mechs plus tracked or wheeled vehicles as the fast option.
+  - **Air units** (user, 2026-11-16, keep it simple): start with 2–3, e.g. an attack helicopter, a "flying Seeker", a bomber; they ignore turret walls and lane blocking, only some units and turrets can hit them. Needs new targeting rules, anti-air, art.
+  - Other ideas from the same discussion: air drop / forward base, a group deploy action, a "Charge" special.
+  - Parked points that belong here: Seeker without a clear weakness (minimum range), Aegis should never lead (section "Unit types and roles (parked)").
 - **[ui] Enemy intel** (user, 2026-11-16: "I have no idea what level his units are"; pre-game info? before or after the loadout? or a surprise?)
   - Today nothing about the enemy is shown: its level (one per stage, all units: e.g. Scrubline 0, Ash Ridge 2, Endless up to 5), roster, base upgrades, starting turrets.
   - **Proposal:** an "Intel" line **before the loadout pick** (stage list / loadout screen): enemy unit icons, "Level N", base upgrades as pips, number of starting turrets; makes the loadout a real counter-pick (and scouting is realistic). In battle: "L N" next to the enemy HP bar.
