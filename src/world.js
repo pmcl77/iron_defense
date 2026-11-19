@@ -1167,6 +1167,7 @@ export class World {
     if (pressure > 0) regen *= 1 + Math.min(AI.pressureBonus, pressure / 1500);
     regen = this.otIncome(regen);
     ai.energy += regen * dt;
+    if (PERSONALITIES[st.personality]?.waves) { this.aiWaves(dt, pressure, laneP); return; }
 
     if (!ai.next) ai.next = this.aiOrder(pressure, laneP);
     const cost = ai.next.groups.flat().reduce((c, t) => c + MECHS[t].cost, 0);
@@ -1187,6 +1188,62 @@ export class World {
       }
       ai.next = null;
     }
+  }
+  // one enemy unit onto the field (waves and their defenders)
+  aiSpawn(type, lane, order, gi = 1) {
+    const ai = this.ai, face = BASE_FACE[1];
+    ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
+    const jitter = (this.rnd() * 2 - 1) * 20;
+    const e = this.spawn({ kind: 'mech', type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24, jitter });
+    this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
+    this.ev('deploy', 0, type, this.lvl[1][type], lane + 1, order, gi);
+    this.aiCount[type] = (this.aiCount[type] || 0) + 1;
+  }
+  // waves (AI.wave): save, then release a wave unit by unit; under pressure defend at once
+  aiWaves(dt, pressure, laneP) {
+    const ai = this.ai, W = AI.wave;
+    ai.waveT = (ai.waveT || 0) - dt;
+    if (ai.waveT > 0) return;
+    const gap = () => W.gap[0] + this.rnd() * (W.gap[1] - W.gap[0]);
+    if (ai.wave?.length) {
+      const u = ai.wave[0];
+      if (ai.energy < MECHS[u.type].cost) return;
+      ai.energy -= MECHS[u.type].cost; ai.wave.shift();
+      this.aiSpawn(u.type, u.lane, ai.waveNo, u.gi);
+      ai.waveT = gap();
+      return;
+    }
+    if (pressure > 300) { // defend now with what it has saved
+      const d = this.aiDefend(laneP), t = d.groups[0][0];
+      if (ai.energy < MECHS[t].cost) return;
+      ai.energy -= MECHS[t].cost;
+      this.aiSpawn(t, d.lane ?? this.aiLane(pressure, laneP), ++this.aiOrders);
+      ai.waveT = gap();
+      return;
+    }
+    if (ai.energy >= W.budget) { ai.waveNo = ++this.aiOrders; ai.wave = this.aiBuildWave(); }
+  }
+  // the units of the next wave in deploy order, each with its lane; ai.waveStyle: the style drawn
+  aiBuildWave() {
+    const W = AI.wave, roster = this.stage.roster, ft = this.focus.length ? this.focus : roster.filter((t) => MECHS[t].role !== 'support');
+    const tanks = roster.filter((t) => MECHS[t].role === 'tank');
+    const styles = tanks.length ? ['plain', 'mixed', 'tank'] : ['plain', 'mixed'];
+    const style = styles[Math.floor(this.rnd() * styles.length)];
+    const set = this.laneSet() || [...Array(LANES).keys()];
+    const lanes = [...set]; const k = Math.floor(this.rnd() * lanes.length); lanes.push(...lanes.splice(0, k)); // random start
+    let budget = W.budget; const lead = [], body = [], back = [];
+    const take = (list, t) => { if (budget < MECHS[t].cost || lead.length + body.length + back.length >= W.max) return false; budget -= MECHS[t].cost; list.push(t); return true; };
+    if (style === 'tank') for (let i = 0; i < Math.min(2, lanes.length); i++) take(lead, tanks[Math.floor(this.rnd() * tanks.length)]);
+    const others = roster.filter((t) => !ft.includes(t) && MECHS[t].role !== 'tank');
+    if (style !== 'plain' && others.length && this.rnd() < W.extra) take(back, others[Math.floor(this.rnd() * others.length)]);
+    const one = ft[Math.floor(this.rnd() * ft.length)];
+    for (let i = 0; i < 40; i++) if (!take(body, style === 'plain' ? one : ft[i % ft.length])) break;
+    body.sort((a, b) => MECHS[a].speed - MECHS[b].speed); // slowest first: the fast ones catch up
+    this.ai.waveStyle = style;
+    this.ev('wave', 0, style, lead.length + body.length + back.length);
+    // lanes: tanks lead in the first lanes and the rest follows them; otherwise the wave rotates through the set
+    const use = style === 'tank' ? lanes.slice(0, lead.length) : lanes;
+    return [...lead, ...body, ...back].map((type, i) => ({ type, lane: use[i % use.length], gi: (i % use.length) + 1 }));
   }
   // the next enemy order: { groups: [[types front to back], …] }
   aiOrder(pressure, laneP = null) {

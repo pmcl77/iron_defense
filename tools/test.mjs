@@ -936,6 +936,45 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const lp = [0, 0, 0, 0, 0]; lp[other] = 900;
   check('lane set: a defender still goes where it is pushed', d.aiDefend(lp).lane === other);
 }
+// swarm waves (AI.wave)
+{
+  const sw = stageDef(6);
+  const runWaves = (stage, secs, setup = () => {}) => {
+    const w = new World({ ...stage, turrets: [] }, defaultSave(), ALL, { seed: 5 });
+    setup(w);
+    for (let t = 0; t < secs; t += 1 / 60) w.update(1 / 60);
+    return w;
+  };
+  const w = runWaves(sw, 240);
+  const dep = w.log.events.filter((e) => e[1] === 'deploy' && e[2] === 0), waves = w.log.events.filter((e) => e[1] === 'wave');
+  const first = dep[0]?.[0] ?? 0;
+  check('waves: the swarm saves first (no deploy before it can afford a wave)', first > 20 && waves.length >= 2, `first deploy ${first}s, ${waves.length} waves`);
+  const byWave = {}; for (const e of dep) (byWave[e[6]] ||= []).push(e);
+  const sizes = Object.values(byWave).map((x) => x.length);
+  const gaps = Object.values(byWave).flatMap((x) => x.slice(1).map((e, i) => e[0] - x[i][0]));
+  check('waves: 5–12 units each, one about every 1–1.2 s', sizes.every((n) => n >= 5 && n <= 12) && gaps.every((g) => g >= 0.95 && g <= 1.3), `sizes ${sizes}, gaps ${Math.min(...gaps).toFixed(2)}–${Math.max(...gaps).toFixed(2)}`);
+  const mixed = Object.values(byWave).filter((x) => new Set(x.map((e) => e[3])).size > 1);
+  const slowFirst = mixed.every((x) => { const fs = x.filter((e) => ['scout', 'gunner'].includes(e[3])).map((e) => MECHS[e[3]].speed); return fs.every((v, i) => !i || v >= fs[i - 1]); });
+  check('waves: slowest first (Scouts after the Gunners)', slowFirst, mixed.map((x) => x.map((e) => e[3].slice(0, 2)).join(' ')).join(' | '));
+  check('waves: inside the lane set', Object.values(byWave).every((x) => x.every((e) => w.log.events.some((l) => l[1] === 'lanes' && String(l[3]).includes(String(e[5]))))));
+  const styles = new Set(); let extras = 0, tankLed = 0;
+  const lo = ['brawler', 'gunner', 'scout', 'mortar', 'aegis'];
+  for (let seed = 1; seed <= 12; seed++) {
+    const v = new World({ ...sw, roster: lo, turrets: [] }, defaultSave(), ALL, { seed });
+    for (let i = 0; i < 30; i++) { const wave = v.aiBuildWave(); styles.add(v.ai.waveStyle);
+      if (v.ai.waveStyle === 'tank') tankLed += wave[0].type === 'brawler' ? 1 : -100;
+      if (['mortar', 'aegis'].includes(wave[wave.length - 1].type)) extras++;
+      if (wave.slice(0, -1).some((u) => ['mortar', 'aegis'].includes(u.type))) extras -= 100; }
+  }
+  check('waves: plain, mixed and tank-led (with a tank in the loadout); tanks lead', styles.size === 3 && tankLed > 0, `${[...styles]} tank-led ${tankLed}`);
+  check('waves: other unit types only at the back, now and then', extras > 10, `${extras}`);
+  const noTank = new World({ ...sw, turrets: [] }, defaultSave(), ALL, { seed: 2 });
+  const st2 = new Set(); for (let i = 0; i < 40; i++) { noTank.aiBuildWave(); st2.add(noTank.ai.waveStyle); }
+  check('waves: no tank-led wave without a tank (stage 7)', !st2.has('tank') && st2.size === 2);
+  const d = runWaves(sw, 15, (v) => { for (let i = 0; i < 5; i++) { const m = v.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: laneX(2), y: BASE_FACE[1] - 400 - i * 50 }); m.hp = m.maxHp = 1e9; m.def = { ...m.def, speed: 0, dmg: 0 }; } });
+  const dd = d.log.events.filter((e) => e[1] === 'deploy' && e[2] === 0);
+  check('waves: under pressure it defends at once instead of saving', dd.length >= 2 && dd[0][0] < 12, dd.map((e) => `${e[0]}s ${e[3]}`).join(', '));
+}
 // defensive pick (the user's order, followed about 70% of the time)
 {
   const st = { name: 'D', index: 9, baseHp: 1e6, lvl: 0, regen: 0, roster: ['brawler', 'gunner', 'seeker', 'mortar', 'lancer'], turrets: [], base: {} };
