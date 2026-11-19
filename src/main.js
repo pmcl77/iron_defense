@@ -57,7 +57,8 @@ const unlocked = () => unlockedSet(save.cleared);
 
 // positional sound: pan from x, distance from the camera center
 function sfx(name, f) {
-  if (game.mode !== 'play') return;
+  // battle sounds in a battle and in a replay; silent once the result screen is up (the field keeps running behind it)
+  if ((game.mode !== 'play' && game.mode !== 'replay') || (game.mode === 'play' && game.resultShown)) return;
   let pan = 0, dist = 0;
   if (f && f.x !== undefined) {
     pan = Math.max(-1, Math.min(1, f.x / (FIELD.w / 2) - 1));

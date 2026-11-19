@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.7.0-dev
 
+### Fixes
+- **Silence behind the result screen** (0.7.0-dev.6, user report): after a battle the field keeps running behind the result dialog, and its shots and explosions kept playing until you left the dialog. Battle sounds now stop when the result screen appears (the win/lose sound still plays). Replays now have battle sound too (it was silent; off above 2×).
+
 ### Tools
 - **Replays** (0.7.0-dev.4, user: "I would love to see replays in action"): every battle now uses a random seed, and the stats carry a `replay` block: the seed, the stage as played (incl. the enemy loadout, personality, surprise), your units, dev switches and every input (deploys and queue, lane taps, turret orders, cancels, sales, upgrades, specials with their target, dev switch changes) with its exact simulation step. `tools/replay.mjs` re-runs the battle and checks it against the recorded timeline samples and events (drift detection); `--at m:ss` prints who stands where. Checked: a battle played in the browser (Chromium) replays exactly in Node. Next: a replay viewer in the game.
 - **Replay viewer** (0.7.0-dev.5, dev builds): menu → **Replays** lists your last 10 battles on this device (since dev.4), or **Open file…** loads a replay file (made from the stats with `node tools/replay.mjs <stats.json> <row> --export <file>`, e.g. to watch a phone battle on the Mac). The battle view with a replay bar: play/pause, −30 s / +30 s, speed 1×/2×/4×/8× (sound off above 2×), the time, and a slider to jump anywhere (jumping back re-runs from the start in the background, a few seconds for a long battle). Pan the camera as in battle. Checked with row 59 (stage 5, played on the phone): same win, same 81 events.
