@@ -103,7 +103,7 @@ export class World {
     this.con = null;
     this.conWait = 0;
 
-    this.ai = { energy: 40, next: null, recent: [] };
+    this.ai = { energy: 40, next: null, recent: [], door: Array.from({ length: LANES }, () => []) }; // door: paid deploys waiting per lane
     // focus types of the enemy's personality (only those in its loadout) and this battle's target factor
     this.focus = (PERSONALITIES[stage.personality]?.focus || []).filter((t) => stage.roster.includes(t));
     const [f0, f1] = AI.focus.range;
@@ -386,6 +386,7 @@ export class World {
       for (const k in this.specialCd) this.specialCd[k] = Math.max(0, this.specialCd[k] - dt);
       this.updateQueue(dt);
       this.updateAI(dt);
+      this.updateDoor(dt);
       this.updateConstructor(dt);
       if (this.time >= this.nextSample) { this.sample(); this.nextSample += 30; }
     }
@@ -1176,25 +1177,36 @@ export class World {
         const lane = gi === 0 && ai.next.lane != null ? ai.next.lane : this.aiLane(pressure, laneP, first); // a defender goes where it's pushed
         if (first < 0) first = lane;
         ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
-        g.forEach((type, i) => { // front to back: the first one deploys furthest forward
-          const jitter = (this.rnd() * 2 - 1) * 20;
-          const e = this.spawn({ kind: 'mech', type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24 + i * 34, jitter });
-          this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
-          this.ev('deploy', 0, type, this.lvl[1][type], lane + 1, order, gi + 1);
-        });
+        for (const type of g) this.ai.door[lane].push({ type, order, gi: gi + 1, wait: 0 }); // front to back, through the door one by one
       }
       ai.next = null;
     }
   }
-  // one enemy unit onto the field (waves and their defenders)
+  // one enemy unit (waves and their defenders): paid, then through the door (updateDoor)
   aiSpawn(type, lane, order, gi = 1) {
-    const ai = this.ai, face = BASE_FACE[1];
+    const ai = this.ai;
     ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
-    const jitter = (this.rnd() * 2 - 1) * 20;
-    const e = this.spawn({ kind: 'mech', type, team: 1, lane, x: laneX(lane) + jitter, y: face - 24, jitter });
-    this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
-    this.ev('deploy', 0, type, this.lvl[1][type], lane + 1, order, gi);
+    ai.door[lane].push({ type, order, gi, wait: 0 });
     this.aiCount[type] = (this.aiCount[type] || 0) + 1;
+  }
+  // the enemy's door (ISSUES.md 2026-11-19, like the player's deploy queue): per lane, a paid unit appears at the deploy
+  // point once no own mech stands on it, or after QUEUE.wait s anyway. Groups come through one by one, front unit first
+  // (before: a group appeared at once, its back units behind the base face, hidden under the base).
+  updateDoor(dt) {
+    const face = BASE_FACE[1], y0 = face - 24;
+    for (let lane = 0; lane < LANES; lane++) {
+      const q = this.ai.door[lane][0];
+      if (!q) continue;
+      q.wait += dt;
+      const x0 = laneX(lane);
+      const busy = this.entities.some((e) => !e.dead && e.team === 1 && e.kind === 'mech' && Math.abs(e.x - x0) < 50 && Math.abs(e.y - y0) < e.radius + 26);
+      if (busy && q.wait < QUEUE.wait) continue;
+      this.ai.door[lane].shift();
+      const jitter = (this.rnd() * 2 - 1) * 20;
+      const e = this.spawn({ kind: 'mech', type: q.type, team: 1, lane, x: x0 + jitter, y: y0, jitter });
+      this.fx.push({ t: 'deploy', x: e.x, y: e.y, team: 1, type: e.type });
+      this.ev('deploy', 0, q.type, this.lvl[1][q.type], lane + 1, q.order, q.gi);
+    }
   }
   // waves (AI.wave): save, then release a wave unit by unit; under pressure defend at once
   aiWaves(dt, pressure, laneP) {

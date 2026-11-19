@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.7.0-dev
 
+### Enemy AI
+- **The enemy's door** (0.7.0-dev.2, user report: an enemy Lancer was invisible, "beneath the base", only its shots and HP bar showed): enemy groups appeared at once, front to back 34 apart, so the 3rd and 4th unit stood behind the base face, inside the base; artillery comes last in a group, and a Lancer with a target in range never walked out. The voxel graphics drew it under the base. Now every enemy unit comes through the door of its lane one by one, once the deploy point is clear or after 1.5 s at most, like the player's deploy queue. Groups keep their front-to-back order. Bot battles: no enemy mech behind its base face any more (before: thousands of frames, mostly Lancers).
+
 ### Progression
 - **Workshop removed** (0.7.0-dev.1, decided with the user 2026-11-19: perks are dead weight once bought, unit tech is grind and made tuning and a fair quick match hard). Gone: credits, the Workshop screen, Veteran Training (unit, turret and Constructor tech) and the four perks (Capacitors, Reinforced Walls, Fast Uplink, Power Grid). Every battle starts the same: 100 of 300 energy, 8 energy/s, base 3000 HP, all units at level 0. Stays: the in-battle upgrades (unit levels 0–5, Bastion Gun, Reactor). The in-battle base **Armor** upgrade is also gone (an emergency QRF may replace it); the enemy base keeps its stage Armor. Old saves keep cleared stages, stars, Endless best and loadout; credits, tech and perks are dropped. **The stages are not re-tuned yet** (on purpose: the user plays them first; an interim re-tune follows in dev.2). Stats no longer send `tech` and `perks`. Bot tools (balance, matrix, lifetime) run without Workshop variants.
 

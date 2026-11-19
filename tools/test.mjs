@@ -988,6 +988,23 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const dd = d.log.events.filter((e) => e[1] === 'deploy' && e[2] === 0);
   check('waves: under pressure it defends at once instead of saving', dd.length >= 2 && dd[0][0] < 12, dd.map((e) => `${e[0]}s ${e[3]}`).join(', '));
 }
+// enemy door (ISSUES.md 2026-11-19, hidden Lancer): groups come through the door one by one, never behind the base face
+{
+  const st = { name: 'D', index: 9, baseHp: 1e6, lvl: 0, regen: 0, roster: ['brawler', 'gunner', 'seeker', 'lancer'], turrets: [], base: {} };
+  const w = new World(st, defaultSave(), ALL, { seed: 4 });
+  for (const t of ['brawler', 'gunner', 'seeker', 'lancer']) w.ai.door[1].push({ type: t, order: 1, gi: 1, wait: 0 });
+  let behind = 0;
+  for (let i = 0; i < 60 * 12; i++) { w.update(1 / 60); for (const e of w.entities) if (!e.dead && e.kind === 'mech' && e.team === 1 && e.y > BASE_FACE[1]) behind++; }
+  const dep = w.log.events.filter((e) => e[1] === 'deploy' && e[2] === 0);
+  const gaps = dep.slice(1).map((e, i) => e[0] - dep[i][0]);
+  check('enemy door: a group comes through one by one, front unit first', dep.map((e) => e[3]).join() === 'brawler,gunner,seeker,lancer' && gaps.every((g) => g > 0.3 && g <= 1.6), `${dep.map((e) => `${e[0]}s ${e[3]}`).join(', ')}`);
+  check('enemy door: no enemy mech behind its base face', behind === 0, `${behind} frames`);
+  const v = new World(st, defaultSave(), ALL, { seed: 4 });
+  const m = v.spawn({ kind: 'mech', type: 'seeker', team: 1, lane: 1, x: laneX(1), y: BASE_FACE[1] - 24 }); m.def = { ...m.def, speed: 0 };
+  v.ai.door[1].push({ type: 'lancer', order: 1, gi: 1, wait: 0 });
+  let t = 0; while (!v.log.events.some((e) => e[1] === 'deploy') && t < 5) { v.update(1 / 60); t += 1 / 60; }
+  check('enemy door: an occupied door delays a deploy by at most 1.5 s', t > 1.4 && t < 1.6, `${t.toFixed(2)} s`);
+}
 // defensive pick (the user's order, followed about 70% of the time)
 {
   const st = { name: 'D', index: 9, baseHp: 1e6, lvl: 0, regen: 0, roster: ['brawler', 'gunner', 'seeker', 'mortar', 'lancer'], turrets: [], base: {} };
