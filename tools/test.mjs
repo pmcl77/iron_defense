@@ -1,6 +1,7 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout } from '../src/data.js';
+import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI } from '../src/data.js';
+import { focusFactor } from './focus.mjs';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -893,6 +894,41 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const all = [];
   for (let i = 0; i < 2000; i++) { w.time = i % 400; for (const g of w.aiOrder(i % 4 === 0 ? 800 : 0).groups) all.push(...g); }
   check('AI fields only its loadout (no Tank in a tankless loadout)', all.every((t) => lo.includes(t)) && lo.every((t) => all.includes(t)), [...new Set(all)].join(','));
+}
+
+// personalities and focus types (ISSUES.md 2026-11-19)
+{
+  check('personality: every stage has one, its focus types are in its loadout', STAGES.every((st) => PERSONALITIES[st.personality] && PERSONALITIES[st.personality].focus.every((t) => st.roster.includes(t))));
+  let r = 11; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const ok = RANDOM_PERSONALITIES.every((p) => Array.from({ length: 50 }, () => randomLoadout(rnd, MECH_TYPES, p)).every((lo) => lo.length === LOADOUT_SIZE && new Set(lo).size === LOADOUT_SIZE && PERSONALITIES[p].focus.every((t) => lo.includes(t))
+    && lo.some((t) => MECHS[t].role === 'line') && lo.some((t) => ['tank', 'artillery'].includes(MECHS[t].role))));
+  check('personality: a random loadout always holds its focus types and keeps the rules', ok);
+  const w = new World(stageDef(7), defaultSave(), ALL, { seed: 4 });
+  check('focus: the battle draws a target in the range', w.focusX >= AI.focus.range[0] && w.focusX <= AI.focus.range[1] && w.focus.join() === 'breacher,lancer', `${w.focusX} ${w.focus}`);
+  check('focus: Artillery/Support focus types get no boost as singles', w.focusOf('lancer', true) === 1 && w.focusOf('breacher', true) > 1);
+  const alone = focusFactor(stageDef(5), { target: 3 }), hunt = focusFactor(stageDef(2), { target: 3 }), siege = focusFactor(stageDef(7), { target: 3 });
+  check('focus: a focus type that works alone ends near the target (×3)', Math.abs(alone.factor - 3) < 0.4 && Math.abs(hunt.factor - 3) < 0.4, `breacher ×${alone.factor.toFixed(2)}, seeker ×${hunt.factor.toFixed(2)}`);
+  check('focus: siege deploys clearly more Breachers and Lancers than before (×0.4)', siege.factor > 2, `×${siege.factor.toFixed(2)}`);
+  const low = focusFactor(stageDef(7), { target: 2.2 }), high = focusFactor(stageDef(7), { target: 3.5 });
+  check('focus: a higher drawn target gives more focus types', high.factor > low.factor, `${low.factor.toFixed(2)} < ${high.factor.toFixed(2)}`);
+}
+// defensive pick (the user's order, followed about 70% of the time)
+{
+  const st = { name: 'D', index: 9, baseHp: 1e6, lvl: 0, regen: 0, roster: ['brawler', 'gunner', 'seeker', 'mortar', 'lancer'], turrets: [], base: {} };
+  const picks = (setup) => {
+    const w = mk(); w.stage = st; setup(w);
+    const out = {}; for (let i = 0; i < 400; i++) { const o = w.aiDefend([0, 0, 800, 0, 0]); out[o.groups[0][0]] = (out[o.groups[0][0]] || 0) + 1; if (o.lane !== 2) out.wrongLane = 1; }
+    return out;
+  };
+  const face = BASE_FACE[1];
+  const shelled = picks((w) => { mech(w, 'mortar', 0, 2, face - 600); mech(w, 'lancer', 0, 1, face - 700); });
+  check('defend: shelled from afar by artillery → Seeker first', shelled.seeker > 280 && !shelled.wrongLane, JSON.stringify(shelled));
+  const pushed = picks((w) => { mech(w, 'gunner', 0, 2, face - 400); });
+  check('defend: no own tank in the pushed lane → Brawler first', pushed.brawler > 280, JSON.stringify(pushed));
+  const tanked = picks((w) => { mech(w, 'gunner', 0, 2, face - 400); mech(w, 'brawler', 1, 2, face - 200); });
+  check('defend: with its tank there → Seeker or Gunner', tanked.seeker + tanked.gunner > 280 && tanked.seeker > 60 && tanked.gunner > 60, JSON.stringify(tanked));
+  check('defend: some variety (random defender about 30%)', pushed.gunner > 20 && pushed.seeker > 20, JSON.stringify(pushed));
+  check('defend: deploys in the lane pushed hardest', !shelled.wrongLane && !pushed.wrongLane);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

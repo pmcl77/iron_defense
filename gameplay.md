@@ -101,7 +101,7 @@ Mechs are mobile units. Each one attacks the first enemy it comes across, and th
 - **Forward deploy** *(0.4.0-dev, player only)*: your turrets double as forward bases for their **own lane only** (a turret in L3 serves L3, not L2/L4). **Forward is the default:** when a lane's first turret is finished, the lane switches to forward on its own (button shows **FWD**); a further turret keeps whatever the lane is set to. Tapping the already selected lane button again switches that lane between forward and base (forward only if the lane has a finished turret). Each lane remembers its choice. New mechs appear just behind (base side of) the lane's frontmost turret; a turret under attack still works. If it falls, the next turret back in that lane takes over; when the lane's last turret is destroyed or sold, the lane goes back to the base. Queued orders keep their own choice (▲ in the queue) and fall back the same way. Tapping the field near your base selects that lane at the base. The enemy doesn't deploy forward (it would have to build its turrets like the player; ISSUES.md "same rules for the enemy").
 - Each card has a short cooldown after use, as in Ironline.
 - **Loadout:** you have up to 8 mech types, but the HUD holds 5 mech cards. Before each battle you pick a loadout of 5 unlocked mechs, which keeps hotkeys 1–5. The last loadout is remembered. *(Might later grow to allow all 8 mechs.)*
-- **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. From 0.6.0-dev the intel shows the enemy's loadout. A type you neither own nor have fought (the stage's frontrunner) shows as "?" ("New unit"). From stage 7, and in Endless, one slot is the **surprise**: it shows as "?" (always last), a different type of the loadout each battle. During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
+- **Enemy intel** *(0.4.0-dev)*: the loadout screen opens before every battle (with 5 or fewer mechs unlocked, all are picked) and shows what you'll face: the enemy's unit types, its level (one level for all its units, e.g. 2 at Ash Ridge), its starting turrets and its base upgrades. From 0.6.0-dev the intel shows the enemy's loadout. A type you neither own nor have fought (the stage's frontrunner) shows as "?" ("New unit"). From stage 7, and in Endless, one slot is the **surprise**: it shows as "?" (always last), a different type of the loadout each battle. *(0.6.0-dev.4, dev builds only)* A **DEV** button in the intel reveals the personality (with a short description), its focus types and the surprise unit; the battle stats record whether it was revealed (`devIntel`). During the battle the enemy level stands next to its HP bar ("L2 HOSTILE").
 
 ### 5.2 Movement: roles, types and traits
 
@@ -350,11 +350,12 @@ The enemy works like Ironline's AI, adapted for lanes:
   - **Singles:** it prefers cheap units early and expensive ones later.
   - **Groups:** 25% of orders early, rising to 45% after about 2.5 minutes, are a group. A group is a small formation from role templates, deployed front to back: Tank + Line, Tank + Artillery, Line + Artillery, two Line, two Line + Support, Tank + Line + Support, siege (Charger + Artillery; the Breacher rather than the Scout). Same-type packs only for cheap units (2–3 Scouts) and, rarely, two Brawlers (they spread out with the side attack). A template is used only if the stage roster has a type for each role.
   - **Split attacks:** about 15% of group orders are two small groups (up to 2 units each) sent into two different lanes at once.
-  - **Under pressure** (your mechs near its base): half the time a single unit from a defensive set (Brawler, Gunner, Seeker) instead of always a Brawler.
+  - **Under pressure** (your mechs near its base): half the time a **defensive pick**, a single defender from Brawler, Gunner, Seeker (only those in its loadout), deployed in the lane you push hardest. *(0.6.0-dev.4)* About 70% of the time it follows the situation (the user's own order): its base is shelled from afar by artillery → a Seeker (else a Gunner); otherwise, with no tank of its own in that lane yet, a Brawler first; then a Seeker or Gunner. The rest of the time a random defender.
+  - **Focus types** *(0.6.0-dev.4)*: every enemy loadout has a **personality** with 1–2 focus types (`PERSONALITIES` in data.js; table in §11). Each battle draws a target factor between ×2.2 and ×3.5: each focus type is deployed about that many times as often as each other unit type, measured on the result. The AI steers on its own count during the battle (the boost grows while a focus type is behind the target). Singles get the boost only for roles that work alone (Tank, Line, Charger); Artillery and Aegis focus types come more often only inside groups (groups with a place for them come up more often), so they end lower (about ×1–2). Simulated (`tools/focus.mjs`): focus types that work alone ×3, Siege ×2.6, Armored/Iron wall ×2 (the Aegis about doubled), Artillery line ×1 (Lancer + Mortar 41% of deploys, from 33%).
   - **A Support (Aegis) never goes alone:** it only comes as part of a group (alone it has nothing to protect).
 - **Lane choice:** 20% a random lane; under pressure 20% the lane you push in; otherwise weighted toward the weakest-defended lanes (fewest turret HP in range), not always the weakest, and a lane used in its last 4 orders is less likely each time (×0.5 per use) *(tune)*.
 - **Behavior:** its mechs follow the same roles as yours (§5.2).
-- **Later:** stage personalities (e.g. "siege", "swarm"); real counter-picking against your army (the "counter AI" feature).
+- **Later:** real counter-picking against your army (the "counter AI" feature).
 - **Turrets:** fixed per stage. The enemy has no Constructor. It never builds new turrets, never repairs and never upgrades during a battle.
 
 ## 11. Battle end, rewards and progression
@@ -369,9 +370,9 @@ Everything below carries over from Ironline unless noted.
 
 | # | Stage | Enemy base HP | Enemy level | Enemy regen | Enemy loadout | Enemy turrets (type lane/row) | Enemy base upgrades |
 |---|---|---|---|---|---|---|---|
-| 1 | Scrubline | 1500 | 0 | 5 | Scout, Gunner, **Brawler** | none | — |
-| 2 | Dry Ford | 1800 | 0 | 6 | Scout, Gunner, Brawler, **Mortar** | none | — |
-| 3 | Quarry Road | 2100 | 0 | 6.5 | Scout, Gunner, Brawler, Mortar, **Seeker** | Sentry 3/3 | — |
+| 1 | Scrubline | 1500 | 0 | 5 | Scout, Gunner, **Brawler** (first contact) | none | — |
+| 2 | Dry Ford | 1800 | 0 | 6 | Scout, Gunner, Brawler, **Mortar** (first shells) | none | — |
+| 3 | Quarry Road | 2100 | 0 | 6.5 | Scout, Gunner, Brawler, Mortar, **Seeker** (hunters) | Sentry 3/3 | — |
 | 4 | Dust Belt | 2400 | 0 | 7 | Brawler, **Aegis**, Gunner, Seeker, Mortar (armored) | Sentry 2/3, 4/3 | Gun 1 |
 | 5 | Saltpan | 2700 | 0 | 7.5 | **Lancer**, Mortar, Gunner, Brawler, Scout (long guns) | Sentry 1/3, 5/3; Howitzer 3/1 | Armor 1 |
 | 6 | Red Cut | 3000 | 1 | 8 | **Breacher**, Brawler, Aegis, Gunner, Mortar (wall breakers) | Sentry 2/4, 3/4, 4/4; Howitzer 3/1 | Armor 1, Gun 1 |
@@ -382,12 +383,14 @@ Everything below carries over from Ironline unless noted.
 | 11 | Breakwater | 4800 | 2 | 11.3 | Scout, Breacher, Brawler, Gunner, Seeker (rush) | Sentry wall 1–5/5; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
 | 12 | Last Bastion | 5400 | 2 | 12.4 | Brawler, Aegis, Seeker, Lancer, Mortar (elite) | Arc 1/5, 3/5, 5/5; Sentry 2/5, 4/5; Howitzer 2/1, 4/1 | Armor 2, Gun 2, Reactor 1 |
 
+**Personalities and focus types** (§10): first contact Brawler; first shells Mortar; hunters Seeker; armored Aegis + Brawler; long guns Lancer; wall breakers Breacher; swarm Scout + Seeker; siege Breacher + Lancer; iron wall Brawler + Aegis; artillery line Lancer + Mortar; rush Scout + Breacher; elite Seeker + Lancer.
+
 **Endless wave n** starts just above Last Bastion and ramps up gradually:
 - **Enemy base HP:** 5400 × (1 + 0.06 n)
 - **Enemy level:** 2 + ⌊(n + 1) / 3⌋, max 5
 - **Enemy regen:** 12.4 × (1 + 0.04 n)
 - **Turrets:** the same as Last Bastion
-- **Enemy loadout:** new and random every battle: 5 different types with at least one Line type, at least one Tank or Artillery, and at most one Charger
+- **Enemy loadout:** new and random every battle, built personality-first: a random personality from the 9 themes of stages 4–12, its focus types always in the loadout, the other slots random (5 different types with at least one Line type, at least one Tank or Artillery, and at most one Charger unless the personality brings two)
 - **Enemy base upgrades:** armor 2 + ⌊n/3⌋, gun 2 + ⌊n/4⌋, reactor 1 + ⌊n/3⌋, each capped at 3
 
 So Endless 1 is about as hard as stage 12, Endless 2 brings level 3, and each further wave adds a little.

@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, PERKS, STAGES, CONSTRUCTOR, MAX_UNIT_LEVEL, MAX_TECH,
-  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, SURPRISE_FROM, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, stageReward, lossReward, unlockedSet, techCost, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
@@ -100,7 +100,7 @@ function demoTick(dt) {
 // slot (random per battle) is the surprise and shows '?' in the intel.
 function prepareStage(i) {
   const st = stageDef(i);
-  if (st.endless) st.roster = randomLoadout(Math.random);
+  if (st.endless) { st.personality = randomPersonality(Math.random); st.roster = randomLoadout(Math.random, undefined, st.personality); }
   if (i >= SURPRISE_FROM) st.surprise = st.roster[Math.floor(Math.random() * st.roster.length)];
   game.next = { i, st };
   return st;
@@ -142,8 +142,14 @@ function intelHtml(i) {
   for (const [t] of st.turrets || []) tc[t] = (tc[t] || 0) + 1;
   const turrets = Object.entries(tc).map(([t, n]) => `${n}× ${TURRETS[t].name}`).join(', ') || 'none';
   const base = Object.keys(BASE_UPGRADES).map((k) => `<span class="ib">${BASE_UPGRADES[k].name}${pips((st.base || {})[k] || 0, BASE_UPGRADES[k].costs.length)}</span>`).join('');
+  // dev builds: a DEV button reveals what the enemy is supposed to do (personality, focus types, the surprise); the
+  // battle stats record whether it was revealed (devIntel)
+  const pe = PERSONALITIES[st.personality];
+  const dev = !IS_DEV ? '' : st.devIntel
+    ? `<div class="dev-intel"><b>DEV</b> ${pe ? `<span class="k">Personality</span> ${pe.name}: ${pe.desc} <span class="k">Focus</span> ${pe.focus.filter((t) => st.roster.includes(t)).map((t) => MECHS[t].name).join(', ')}` : ''}${st.surprise ? ` <span class="k">Surprise</span> ${MECHS[st.surprise].name}` : ''}</div>`
+    : '<button class="btn small dev-btn" data-a="devintel">DEV</button>';
   return `<div class="intel">
-      <div class="section-t">INTEL · ENEMY <span class="lvl-tag">LEVEL ${st.lvl}</span></div>
+      <div class="section-t">INTEL · ENEMY <span class="lvl-tag">LEVEL ${st.lvl}</span>${st.devIntel ? '' : dev}</div>${st.devIntel ? dev : ''}
       <div class="intel-units">${units}</div>
       <div class="intel-row"><span class="k">Turrets</span> ${turrets}</div>
       <div class="intel-row"><span class="k">Base</span> ${base}</div>
@@ -157,6 +163,7 @@ function launch(i) {
   const st = nextStage(i); game.next = null;
   game.world = new World(st, save, { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, { dev: devSettings() });
   game.world.battleId = randomHex(8);
+  game.world.devIntel = !!st.devIntel;
   game.paused = false;
   game.resultShown = false;
   game.ui = freshUi();
@@ -198,6 +205,7 @@ function summary(result, stars = 0) {
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, tech: { ...save.tech }, perks: { ...save.perks }, baseLvl: { ...w.baseLvl },
     mode: st.endless ? 'endless' : 'campaign', enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
+    personality: st.personality, focusX: w.focusX, ...(IS_DEV ? { devIntel: !!w.devIntel } : {}),
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
     dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)), strip: duo(w.log.strip.map((a) => a.map(Math.round))), wait: duo(w.log.wait.map(rounded)), life: duo(w.lifeLog().map(rounded)),
@@ -391,6 +399,7 @@ function showLoadout(i) {
       back: showStages,
       tog: (el) => { const t = el.dataset.t; pick = pick.includes(t) ? pick.filter((x) => x !== t) : pick.length < LOADOUT_SIZE ? [...pick, t] : pick; render(); },
       go: () => { save.loadout = pick; writeSave(save); launch(i); },
+      devintel: () => { nextStage(i).devIntel = true; render(); },
     });
   };
   render();

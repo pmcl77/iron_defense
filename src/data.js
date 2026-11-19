@@ -137,6 +137,12 @@ export const AI = {
   groupChance: [0.25, 0.45], // share of orders that are groups: early, after about 2.5 minutes
   splitChance: 0.15,          // share of group orders that are a split attack: two small groups in two lanes
   defensive: ['brawler', 'gunner', 'seeker'], // picks under pressure (half the time); no Aegis: a Support never goes alone
+  defendOrder: 0.7, // share of defensive picks that follow the situation rule (see aiDefend); the rest: a random defender
+  // focus types (PERSONALITIES): each battle draws a target factor in `range`: each FT deployed about that many times as
+  // often as each other type, measured on the result. The AI steers on its own count: the boost of an FT grows while it
+  // is behind the target and shrinks when ahead (between 1 and `max`). Singles: only roles that work alone get the
+  // boost; Artillery/Support FT come more often only in groups (their factor may end lower). tools/focus.mjs checks it.
+  focus: { range: [2.2, 3.5], max: 40, alone: ['tank', 'line', 'charger'] },
   recent: 4, recentPenalty: 0.5, // lanes used in the last 4 orders get this weight factor per use
   pressureBonus: 0.1, // extra income when the player's mechs are near its base, at most (was 0.4; ISSUES "Battles are too long")
 };
@@ -247,46 +253,46 @@ export const LOADOUT_SIZE = 5;
 // 8 siege, 9 iron wall, 10 artillery line, 11 rush, 12 elite.
 const S = (name, o) => ({ name, ...o });
 export const STAGES = [
-  S('Scrubline', { baseHp: 1500, lvl: 0, regen: 5, roster: ['scout', 'gunner', 'brawler'], turrets: [], base: {} }),
-  S('Dry Ford', { baseHp: 1800, lvl: 0, regen: 6, roster: ['scout', 'gunner', 'brawler', 'mortar'], turrets: [], base: {} }),
-  S('Quarry Road', { baseHp: 2100, lvl: 0, regen: 6.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker'], turrets: [['sentry', 2, 3]], base: {} }),
-  S('Dust Belt', {
+  S('Scrubline', { personality: 'firstContact', baseHp: 1500, lvl: 0, regen: 5, roster: ['scout', 'gunner', 'brawler'], turrets: [], base: {} }),
+  S('Dry Ford', { personality: 'firstShells', baseHp: 1800, lvl: 0, regen: 6, roster: ['scout', 'gunner', 'brawler', 'mortar'], turrets: [], base: {} }),
+  S('Quarry Road', { personality: 'hunters', baseHp: 2100, lvl: 0, regen: 6.5, roster: ['scout', 'gunner', 'brawler', 'mortar', 'seeker'], turrets: [['sentry', 2, 3]], base: {} }),
+  S('Dust Belt', { personality: 'armored',
     baseHp: 2400, lvl: 0, regen: 7, roster: ['brawler', 'aegis', 'gunner', 'seeker', 'mortar'],
     turrets: [['sentry', 1, 3], ['sentry', 3, 3]], base: { gun: 1 },
   }),
-  S('Saltpan', {
+  S('Saltpan', { personality: 'longGuns',
     baseHp: 2700, lvl: 0, regen: 7.5, roster: ['lancer', 'mortar', 'gunner', 'brawler', 'scout'],
     turrets: [['sentry', 0, 3], ['howitzer', 2, 1], ['sentry', 4, 3]], base: { armor: 1 },
   }),
-  S('Red Cut', {
+  S('Red Cut', { personality: 'wallBreakers',
     baseHp: 3000, lvl: 1, regen: 8, roster: ['breacher', 'brawler', 'aegis', 'gunner', 'mortar'],
     turrets: [['sentry', 1, 4], ['sentry', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1]], base: { gun: 1, armor: 1 },
   }),
-  S('Pylon Field', {
+  S('Pylon Field', { personality: 'swarm',
     baseHp: 3300, lvl: 1, regen: 9.2, roster: ['scout', 'gunner', 'seeker', 'aegis', 'mortar'],
     turrets: [['arc', 2, 3], ['sentry', 0, 3], ['sentry', 4, 3], ['howitzer', 1, 1]], base: { reactor: 1 },
   }),
-  S('Gravel Sea', {
+  S('Gravel Sea', { personality: 'siege',
     baseHp: 3600, lvl: 1, regen: 9.7, roster: ['lancer', 'mortar', 'breacher', 'brawler', 'gunner'],
     turrets: [['sentry', 0, 4], ['sentry', 1, 4], ['arc', 2, 4], ['sentry', 3, 4], ['howitzer', 2, 1], ['howitzer', 4, 2]],
     base: { armor: 1, gun: 1 },
   }),
-  S('Ironwood', {
+  S('Ironwood', { personality: 'ironWall',
     baseHp: 4000, lvl: 2, regen: 10.3, roster: ['brawler', 'aegis', 'seeker', 'gunner', 'breacher'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['arc', 2, 3], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
-  S('Ash Ridge', {
+  S('Ash Ridge', { personality: 'artilleryLine',
     baseHp: 4400, lvl: 2, regen: 10.8, roster: ['lancer', 'mortar', 'seeker', 'gunner', 'brawler'],
     turrets: [['arc', 1, 4], ['arc', 3, 4], ['sentry', 2, 4], ['howitzer', 0, 2], ['howitzer', 4, 2], ['sentry', 2, 1]],
     base: { armor: 2, gun: 1, reactor: 1 },
   }),
-  S('Breakwater', {
+  S('Breakwater', { personality: 'rush',
     baseHp: 4800, lvl: 2, regen: 11.3, roster: ['scout', 'breacher', 'brawler', 'gunner', 'seeker'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 2, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
-  S('Last Bastion', {
+  S('Last Bastion', { personality: 'elite',
     baseHp: 5400, lvl: 2, regen: 12.4, roster: ['brawler', 'aegis', 'seeker', 'lancer', 'mortar'],
     turrets: [['arc', 0, 5], ['sentry', 1, 5], ['arc', 2, 5], ['sentry', 3, 5], ['arc', 4, 5], ['howitzer', 1, 1], ['howitzer', 3, 1]],
     base: { armor: 2, gun: 2, reactor: 1 },
@@ -301,7 +307,7 @@ export function stageDef(i) {
     name: `Endless ${n}`, index: i, endless: true,
     baseHp: Math.round(last.baseHp * (1 + 0.06 * n)),
     lvl: Math.min(MAX_UNIT_LEVEL, last.lvl + Math.floor((n + 1) / 3)),
-    regen: +(last.regen * (1 + 0.04 * n)).toFixed(1), roster: last.roster, turrets: last.turrets, // the game gives Endless a randomLoadout() per battle
+    regen: +(last.regen * (1 + 0.04 * n)).toFixed(1), roster: last.roster, personality: last.personality, turrets: last.turrets, // the game gives Endless a random personality and loadout per battle
     base: {
       armor: Math.min(3, (last.base.armor || 0) + Math.floor(n / 3)),
       gun: Math.min(3, (last.base.gun || 0) + Math.floor(n / 4)),
@@ -310,17 +316,40 @@ export function stageDef(i) {
   };
 }
 
+// Enemy personalities (ISSUES.md 2026-11-19, glossary in gameplay.md): the theme of an enemy loadout and its focus
+// types (FT), which the enemy deploys more often (AI.focus). A campaign stage names its personality; Endless (later
+// quick match) draws one of RANDOM_PERSONALITIES and builds its loadout around the FT. desc: shown with dev intel.
+export const PERSONALITIES = {
+  firstContact: { name: 'First contact', focus: ['brawler'], desc: 'A light probe: Scouts and Gunners, then the first Brawlers.' },
+  firstShells: { name: 'First shells', focus: ['mortar'], desc: 'Mortars lob shells over the front line.' },
+  hunters: { name: 'Hunters', focus: ['seeker'], desc: 'Seekers hunt your mechs with missiles.' },
+  armored: { name: 'Armored', focus: ['aegis', 'brawler'], desc: 'Brawlers advance under Aegis fields.' },
+  longGuns: { name: 'Long guns', focus: ['lancer'], desc: 'Lancers outrange your turrets and shoot them from afar.' },
+  wallBreakers: { name: 'Wall breakers', focus: ['breacher'], desc: 'Breachers charge your turrets and stun them.' },
+  swarm: { name: 'Swarm', focus: ['scout', 'seeker'], desc: 'Many light, fast units and no tanks.' },
+  siege: { name: 'Siege', focus: ['breacher', 'lancer'], desc: 'Breaks your turrets with Breachers and Lancers.' },
+  ironWall: { name: 'Iron wall', focus: ['brawler', 'aegis'], desc: 'Shielded Brawler lines that are hard to break and slow to die.' },
+  artilleryLine: { name: 'Artillery line', focus: ['lancer', 'mortar'], desc: 'Lancers and Mortars shell you from far back.' },
+  rush: { name: 'Rush', focus: ['scout', 'breacher'], desc: 'Scouts and Breachers dash past your mechs to your structures.' },
+  elite: { name: 'Elite', focus: ['seeker', 'lancer'], desc: 'Seekers and Lancers, backed by Brawlers and Aegis.' },
+};
+export const RANDOM_PERSONALITIES = ['armored', 'longGuns', 'wallBreakers', 'swarm', 'siege', 'ironWall', 'artilleryLine', 'rush', 'elite'];
+export const randomPersonality = (rnd) => RANDOM_PERSONALITIES[Math.floor(rnd() * RANDOM_PERSONALITIES.length)];
+
 export const SURPRISE_FROM = 6; // stage index (stage 7): from here one enemy loadout slot shows '?' in the intel
 
 // A rule-based random enemy loadout (Endless, later quick match): LOADOUT_SIZE different types with at least one Line
-// type, at least one Tank or Artillery, and at most one Charger. rnd: () => [0, 1).
-export function randomLoadout(rnd, types = MECH_TYPES) {
+// type, at least one Tank or Artillery, and at most one Charger. With a personality its focus types are always in it
+// (a personality may bring two Chargers, e.g. rush); the other slots are random. rnd: () => [0, 1).
+export function randomLoadout(rnd, types = MECH_TYPES, personality = null) {
   const role = (t) => MECHS[t].role;
+  const focus = (PERSONALITIES[personality]?.focus || []).filter((t) => types.includes(t));
+  const chargers = Math.max(1, focus.filter((t) => role(t) === 'charger').length);
   for (let n = 0; n < 1000; n++) {
-    const pool = [...types], pick = [];
+    const pool = types.filter((t) => !focus.includes(t)), pick = [...focus];
     while (pick.length < Math.min(LOADOUT_SIZE, types.length)) pick.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
     if (pick.some((t) => role(t) === 'line') && pick.some((t) => role(t) === 'tank' || role(t) === 'artillery')
-      && pick.filter((t) => role(t) === 'charger').length <= 1) return pick;
+      && pick.filter((t) => role(t) === 'charger').length <= chargers) return pick;
   }
   return STAGES[STAGES.length - 1].roster.slice();
 }

@@ -1,6 +1,6 @@
 import {
   FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
-  ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
+  ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, PERSONALITIES, levelMult, upgradeCost, MAX_UNIT_LEVEL, MAX_TECH, sellRefund,
 } from './data.js';
 
 // The simulation. No drawing and no DOM: everything visual or audible is emitted as `fx`
@@ -105,6 +105,11 @@ export class World {
     this.conWait = 0;
 
     this.ai = { energy: 40, next: null, recent: [] };
+    // focus types of the enemy's personality (only those in its loadout) and this battle's target factor
+    this.focus = (PERSONALITIES[stage.personality]?.focus || []).filter((t) => stage.roster.includes(t));
+    const [f0, f1] = AI.focus.range;
+    this.focusX = stage.focusX ?? +(f0 + this.rnd() * (f1 - f0)).toFixed(2);
+    this.aiCount = {}; this.focusB = {}; // enemy units chosen so far per type, and the steered focus boost per FT
   }
 
   // Battle events, time in s (0.1). Side: 1 = player, 0 = enemy AI ("Player 1"; inside the game team 0 is the player,
@@ -1163,14 +1168,14 @@ export class World {
     regen = this.otIncome(regen);
     ai.energy += regen * dt;
 
-    if (!ai.next) ai.next = this.aiOrder(pressure);
+    if (!ai.next) ai.next = this.aiOrder(pressure, laneP);
     const cost = ai.next.groups.flat().reduce((c, t) => c + MECHS[t].cost, 0);
     if (ai.energy >= cost) {
       ai.energy -= cost;
       let first = -1;
       const order = ++this.aiOrders;
       for (const [gi, g] of ai.next.groups.entries()) {
-        const lane = this.aiLane(pressure, laneP, first);
+        const lane = gi === 0 && ai.next.lane != null ? ai.next.lane : this.aiLane(pressure, laneP, first); // a defender goes where it's pushed
         if (first < 0) first = lane;
         ai.recent.push(lane); if (ai.recent.length > AI.recent) ai.recent.shift();
         g.forEach((type, i) => { // front to back: the first one deploys furthest forward
@@ -1184,14 +1189,16 @@ export class World {
     }
   }
   // the next enemy order: { groups: [[types front to back], …] }
-  aiOrder(pressure) {
+  aiOrder(pressure, laneP = null) {
+    const o = this.aiChoose(pressure, laneP);
+    for (const t of o.groups.flat()) this.aiCount[t] = (this.aiCount[t] || 0) + 1;
+    this.focusSteer();
+    return o;
+  }
+  aiChoose(pressure, laneP) {
     const roster = this.stage.roster, late = Math.min(1, this.time / 150);
-    // under pressure: half the time a single unit from the defensive set
-    if (pressure > 300 && this.rnd() < 0.5) {
-      const def = AI.defensive.filter((t) => roster.includes(t));
-      const solo = roster.filter((t) => MECHS[t].role !== 'support');
-      return { groups: [[def.length ? def[Math.floor(this.rnd() * def.length)] : solo[solo.length - 1]]] };
-    }
+    // under pressure: half the time a single defender (aiDefend)
+    if (pressure > 300 && this.rnd() < 0.5) return this.aiDefend(laneP);
     const [g0, g1] = AI.groupChance;
     if (this.rnd() < g0 + late * (g1 - g0)) {
       const g = this.aiGroup();
@@ -1206,7 +1213,7 @@ export class World {
     // single unit: cheap ones early, more even later. A Support (Aegis) only comes with a group: alone it has
     // nothing to protect.
     const solo = roster.filter((t) => MECHS[t].role !== 'support');
-    const wts = solo.map((t) => 1 / Math.pow(MECHS[t].cost, 1 - late * 0.8));
+    const wts = solo.map((t) => this.focusOf(t, true) / Math.pow(MECHS[t].cost, 1 - late * 0.8));
     let r = this.rnd() * wts.reduce((x, y) => x + y, 0), pick = solo[0];
     for (let i = 0; i < solo.length; i++) { r -= wts[i]; if (r <= 0) { pick = solo[i]; break; } }
     return { groups: [[pick]] };
@@ -1221,12 +1228,59 @@ export class World {
     const cheap = roster.filter((t) => MECHS[t].cost <= 50), tanks = ofRole('tank');
     const fits = AI_GROUPS.filter((g) => (g.pack === 'cheap' ? cheap.length > 0 : g.pack === 'tank' ? tanks.length > 0 && maxSize >= 2 : g.roles.length <= maxSize && g.roles.every((r) => ofRole(r).length)));
     if (!fits.length) return null;
-    let r = this.rnd() * fits.reduce((x, g) => x + g.w, 0), tpl = fits[0];
-    for (const g of fits) { r -= g.w; if (r <= 0) { tpl = g; break; } }
-    const any = (list) => list[Math.floor(this.rnd() * list.length)];
+    // focus types: a group that has a place for one comes up more often (the factor once per group), and a place in the
+    // group a focus type can fill prefers it
+    const members = (g) => (g.pack === 'cheap' ? cheap : g.pack === 'tank' ? tanks : g.roles.flatMap((r) => ofRole(r)));
+    const gw = (g) => g.w * Math.max(1, ...members(g).map((t) => this.focusOf(t)));
+    let r = this.rnd() * fits.reduce((x, g) => x + gw(g), 0), tpl = fits[0];
+    for (const g of fits) { r -= gw(g); if (r <= 0) { tpl = g; break; } }
+    const any = (list) => this.weighted(list, (t) => this.focusOf(t));
     if (tpl.pack === 'cheap') { const t = any(cheap); return Array(Math.min(maxSize, 2 + Math.floor(this.rnd() * 2))).fill(t); }
     if (tpl.pack === 'tank') { const t = any(tanks); return [t, t]; }
     return tpl.roles.map((role) => any(ofRole(role)));
+  }
+  // the focus weight of a type: its steered boost for a focus type, else 1. alone: for a single unit, only roles that work alone
+  focusOf(t, alone = false) {
+    if (!this.focus.includes(t) || (alone && !AI.focus.alone.includes(MECHS[t].role))) return 1;
+    return this.focusBoost(t);
+  }
+  // steering: each FT keeps a boost (start: the target factor) that grows a little with every choice while it is behind
+  // the target in this battle and shrinks while it is ahead (an FT that can't get there just stays at `max`)
+  focusBoost(t) { return this.focusB[t] ?? this.focusX; }
+  focusSteer() {
+    if (!this.focus.length) return;
+    const others = this.stage.roster.filter((x) => !this.focus.includes(x));
+    const avg = others.reduce((a, x) => a + (this.aiCount[x] || 0), 0) / (others.length || 1);
+    for (const t of this.focus) {
+      const now = ((this.aiCount[t] || 0) + 1) / (avg + 1);
+      this.focusB[t] = Math.min(AI.focus.max, Math.max(1, this.focusBoost(t) * Math.pow(this.focusX / now, 0.25)));
+    }
+  }
+  weighted(list, w) {
+    let r = this.rnd() * list.reduce((a, t) => a + w(t), 0);
+    for (const t of list) { r -= w(t); if (r <= 0) return t; }
+    return list[list.length - 1];
+  }
+  // a single defender when the player's mechs are near the base (ISSUES.md 2026-11-19, the user's own order): most of
+  // the time by the situation: the base is shelled from afar by artillery → Seeker, else Gunner; otherwise a Brawler first
+  // if it has no tank in the pushed lane yet, then Seeker/Gunner. Only types in its loadout (the next in that order if
+  // one is missing). The rest of the time a random defender. It deploys in the lane that is pushed hardest.
+  aiDefend(laneP) {
+    const roster = this.stage.roster, face = BASE_FACE[1];
+    const def = AI.defensive.filter((t) => roster.includes(t));
+    const solo = roster.filter((t) => MECHS[t].role !== 'support');
+    const lane = laneP && laneP.some((x) => x > 0) ? laneP.indexOf(Math.max(...laneP)) : null;
+    if (!def.length) return { groups: [[solo[solo.length - 1]]], lane };
+    if (this.rnd() >= AI.defendOrder) return { groups: [[this.weighted(def, (t) => this.focusOf(t))]], lane };
+    let art = 0, all = 0;
+    for (const e of this.entities) {
+      if (e.dead || e.team !== 0 || e.kind !== 'mech' || e.y < face - 900) continue;
+      all += e.def.cost; if (e.def.role === 'artillery') art += e.def.cost;
+    }
+    const sg = this.rnd() < 0.5 ? ['seeker', 'gunner'] : ['gunner', 'seeker'];
+    const tank = lane != null && this.entities.some((e) => !e.dead && e.team === 1 && e.kind === 'mech' && e.def.role === 'tank' && e.lane === lane && e.y > face - 900);
+    const order = all > 0 && art / all >= 0.5 ? ['seeker', 'gunner', 'brawler'] : tank ? [...sg, 'brawler'] : ['brawler', ...sg];
+    return { groups: [[order.find((t) => def.includes(t))]], lane };
   }
   // lane for an enemy group: sometimes random, sometimes the lane you push in, otherwise weighted toward weakly
   // defended lanes, with a penalty for lanes it used recently. exclude: a lane already used by this order (split).
