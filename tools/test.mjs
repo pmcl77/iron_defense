@@ -912,6 +912,30 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const low = focusFactor(stageDef(7), { target: 2.2 }), high = focusFactor(stageDef(7), { target: 3.5 });
   check('focus: a higher drawn target gives more focus types', high.factor > low.factor, `${low.factor.toFixed(2)} < ${high.factor.toFixed(2)}`);
 }
+// lane sets (swarm: three lanes per phase, weighted toward weakly defended lanes)
+{
+  const sw = stageDef(6);
+  check('swarm: focus types Scout + Gunner, three-lane sets', PERSONALITIES.swarm.focus.join() === 'scout,gunner' && PERSONALITIES.swarm.lanes === 'three');
+  const w = mk(); w.stage = sw; w.time = 10;
+  const set = w.laneSet();
+  const lanes = Array.from({ length: 300 }, () => w.aiLane(0, [0, 0, 0, 0, 0]));
+  check('lane set: one of the four 3-lane sets, all deploys inside it', AI.laneSets.three.some((x) => x.join() === set.join()) && lanes.every((l) => set.includes(l)) && new Set(lanes).size === 3, `${set} → ${[...new Set(lanes)]}`);
+  const end = w.ai.setEnd;
+  check('lane set: a phase lasts 60–120 s', end - 10 >= 60 && end - 10 <= 120, `${(end - 10).toFixed(0)} s`);
+  const seen = new Set(); for (let t = 0; t < 1200; t += 5) { w.time = t; seen.add(w.laneSet().join()); }
+  check('lane set: changes over a battle, logged', seen.size >= 2 && w.log.events.filter((e) => e[1] === 'lanes').length >= 5, [...seen].join(' | '));
+  // turrets cover lanes 3–5 (and 2 a little): sets with lane 1 are much more likely
+  const v = mk(); v.stage = sw;
+  for (const l of [2, 3, 4]) { v.placeTurret(0, 'sentry', l, 2); v.placeTurret(0, 'sentry', l, 3); }
+  const n = {}; for (let i = 0; i < 600; i++) { v.ai.set = null; const x = v.laneSet().join(); n[x] = (n[x] || 0) + 1; }
+  check('lane set: sets with open lanes are more likely, others still possible', (n['0,1,2'] || 0) > 2 * (n['2,3,4'] || 0) && (n['2,3,4'] || 0) > 0, JSON.stringify(n));
+  const o = mk(); o.stage = stageDef(7);
+  check('lane set: other personalities use all lanes (none)', o.laneSet() === null);
+  const d = mk(); d.stage = sw; d.time = 10; d.laneSet();
+  const out = d.ai.set; const other = [0, 1, 2, 3, 4].find((l) => !out.includes(l));
+  const lp = [0, 0, 0, 0, 0]; lp[other] = 900;
+  check('lane set: a defender still goes where it is pushed', d.aiDefend(lp).lane === other);
+}
 // defensive pick (the user's order, followed about 70% of the time)
 {
   const st = { name: 'D', index: 9, baseHp: 1e6, lvl: 0, regen: 0, roster: ['brawler', 'gunner', 'seeker', 'mortar', 'lancer'], turrets: [], base: {} };

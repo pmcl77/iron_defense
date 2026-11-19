@@ -137,6 +137,11 @@ export const AI = {
   groupChance: [0.25, 0.45], // share of orders that are groups: early, after about 2.5 minutes
   splitChance: 0.15,          // share of group orders that are a split attack: two small groups in two lanes
   defensive: ['brawler', 'gunner', 'seeker'], // picks under pressure (half the time); no Aegis: a Support never goes alone
+  // lane sets (ISSUES.md 2026-11-19): a personality with `lanes` deploys within a set of lanes for a phase (a random
+  // `phase` s), then picks again. Sets with weakly defended lanes are more likely (weight: their weakness ^ 2); inside
+  // the set the usual lane choice applies. Defensive picks ignore it. Later: one- and two-lane sets for siege/rush.
+  laneSets: { three: [[0, 1, 2], [1, 2, 3], [2, 3, 4], [0, 2, 4]] },
+  lanePhase: [60, 120],
   defendOrder: 0.7, // share of defensive picks that follow the situation rule (see aiDefend); the rest: a random defender
   // focus types (PERSONALITIES): each battle draws a target factor in `range`: each FT deployed about that many times as
   // often as each other type, measured on the result. The AI steers on its own count: the boost of an FT grows while it
@@ -319,6 +324,7 @@ export function stageDef(i) {
 // Enemy personalities (ISSUES.md 2026-11-19, glossary in gameplay.md): the theme of an enemy loadout and its focus
 // types (FT), which the enemy deploys more often (AI.focus). A campaign stage names its personality; Endless (later
 // quick match) draws one of RANDOM_PERSONALITIES and builds its loadout around the FT. desc: shown with dev intel.
+// lanes: a lane-set shape from AI.laneSets (default: all 5 lanes, today's lane choice).
 export const PERSONALITIES = {
   firstContact: { name: 'First contact', focus: ['brawler'], desc: 'A light probe: Scouts and Gunners, then the first Brawlers.' },
   firstShells: { name: 'First shells', focus: ['mortar'], desc: 'Mortars lob shells over the front line.' },
@@ -326,7 +332,7 @@ export const PERSONALITIES = {
   armored: { name: 'Armored', focus: ['aegis', 'brawler'], desc: 'Brawlers advance under Aegis fields.' },
   longGuns: { name: 'Long guns', focus: ['lancer'], desc: 'Lancers outrange your turrets and shoot them from afar.' },
   wallBreakers: { name: 'Wall breakers', focus: ['breacher'], desc: 'Breachers charge your turrets and stun them.' },
-  swarm: { name: 'Swarm', focus: ['scout', 'seeker'], desc: 'Many light, fast units and no tanks.' },
+  swarm: { name: 'Swarm', focus: ['scout', 'gunner'], lanes: 'three', desc: 'Cheap but many: Scouts and Gunners in waves over three lanes, no tanks.' },
   siege: { name: 'Siege', focus: ['breacher', 'lancer'], desc: 'Breaks your turrets with Breachers and Lancers.' },
   ironWall: { name: 'Iron wall', focus: ['brawler', 'aegis'], desc: 'Shielded Brawler lines that are hard to break and slow to die.' },
   artilleryLine: { name: 'Artillery line', focus: ['lancer', 'mortar'], desc: 'Lancers and Mortars shell you from far back.' },

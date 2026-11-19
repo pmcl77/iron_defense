@@ -1284,21 +1284,48 @@ export class World {
   }
   // lane for an enemy group: sometimes random, sometimes the lane you push in, otherwise weighted toward weakly
   // defended lanes, with a penalty for lanes it used recently. exclude: a lane already used by this order (split).
-  aiLane(pressure, laneP, exclude = -1) {
-    const lanes = [...Array(LANES).keys()].filter((l) => l !== exclude);
-    const r = this.rnd();
-    if (r < 0.2) return lanes[Math.floor(this.rnd() * lanes.length)];
-    if (pressure > 0 && r < 0.4) {
-      const best = lanes.reduce((a, b) => (laneP[b] > laneP[a] ? b : a));
-      if (laneP[best] > 0) return best;
-    }
-    // defence per lane: player turret HP that can cover it
+  // defence per lane: player turret HP that can cover it
+  laneCover() {
     const cover = Array(LANES).fill(0);
     for (const t of this.entities) {
       if (t.dead || t.team !== 0 || t.kind !== 'turret') continue;
       const rng = this.stat(t, 'range');
       for (let l = 0; l < LANES; l++) if (Math.abs(t.x - laneX(l)) <= rng) cover[l] += t.hp;
     }
+    return cover;
+  }
+  // the lane set of the current phase for a personality with `lanes` (null: all lanes); a new one when the phase ends
+  laneSet() {
+    const shape = PERSONALITIES[this.stage.personality]?.lanes, sets = shape && AI.laneSets[shape];
+    if (!sets) return null;
+    const ai = this.ai;
+    if (!ai.set || this.time >= ai.setEnd) {
+      const cover = this.laneCover(), min = Math.min(...cover);
+      const weak = (l) => 1 / (1 + (cover[l] - min) / 800);
+      ai.set = this.weightedBy(sets, (set) => Math.pow(set.reduce((a, l) => a + weak(l), 0) / set.length, 2));
+      const [p0, p1] = AI.lanePhase;
+      ai.setEnd = this.time + p0 + this.rnd() * (p1 - p0);
+      this.ev('lanes', 0, ai.set.map((l) => l + 1).join(''));
+    }
+    return ai.set;
+  }
+  weightedBy(list, w) {
+    const ws = list.map(w);
+    let r = this.rnd() * ws.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
+    return list[list.length - 1];
+  }
+  aiLane(pressure, laneP, exclude = -1) {
+    const set = this.laneSet();
+    let lanes = [...Array(LANES).keys()].filter((l) => l !== exclude && (!set || set.includes(l)));
+    if (!lanes.length) lanes = [...Array(LANES).keys()].filter((l) => l !== exclude);
+    const r = this.rnd();
+    if (r < 0.2) return lanes[Math.floor(this.rnd() * lanes.length)];
+    if (pressure > 0 && r < 0.4) {
+      const best = lanes.reduce((a, b) => (laneP[b] > laneP[a] ? b : a));
+      if (laneP[best] > 0) return best;
+    }
+    const cover = this.laneCover();
     const min = Math.min(...lanes.map((l) => cover[l]));
     const wts = lanes.map((l) => (1 / (1 + (cover[l] - min) / 800)) * Math.pow(AI.recentPenalty, this.ai.recent.filter((x) => x === l).length));
     let k = this.rnd() * wts.reduce((a, b) => a + b, 0);
