@@ -391,10 +391,10 @@ Everything below carries over from Ironline unless noted.
 | 6 | Red Cut | 3000 | 1 | 8 | **Breacher**, Brawler, Aegis, Gunner, Mortar (wall breakers) | Sentry 2/4, 3/4, 4/4; Howitzer 3/1 | Armor 1, Gun 1 |
 | 7 | Pylon Field | 3300 | 1 | 9.2 | Scout, Gunner, Seeker, Aegis, Mortar (swarm, no tanks) | Arc 3/3; Sentry 1/3, 5/3; Howitzer 2/1 | Reactor 1 |
 | 8 | Gravel Sea | 3600 | 1 | 9.7 | Lancer, Mortar, Breacher, Brawler, Gunner (siege) | Sentry 1/4, 2/4, 4/4; Arc 3/4; Howitzer 3/1, 5/2 | Armor 1, Gun 1 |
-| 9 | Ironwood | 4000 | 2 | 10.3 | Brawler, Aegis, Seeker, Gunner, Breacher (iron wall) | Sentry 1/5, 2/5, 4/5, 5/5; Arc 3/3; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
-| 10 | Ash Ridge | 4400 | 2 | 10.8 | Lancer, Mortar, Seeker, Gunner, Brawler (artillery line) | Arc 2/4, 4/4; Sentry 3/4, 3/1; Howitzer 1/2, 5/2 | Armor 2, Gun 1, Reactor 1 |
-| 11 | Breakwater | 4800 | 2 | 11.3 | Scout, Breacher, Brawler, Gunner, Seeker (rush) | Sentry wall 1–5/5; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
-| 12 | Last Bastion | 5400 | 2 | 12.4 | Brawler, Aegis, Seeker, Lancer, Mortar (elite) | Arc 1/5, 3/5, 5/5; Sentry 2/5, 4/5; Howitzer 2/1, 4/1 | Armor 2, Gun 2, Reactor 1 |
+| 9 | Ironwood | 4000 | 1 | 10.3 | Brawler, Aegis, Seeker, Gunner, Breacher (iron wall) | Sentry 1/5, 2/5, 4/5, 5/5; Arc 3/3; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
+| 10 | Ash Ridge | 4400 | 1 | 10.8 | Lancer, Mortar, Seeker, Gunner, Brawler (artillery line) | Arc 2/4, 4/4; Sentry 3/4, 3/1; Howitzer 1/2, 5/2 | Armor 2, Gun 1, Reactor 1 |
+| 11 | Breakwater | 3600 | 2 | 11.3 | Scout, Breacher, Brawler, Gunner, Seeker (rush) | Sentry wall 1–5/5; Howitzer 3/1 | Armor 1, Gun 1, Reactor 1 |
+| 12 | Last Bastion | 5400 | 1 | 12.4 | Brawler, Aegis, Seeker, Lancer, Mortar (elite) | Arc 1/5, 3/5, 5/5; Sentry 2/5, 4/5; Howitzer 2/1, 4/1 | Armor 2, Gun 2, Reactor 1 |
 
 **Personalities and focus types** (§10): first contact Brawler; first shells Mortar; hunters Seeker; armored Aegis + Brawler; long guns Lancer; wall breakers Breacher; swarm Scout + Gunner (three-lane sets, waves); siege Breacher + Lancer; iron wall Brawler + Aegis; artillery line Lancer + Mortar; rush Scout + Breacher; elite Seeker + Lancer.
 
@@ -432,7 +432,7 @@ So Endless 1 is about as hard as stage 12, Endless 2 brings level 3, and each fu
 
 One new mech type per stage, so the full arsenal is available from stage 7. The 5-mech loadout becomes a real choice from stage 5, once 6 mechs are unlocked.
 
-- **Workshop:** removed in 0.7.0-dev.1 (Veteran Training, the four perks and credits). The stages are not re-tuned yet: they were tuned against a mid to max Workshop (first the user plays them untuned, then an interim re-tune).
+- **Workshop:** removed in 0.7.0-dev.1 (Veteran Training, the four perks and credits). The stages are not re-tuned yet: they were tuned against a mid to max Workshop (first the user plays them untuned, then an interim re-tune). **Interim re-tune 0.7.0-dev.3:** enemy level 2 → 1 on stages 9, 10 and 12; stage 11 base HP 4800 → 3600; stages 1–8 unchanged.
 
 ## 12. Controls (portrait touch first)
 

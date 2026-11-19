@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.7.0-dev
 
+### Balance
+- **Interim re-tune after the Workshop removal** (0.7.0-dev.3, from the user's untuned rounds rows 52–56: stage 8 win 3★, 9 loss in 5:26, 10 loss in 11:36, 11 win 3★ in 16:46, 12 loss in 4:39): enemy level 2 → 1 on Ironwood (9), Ash Ridge (10) and Last Bastion (12), the strong personalities that overran level 0 units; Breakwater (11) keeps level 2 (a weak rush) but its base HP drops 4800 → 3600 (too long, not too hard). Stages 1–8 unchanged. Endless builds on stage 12, so it starts one level lower too. The careful re-tune comes after the new unit types.
+
 ### Enemy AI
 - **The enemy's door** (0.7.0-dev.2, user report: an enemy Lancer was invisible, "beneath the base", only its shots and HP bar showed): enemy groups appeared at once, front to back 34 apart, so the 3rd and 4th unit stood behind the base face, inside the base; artillery comes last in a group, and a Lancer with a target in range never walked out. The voxel graphics drew it under the base. Now every enemy unit comes through the door of its lane one by one, once the deploy point is clear or after 1.5 s at most, like the player's deploy queue. Groups keep their front-to-back order. Bot battles: no enemy mech behind its base face any more (before: thousands of frames, mostly Lancers).
 

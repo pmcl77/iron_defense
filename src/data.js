@@ -294,27 +294,29 @@ export const STAGES = [
     base: { armor: 1, gun: 1 },
   }),
   S('Ironwood', { personality: 'ironWall',
-    baseHp: 4000, lvl: 2, regen: 10.3, roster: ['brawler', 'aegis', 'seeker', 'gunner', 'breacher'],
+    baseHp: 4000, lvl: 1, regen: 10.3, roster: ['brawler', 'aegis', 'seeker', 'gunner', 'breacher'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['arc', 2, 3], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Ash Ridge', { personality: 'artilleryLine',
-    baseHp: 4400, lvl: 2, regen: 10.8, roster: ['lancer', 'mortar', 'seeker', 'gunner', 'brawler'],
+    baseHp: 4400, lvl: 1, regen: 10.8, roster: ['lancer', 'mortar', 'seeker', 'gunner', 'brawler'],
     turrets: [['arc', 1, 4], ['arc', 3, 4], ['sentry', 2, 4], ['howitzer', 0, 2], ['howitzer', 4, 2], ['sentry', 2, 1]],
     base: { armor: 2, gun: 1, reactor: 1 },
   }),
   S('Breakwater', { personality: 'rush',
-    baseHp: 4800, lvl: 2, regen: 11.3, roster: ['scout', 'breacher', 'brawler', 'gunner', 'seeker'],
+    baseHp: 3600, lvl: 2, regen: 11.3, roster: ['scout', 'breacher', 'brawler', 'gunner', 'seeker'],
     turrets: [['sentry', 0, 5], ['sentry', 1, 5], ['sentry', 2, 5], ['sentry', 3, 5], ['sentry', 4, 5], ['howitzer', 2, 1]],
     base: { armor: 1, gun: 1, reactor: 1 },
   }),
   S('Last Bastion', { personality: 'elite',
-    baseHp: 5400, lvl: 2, regen: 12.4, roster: ['brawler', 'aegis', 'seeker', 'lancer', 'mortar'],
+    baseHp: 5400, lvl: 1, regen: 12.4, roster: ['brawler', 'aegis', 'seeker', 'lancer', 'mortar'],
     turrets: [['arc', 0, 5], ['sentry', 1, 5], ['arc', 2, 5], ['sentry', 3, 5], ['arc', 4, 5], ['howitzer', 1, 1], ['howitzer', 3, 1]],
     base: { armor: 2, gun: 2, reactor: 1 },
   }),
 ];
 
+// Interim re-tune after the Workshop removal (0.7.0-dev.3, from the user's untuned rounds rows 52–56): enemy level 2 → 1 on
+// Ironwood, Ash Ridge and Last Bastion; Breakwater base HP 4800 → 3600 (it was too long, not too hard).
 // Endless wave n starts just above Last Bastion and ramps up gradually.
 export function stageDef(i) {
   if (i < STAGES.length) return { ...STAGES[i], index: i };
