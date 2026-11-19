@@ -233,6 +233,20 @@ Attack types work as in Ironline, measured in 2D:
 - **Melee** hits instantly.
 - **Zaps** chain to the nearest enemy within 140 units, in any lane.
 
+### 5.4b Unit profiles (2026-11-19)
+A design tool: a unit type is either a cheap jack of all trades, or it has a clear strength paired with a clear weakness; its cost is the price of the strength. Every new unit type should name both. Sorted by role, so unit types of the same role can be compared.
+
+| Role | Unit type (cost) | Clear strength | Clear weakness |
+|---|---|---|---|
+| Tank | Brawler (140) | HP (700), draws fire, hits sideways | slow, melee only |
+| Line | Gunner (80) | none: the cheap jack of all trades, good damage for its price | outranged by Seeker, Mortar and Lancer |
+| Line | Seeker (150) | range (380), homing missiles, prefers mechs, splash | **none besides cost** (see ISSUES.md "Should the Gunner win up close against a Seeker?") |
+| Artillery | Mortar (170) | long range (460), splash on groups | fragile, slow, slow shells miss moving targets, weak against structures (×0.5) |
+| Artillery | Lancer (200) | outranges turrets (540), ×3 against structures | weak against mechs, slow fire |
+| Support | Aegis (120) | protects others (−40% damage taken nearby) | almost no damage of its own |
+| Charger | Scout (40) | fast, cheap | fragile, short range |
+| Charger | Breacher (190) | ×4 against structures, very tough (950 HP) | ignores mechs, slow |
+
 ### 5.5 Type allocation, traits and card texts
 
 *Decided 2026-11-15, see §5.2.*
