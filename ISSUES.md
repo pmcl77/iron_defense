@@ -27,6 +27,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - **Unit profiles (gameplay.md §5.4b, 2026-11-19):** the Seeker is the only unit type without a clear weakness besides its cost (user: an "eierlegende Wollmilchsau", i.e. OP). Fits the data: about 2× the damage per energy of a Gunner in real battles. Its counter should become the Brawler-led charge (and a Gunner that gets close).
   - **A2. Minimum range (user's variant):** the Seeker can't fire its missiles at all at a target closer than a minimum distance (in real life you wouldn't fire an exploding homing missile at a tank 10 m in front of you). Clearer than "weaker up close": a Brawler in contact makes a Seeker helpless, a Gunner inside the minimum range wins. Questions: the distance (e.g. 100–150; a Brawler's melee contact is about 60 + radii); what the Seeker does when its target is too close (pick another target outside the minimum range, e.g. in a neighbouring lane; otherwise just wait; no walking backwards); whether its splash would hit itself (not modelled today). Same idea could later apply to the Mortar (shells need an arc).
 
+### Enemy personalities (parked)
+*Ideas to make single personalities feel more like themselves. Parked (user, 2026-11-19): the swarm feels right now (dev.8); these come back with the re-tune or when a personality doesn't feel like itself in play. History and numbers: "Enemy loadout, intel and quick match" under Enemy AI.*
+- **Tank-led waves for armored, iron wall and siege:** these personalities would also save for waves, with up to two tanks (Brawlers) leading and the rest piling up behind them (the user's "rally line"). Not every wave tank-led (user: about 1 in 3). Today only the swarm uses waves, and stage 7 has no tank.
+- **2–3 Gunners per Seeker** as a wave style for elite or in overtime (the user's own late-game hordes).
+- **One- and two-lane sets** (incl. split ones like L1/L3, L1/L5) for siege or rush variants; the swarm keeps three-lane sets.
+- **Artillery line, step two:** more groups with artillery, if artillery line (×1.0 today) or long guns don't feel like themselves.
+- **Swarm leftovers:** (b) make the 1-3-5 split set rarer; (d) under long pressure, keep saving part of the income for a wave (row 50: 25 single Gunners in 90 s, no waves).
+
 ### UI / readability
 - *(The minimap readability issue was fixed in 0.2.0-dev: a mix of variants B and D (narrow strip, dark background, big outlined triangles and squares). Variant D's wider 40 × 160 strip was tried first. The user is judging it on the phone; in the narrow strip, units in neighboring lanes can overlap.)*
 
