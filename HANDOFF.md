@@ -82,6 +82,8 @@ Last updated: 2026-11-14, after the first playable build (see `git log`).
 | `src/render.js` | Flat vector renderer: unit shapes (`LEGS`/`TOPS`), turrets, base, particles, minimap, `renderIcon` |
 | `src/main.js` | Loop, HUD, screens (menu, stages, loadout, help, settings, pause, upgrades, result), input, debug hooks |
 | `src/audio.js` | Synthesized sound bus (pan, distance, reverb, compressor) |
+| `src/quick.js` | Quick match setup from a seed (also dev match) |
+| `src/replay.js` | Replay core (viewer and tools/replay.mjs) |
 | `src/save.js` | localStorage key `iron-defense-save-v1` |
 | `art_samples/` | Art studies. `sample.html?style=1…7`, renders saved as `style-N.png`, comparisons `comparison.png` and `comparison-2.png`. `fine.js` (ray-traced voxels, primitive-based models) is the start of the final renderer |
 | `tools/` | `serve.py`, `test.mjs`, `balance.mjs` (bot), `matrix.mjs` (bot strategy matrix), `profile.mjs` (strategy profile of a battle), `replay.mjs` (re-run a real battle from its stats), `notes.mjs` (play-test notes with their battle), `lifetime.mjs`, `focus.mjs` (enemy focus types), `synth_howitzer.mjs`, `shots.cjs`, `sound.cjs`, `make_icons.cjs`, `bake_voxel.cjs` + `voxel/` (voxel models and bake code) |

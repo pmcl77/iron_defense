@@ -434,6 +434,8 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 
 - **Workshop:** removed in 0.7.0-dev.1 (Veteran Training, the four perks and credits). The stages are not re-tuned yet: they were tuned against a mid to max Workshop (first the user plays them untuned, then an interim re-tune). **Interim re-tune 0.7.0-dev.3:** enemy level 2 → 1 on stages 9, 10 and 12; stage 11 base HP 4800 → 3600; stages 1–8 unchanged.
 
+- **Quick match** *(0.8.0-dev.1)*: from the menu once stage 1 is cleared. The enemy plays at the strength of your highest cleared stage (its unit level, income and base upgrades), on the turret layout of a random cleared stage, with a random personality whose loadout comes from your unlocked unit types (the types the enemy had up to that stage), plus the surprise slot from stage 7. Difficulty = the enemy's income ramp over 7 minutes: Easy ×1.5, Medium ×2 (as in the campaign), Hard ×2.5. You pick your loadout as in the campaign. A battle and win counter per difficulty; no stars, no unlocks. One seed draws the whole setup and also drives the battle. **Dev match** (dev builds): the same setup with personality, turret stage, enemy level, difficulty and seed fixed or random; the seed (8 characters) shows on the intel and the result screen; "Same match" plays it again.
+
 ## 12. Controls (portrait touch first)
 
 | Action | Touch | Keyboard / mouse |

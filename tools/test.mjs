@@ -3,6 +3,7 @@ import { World } from '../src/world.js';
 import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI, BASE_UPGRADES } from '../src/data.js';
 import { focusFactor } from './focus.mjs';
 import { runReplay, checkReplay } from './replay.mjs';
+import { quickMatch } from '../src/quick.js';
 import { defaultSave } from '../src/save.js';
 
 const ALL = { mechs: MECH_TYPES, turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
@@ -1026,6 +1027,26 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const diff = checkReplay(row, v);
   check('replay: same seed, setup and inputs give the same battle', !diff && w.inputs.length > 100 && v.log.events.length === w.log.events.length, diff ? JSON.stringify(diff) : `${w.inputs.length} inputs, ${w.log.events.length} events`);
   check('replay: inputs are not logged again while replaying', v.inputs.length === 0);
+}
+// quick match (src/quick.js): one setup from a seed; fixed fields override; difficulty = the enemy's ramp
+{
+  const types = unlockedSet(8).mechs;
+  const a = quickMatch('hard', 0xa9b3c1f2, {}, false, 8, types), b = quickMatch('hard', 0xa9b3c1f2, {}, false, 8, types);
+  check('quick match: the same seed gives the same setup', JSON.stringify(a.st) === JSON.stringify(b.st));
+  const many = Array.from({ length: 60 }, (_, k) => quickMatch('medium', k * 7919, {}, false, 8, types).st);
+  check('quick match: strength of the highest cleared stage (8), turrets of a cleared stage, enemy units from yours',
+    many.every((st) => st.lvl === STAGES[7].lvl && st.regen === STAGES[7].regen && st.roster.every((t) => types.includes(t)) && st.quick.turretStage <= 7)
+    && new Set(many.map((st) => st.quick.turretStage)).size >= 5 && new Set(many.map((st) => st.personality)).size >= 5);
+  check('quick match: focus types in the loadout, surprise from stage 7', many.every((st) => PERSONALITIES[st.personality].focus.some((t) => st.roster.includes(t)) && st.roster.includes(st.surprise)));
+  const early = quickMatch('easy', 5, {}, false, 2, unlockedSet(2).mechs).st;
+  check('quick match: no surprise before stage 7; only unlocked types early', !early.surprise && early.roster.every((t) => unlockedSet(2).mechs.includes(t)), early.roster.join());
+  const f = quickMatch('hard', 0xa9b3c1f2, { personality: 'siege' }, true, 8, types);
+  check('dev match: a fixed field overrides, the other draws stay the same', f.st.personality === 'siege' && f.st.quick.turretStage === a.st.quick.turretStage);
+  const g = quickMatch('hard', 1, { turretStage: 2, level: 4 }, true, 8, types);
+  check('dev match: fixed turret stage and level', JSON.stringify(g.st.turrets) === JSON.stringify(STAGES[2].turrets) && g.st.lvl === 4);
+  const inc = (d) => { const w = new World({ ...quickMatch(d, 3, {}, false, 8, types).st, turrets: [] }, defaultSave(), ALL, { seed: 1 }); w.time = 420; w.ai.energy = 0; w.updateAI(1); return w.ai.energy; };
+  const [e, m, h] = ['easy', 'medium', 'hard'].map(inc);
+  check('quick match: difficulty = income ramp (×1.5 / ×2 / ×2.5 at 7 min)', Math.abs(m / e - 2 / 1.5) < 0.02 && Math.abs(h / e - 2.5 / 1.5) < 0.02, `${e.toFixed(2)} ${m.toFixed(2)} ${h.toFixed(2)}`);
 }
 // defensive pick (the user's order, followed about 70% of the time)
 {

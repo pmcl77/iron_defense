@@ -355,6 +355,10 @@ export const PERSONALITIES = {
 export const RANDOM_PERSONALITIES = ['armored', 'longGuns', 'wallBreakers', 'swarm', 'siege', 'ironWall', 'artilleryLine', 'rush', 'elite'];
 export const randomPersonality = (rnd) => RANDOM_PERSONALITIES[Math.floor(rnd() * RANDOM_PERSONALITIES.length)];
 
+// quick match (ISSUES.md 2026-11-20): the enemy's ramp per difficulty (income grows by ramp × its start over 7 min)
+export const QUICK = { ramp: { easy: 0.5, medium: 1, hard: 1.5 }, names: { easy: 'Easy', medium: 'Medium', hard: 'Hard' } };
+// personalities a random enemy can have with these unit types (at least one focus type available)
+export const personalitiesFor = (types) => RANDOM_PERSONALITIES.filter((p) => PERSONALITIES[p].focus.some((t) => types.includes(t)));
 export const SURPRISE_FROM = 6; // stage index (stage 7): from here one enemy loadout slot shows '?' in the intel
 
 // A rule-based random enemy loadout (Endless, later quick match): LOADOUT_SIZE different types with at least one Line

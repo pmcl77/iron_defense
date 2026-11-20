@@ -1168,7 +1168,8 @@ export class World {
   // ---------- enemy AI ----------
   updateAI(dt) {
     const ai = this.ai, st = this.stage, face = BASE_FACE[1];
-    let regen = st.regen * (1 + Math.min(1, this.time / 420)) * (1 + 0.15 * this.enemyBase.reactor);
+    // the ramp: income grows by `ramp` × its start value over 7 minutes (campaign 1 = ×2; quick match Easy 0.5, Medium 1, Hard 1.5)
+    let regen = st.regen * (1 + (st.ramp ?? 1) * Math.min(1, this.time / 420)) * (1 + 0.15 * this.enemyBase.reactor);
     let pressure = 0;
     const laneP = Array(LANES).fill(0);
     for (const e of this.entities) {

@@ -1,8 +1,9 @@
 import {
   FIELD, LANES, BASE_FACE, MECHS, TURRETS, SPECIALS, BASE_UPGRADES, STAGES, MAX_UNIT_LEVEL,
-  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, unlockedSet, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
+  LOADOUT_SIZE, LEVEL_STEP, OVERTIME, DEV_SWITCHES, laneOf, rowOf, cellY, stageDef, randomLoadout, randomPersonality, PERSONALITIES, SURPRISE_FROM, QUICK, personalitiesFor, unlockedSet, sellRefund, MECH_TYPES, TURRET_TYPES, QUEUE, ROLES, TRAITS,
 } from './data.js';
 import { World } from './world.js';
+import { quickMatch as buildQuick, DIFFS, seedHex, topStage as topStageOf } from './quick.js';
 import { replayWorld, replayStep, validReplay } from './replay.js';
 import { Renderer, renderIcon, setAegisLinks, AEGIS_LINK_MODES } from './render.js';
 import { VoxelRenderer } from './render_voxel.js';
@@ -133,8 +134,8 @@ function noteSeen(w) {
   for (const t of types) s.add(t);
   if (s.size !== before) { save.seen = [...s]; writeSave(save); }
 }
-function intelHtml(i) {
-  const st = nextStage(i), seen = seenSet(), own = new Set(unlocked().mechs);
+function intelHtml(st) {
+  const seen = seenSet(), own = new Set(unlocked().mechs);
   // the surprise always shows last: in its own slot, the fixed stage order would give it away on a replay
   const units = [...st.roster.filter((t) => t !== st.surprise), ...(st.surprise ? [st.surprise] : [])].map((t) => t === st.surprise ? '<span class="iu unknown"><i>?</i><small>Surprise</small></span>'
     : seen.has(t) || own.has(t)
@@ -156,16 +157,19 @@ function intelHtml(i) {
       <div class="intel-units">${units}</div>
       <div class="intel-row"><span class="k">Turrets</span> ${turrets}</div>
       <div class="intel-row"><span class="k">Base</span> ${base}</div>
+      ${IS_DEV && st.quick ? `<div class="intel-row"><span class="k">Seed</span> <span class="num">${seedHex(st.quick.seed)}</span></div>` : ''}
     </div>`;
 }
-function launch(i) {
+function launch(i, q = null) {
   tryFullscreen();
   const u = unlocked();
   game.stageIndex = i;
   game.mode = 'play';
-  const st = nextStage(i); game.next = null;
-  // replays: a seed per battle, and the exact setup (stage as played, units, dev switches), sent with the stats
-  const seed = Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, dev = devSettings();
+  game.match = q;
+  const st = q ? q.st : nextStage(i); game.next = null;
+  // replays: a seed per battle, and the exact setup (stage as played, units, dev switches), sent with the stats.
+  // A quick match uses its own seed (it also drew the setup), so the same seed gives the same match.
+  const seed = q ? q.seed : Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, dev = devSettings();
   const { devIntel: _di, ...stCopy } = st;
   const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev })); // before the battle can touch st
   game.world = new World(st, save, unl, { dev, seed });
@@ -181,8 +185,8 @@ function launch(i) {
   resize();
   renderer.camY = -20; renderer.clampCam();
   buildHud();
-  $('#stage-no').textContent = st.endless ? 'ENDLESS' : `STAGE ${String(i + 1).padStart(2, '0')}`;
-  $('#stage-name').textContent = st.endless ? `WAVE ${i - STAGES.length + 1}` : st.name.toUpperCase();
+  $('#stage-no').textContent = q ? 'QUICK MATCH' : st.endless ? 'ENDLESS' : `STAGE ${String(i + 1).padStart(2, '0')}`;
+  $('#stage-name').textContent = q ? QUICK.names[q.difficulty].toUpperCase() : st.endless ? `WAVE ${i - STAGES.length + 1}` : st.name.toUpperCase();
   $('#foe-lvl').textContent = `L${st.lvl} `;
   toast(`${st.name}: destroy the enemy base`);
 }
@@ -212,7 +216,8 @@ function summary(result, stars = 0) {
     time: Math.round(w.time), kills: w.stats.kills, deployed: w.stats.deployed,
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, baseLvl: { ...w.baseLvl },
-    mode: st.endless ? 'endless' : 'campaign', enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
+    mode: st.quick ? 'quick' : st.endless ? 'endless' : 'campaign',
+    ...(st.quick ? { quick: { difficulty: st.quick.difficulty, seed: seedHex(st.quick.seed), turretStage: st.quick.turretStage + 1, dev: !!st.quick.dev, fixed: st.quick.fixed } } : {}), enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
     personality: st.personality, focusX: w.focusX, ...(IS_DEV ? { devIntel: !!w.devIntel } : {}),
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
@@ -280,7 +285,7 @@ function storedReplays() { try { return JSON.parse(localStorage.getItem(REPLAY_K
 function storeReplay(w, result, stars) {
   if (!w.setup || w.time < MIN_TIME) return;
   const i = game.stageIndex, st = w.stage, t = Math.round(w.time);
-  const title = `${st.endless ? `Endless ${i - STAGES.length + 1}` : `Stage ${i + 1} ${st.name}`}: ${result}${stars ? ' ' + '★'.repeat(stars) : ''}, ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  const title = `${battleTitle(w, i)}: ${result}${stars ? ' ' + '★'.repeat(stars) : ''}, ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   const list = storedReplays().filter((e) => e.id !== w.battleId);
   list.push({ id: w.battleId, at: Date.now(), title, replay: { ...w.setup, steps: w.step, inputs: w.inputs } });
   while (list.length > REPLAY_KEEP) list.shift();
@@ -445,6 +450,7 @@ function showNote(ctx, done) {
 }
 function battleTitle(w, i = game.stageIndex) {
   const st = w.stage;
+  if (st.quick) return `Quick match ${QUICK.names[st.quick.difficulty]}${st.quick.dev ? ' (dev)' : ''}`;
   return st.endless ? `Endless ${i - STAGES.length + 1}` : `Stage ${i + 1} ${st.name}`;
 }
 function flushCheckpoints() {
@@ -462,9 +468,10 @@ function quitToMenu(to = 'stages') {
   hideSell();
   resize();
   startDemo();
-  if (to === 'stages') showStages(); else if (to === 'menu') showMenu();
+  if (to === 'stages') showStages(); else if (to === 'quick') showQuick(); else if (to === 'menu') showMenu();
 }
 function finishStage() {
+  if (game.match) { finishQuick(); return; }
   const w = game.world, win = w.result === 'win', i = game.stageIndex;
   const b = w.bases[0], hpK = b.hp / b.maxHp;
   const stars = win ? 1 + (hpK > 0.5 ? 1 : 0) + (hpK > 0.85 ? 1 : 0) : 0;
@@ -520,13 +527,14 @@ function showMenu() {
       <p class="tagline">Hold the line. Break theirs.</p>
       <div class="menu-btns">
         <button class="btn primary" data-a="play">${save.cleared ? 'Campaign' : 'Start campaign'}</button>
+        ${save.cleared ? '<button class="btn" data-a="quick">Quick match</button>' : ''}
         <button class="btn" data-a="how">How to play</button>
         <button class="btn" data-a="settings">Settings</button>
         ${IS_DEV ? '<button class="btn" data-a="replays">Replays</button>' : ''}
       </div>
       <p class="version">v${VERSION}</p>
     </div>`;
-  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), how: showHelp, settings: showSettings, replays: showReplays });
+  bind({ play: () => (save.cleared === 0 ? startStage(0) : showStages()), how: showHelp, settings: showSettings, replays: showReplays, quick: showQuick });
 }
 function showStages() {
   screen.className = '';
@@ -548,16 +556,17 @@ function showStages() {
     </div>`;
   bind({ back: showMenu, go: (el) => startStage(+el.dataset.i), endless: () => startStage(STAGES.length + eFrom - 1) });
 }
-function showLoadout(i) {
-  const u = unlocked().mechs;
+// the loadout picker with the enemy intel; q = a quick match (null: campaign stage i)
+function showLoadout(i, q = null) {
+  const u = unlocked().mechs, st = q ? q.st : nextStage(i);
   let pick = currentLoadout();
   const render = () => {
     screen.className = '';
     screen.innerHTML = `
       <div class="panel">
-        <div class="head"><div><h2>Loadout</h2><p class="sub">${nextStage(i).name}: ${u.length > LOADOUT_SIZE ? `pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE})` : 'your mechs'}.</p></div>
+        <div class="head"><div><h2>Loadout</h2><p class="sub">${q ? quickTitle(q) : st.name}: ${u.length > LOADOUT_SIZE ? `pick ${LOADOUT_SIZE} mechs to bring (${pick.length}/${LOADOUT_SIZE})` : 'your mechs'}.</p></div>
           <button class="btn small" data-a="back">Back</button></div>
-        ${intelHtml(i)}
+        ${intelHtml(st)}
         <div class="section-t">YOUR MECHS</div>
         <div class="loadout">
           ${u.map((t) => { const n = pick.indexOf(t); return `<button class="lo ${n >= 0 ? 'on' : ''}" data-a="tog" data-t="${t}">${n >= 0 ? `<span class="slot">${n + 1}</span>` : ''}
@@ -567,13 +576,131 @@ function showLoadout(i) {
       </div>`;
     drawIcons(screen);
     bind({
-      back: showStages,
+      back: () => (q ? (q.dev ? showDevMatch(q.form || q.fixed) : showQuick()) : showStages()),
       tog: (el) => { const t = el.dataset.t; pick = pick.includes(t) ? pick.filter((x) => x !== t) : pick.length < LOADOUT_SIZE ? [...pick, t] : pick; render(); },
-      go: () => { save.loadout = pick; writeSave(save); launch(i); },
-      devintel: () => { nextStage(i).devIntel = true; render(); },
+      go: () => { save.loadout = pick; writeSave(save); launch(i, q); },
+      devintel: () => { st.devIntel = true; render(); },
     });
   };
   render();
+}
+// ---------- quick match (ISSUES.md 2026-11-20) ----------
+// One match setup: the enemy at the strength of your highest cleared stage (unit level, income, base upgrades), the
+// turrets of a random cleared stage, a random personality with its loadout from your unlocked unit types, the surprise
+// slot from stage 7, and the difficulty as the enemy's ramp. A seed draws everything not fixed (dev match) and also
+// drives the battle, so the same seed and fixed fields give the same match.
+const randomSeed = () => Math.floor(Math.random() * 2 ** 32) >>> 0;
+const topStage = () => topStageOf(save.cleared);
+const quickMatch = (difficulty, seed, fixed = {}, dev = false) => buildQuick(difficulty, seed, fixed, dev, save.cleared, unlocked().mechs);
+const sameMatch = (q) => Object.assign(quickMatch(q.difficulty, q.seed, q.fixed, q.dev), { form: q.form });
+const quickTitle = (q) => `Quick match ${QUICK.names[q.difficulty]}${q.dev ? ' (dev)' : ''}`;
+const quickScore = (d) => { const c = (save.quick || {})[d] || { wins: 0, played: 0 }; return `wins ${c.wins} / ${c.played}`; };
+function showQuick() {
+  screen.className = '';
+  const top = topStage(), st = stageDef(top);
+  screen.innerHTML = `
+    <div class="panel">
+      <div class="head"><div><h2>Quick match</h2><p class="sub">A random enemy with your unlocked units, at the strength of your highest cleared stage (${top + 1} ${st.name}, level ${st.lvl}), on the turret layout of a cleared stage. The difficulty sets how fast its income grows.</p></div>
+        <button class="btn small" data-a="back">Back</button></div>
+      <div class="menu-btns" style="margin:0 auto">
+        ${DIFFS.map((d) => `<button class="btn ${d === 'medium' ? 'primary' : ''}" data-a="go" data-d="${d}">${QUICK.names[d]}<small class="qscore">${quickScore(d)}</small></button>`).join('')}
+        ${IS_DEV ? '<button class="btn" data-a="dev">Dev match…</button>' : ''}
+      </div>
+    </div>`;
+  bind({ back: showMenu, go: (el) => { initAudio(); showLoadout(top, quickMatch(el.dataset.d, randomSeed())); }, dev: () => showDevMatch() });
+}
+// the enemy turret layout of a stage as a small map: 5 lanes, rows counted from the enemy base (top)
+function turretMap(turrets) {
+  const rows = Math.max(3, ...turrets.map(([, , r]) => r + 1)), short = { sentry: 'S', howitzer: 'H', arc: 'A' };
+  let h = '<div class="tmap">';
+  for (let r = 0; r < rows; r++) for (let l = 0; l < LANES; l++) {
+    const t = turrets.find(([, tl, tr]) => tl === l && tr === r);
+    h += `<i class="${t ? 't-' + t[0] : ''}">${t ? short[t[0]] || '?' : ''}</i>`;
+  }
+  return h + '</div>';
+}
+function turretInfo(turrets) {
+  const tc = {}; for (const [t] of turrets) tc[t] = (tc[t] || 0) + 1;
+  return Object.entries(tc).map(([t, n]) => `${n}× ${TURRETS[t].name}`).join(', ') || 'no turrets';
+}
+function personalityInfo(p, types) {
+  const pe = PERSONALITIES[p];
+  const focus = pe.focus.map((t) => `${MECHS[t].name}${types.includes(t) ? '' : ' (locked)'}`).join(', ');
+  return `<b>${pe.name}</b>: ${pe.desc} <span class="k">Focus</span> ${focus}`;
+}
+// dev match (dev builds): the quick match setup with each field fixed or random
+function showDevMatch(fixed = {}) {
+  screen.className = '';
+  const top = topStage(), types = unlocked().mechs, base = stageDef(top);
+  const f = { difficulty: 'medium', seed: '', ...fixed };
+  const opt = (v, label, cur) => `<option value="${v}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${label}</option>`;
+  const pers = personalitiesFor(types);
+  screen.innerHTML = `
+    <div class="panel">
+      <div class="head"><div><h2>Dev match</h2><p class="sub">Fix any part of the quick match setup; the rest is drawn from the seed.</p></div>
+        <button class="btn small" data-a="back">Back</button></div>
+      <div class="devform">
+        <label>Difficulty <select id="dm-diff">${DIFFS.map((d) => opt(d, QUICK.names[d], f.difficulty)).join('')}</select></label>
+        <label>Personality <select id="dm-pers">${opt('', 'Random', f.personality)}${pers.map((p) => opt(p, PERSONALITIES[p].name, f.personality)).join('')}</select></label>
+        <div id="dm-pers-info" class="dm-info"></div>
+        <label>Turrets of <select id="dm-tur">${opt('', 'Random cleared stage', f.turretStage)}${STAGES.slice(0, top + 1).map((s, k) => opt(k, `Stage ${k + 1} ${s.name}`, f.turretStage)).join('')}</select></label>
+        <div id="dm-tur-info" class="dm-info"></div>
+        <label>Enemy level <select id="dm-lvl">${opt('', `Stage ${top + 1} (${base.lvl})`, f.level)}${[0, 1, 2, 3, 4, 5].map((n) => opt(n, String(n), f.level)).join('')}</select></label>
+        <label>Seed <input id="dm-seed" type="text" maxlength="8" placeholder="random" value="${f.seed}" autocomplete="off" spellcheck="false"></label>
+      </div>
+      <div class="btn-row"><button class="btn primary" data-a="go">Continue</button></div>
+    </div>`;
+  const info = () => {
+    const p = $('#dm-pers').value, t = $('#dm-tur').value;
+    $('#dm-pers-info').innerHTML = p ? personalityInfo(p, types) : `Random from ${pers.length}: ${pers.map((x) => PERSONALITIES[x].name).join(', ')}`;
+    $('#dm-tur-info').innerHTML = t === '' ? `Random from stages 1–${top + 1}` : `${turretInfo(STAGES[+t].turrets)}${turretMap(STAGES[+t].turrets)}`;
+  };
+  $('#dm-pers').addEventListener('change', info); $('#dm-tur').addEventListener('change', info);
+  info();
+  bind({
+    back: showQuick,
+    go: () => {
+      const fx = {};
+      if ($('#dm-pers').value) fx.personality = $('#dm-pers').value;
+      if ($('#dm-tur').value !== '') fx.turretStage = +$('#dm-tur').value;
+      if ($('#dm-lvl').value !== '') fx.level = +$('#dm-lvl').value;
+      const sv = $('#dm-seed').value.trim().toLowerCase();
+      if (sv && !/^[0-9a-f]{1,8}$/.test(sv)) { toast('Seed: up to 8 characters 0–9, a–f'); return; }
+      const seed = sv ? parseInt(sv, 16) >>> 0 : randomSeed(), diff = $('#dm-diff').value;
+      const q = quickMatch(diff, seed, fx, true);
+      q.form = { ...fx, difficulty: diff, seed: sv }; // what to show again on Back
+      showLoadout(top, q);
+    },
+  });
+}
+function finishQuick() {
+  const w = game.world, win = w.result === 'win', q = game.match;
+  const c = ((save.quick ||= {})[q.difficulty] ||= { wins: 0, played: 0 });
+  c.played++; if (win) c.wins++;
+  writeSave(save);
+  sendStats(win ? 'win' : 'lose', 0);
+  playSfx(win ? 'win' : 'lose');
+  const t = w.time;
+  screen.className = '';
+  screen.innerHTML = `
+    <div class="panel">
+      <p class="result-title ${win ? 'win' : 'lose'}">${win ? 'VICTORY' : 'DEFEAT'}</p>
+      <p class="result-stats">${quickTitle(q)} · ${w.stats.kills} kills · ${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}</p>
+      <p class="result-stats">${QUICK.names[q.difficulty]}: ${quickScore(q.difficulty)}</p>
+      ${IS_DEV ? `<p class="result-stats">${PERSONALITIES[w.stage.personality]?.name || ''} · turrets of stage ${q.st.quick.turretStage + 1} · seed <span class="num">${seedHex(q.seed)}</span></p>` : ''}
+      <div class="btn-row">
+        <button class="btn primary" data-a="again">Again</button>
+        ${IS_DEV ? '<button class="btn" data-a="same">Same match</button>' : ''}
+        <button class="btn" data-a="quick">Quick match</button>
+      </div>
+    </div>`;
+  const top = game.stageIndex;
+  bind({
+    // Again: a new match with the same difficulty (dev match: the same fixed fields; a fixed seed stays fixed)
+    again: () => showLoadout(top, q.dev ? Object.assign(quickMatch(q.difficulty, q.form?.seed ? q.seed : randomSeed(), q.fixed, true), { form: q.form }) : quickMatch(q.difficulty, randomSeed())),
+    same: () => showLoadout(top, sameMatch(q)),
+    quick: () => quitToMenu('quick'),
+  });
 }
 function showHelp() {
   screen.className = '';
@@ -649,7 +776,7 @@ function showPause() {
   game.paused = true;
   screen.className = '';
   screen.innerHTML = `
-    <div class="panel"><h2 style="text-align:center">Paused</h2><p class="sub" style="text-align:center">${stageDef(game.stageIndex).name}</p>
+    <div class="panel"><h2 style="text-align:center">Paused</h2><p class="sub" style="text-align:center">${game.match ? quickTitle(game.match) : stageDef(game.stageIndex).name}</p>
       <div class="menu-btns" style="margin:0 auto">
         <button class="btn primary" data-a="resume">Resume</button>
         <button class="btn" data-a="restart">Restart</button>
@@ -659,12 +786,12 @@ function showPause() {
         <button class="btn" data-a="quit">Quit to stages</button>
       </div>${IS_DEV ? `<div style="margin-top:12px">${devRows(true)}</div>` : ''}</div>`;
   bind({
-    resume, restart: () => { sendStats('quit'); startStage(game.stageIndex); },
+    resume, restart: () => { sendStats('quit'); if (game.match) showLoadout(game.stageIndex, sameMatch(game.match)); else startStage(game.stageIndex); },
     sound: () => { save.settings.sound = !save.settings.sound; setSound(save.settings.sound); writeSave(save); showPause(); },
     aegis: () => { cycleAegis(); showPause(); },
     note: () => { const w = game.world; showNote({ battle: w.battleId, step: w.step, time: w.time, mode: 'battle', title: battleTitle(w) }, showPause); },
     dev: (el) => { toggleDev(el, true); showPause(); },
-    quit: () => quitToMenu('stages'),
+    quit: () => quitToMenu(game.match ? 'quick' : 'stages'),
   });
 }
 function resume() { game.paused = false; screen.innerHTML = ''; }

@@ -9,6 +9,10 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.8.0-dev
 
+### Quick match
+- **Quick match** (0.8.0-dev.1, decided with the user 2026-11-20): menu → Quick match → Easy / Medium / Hard (each with "wins 3 / 5") → your loadout with the enemy intel → battle. The enemy: the strength of your highest cleared stage, the turrets of a random cleared stage, a random personality with its loadout from your unlocked unit types, the surprise slot from stage 7; the difficulty is its income ramp over 7 minutes (×1.5 / ×2 / ×2.5; Medium = the campaign). Result: win or loss, the counter, Again (a new match) or Quick match. Notes and replays work as in any battle; the stats mark it `mode: quick` with difficulty, seed and turret stage.
+- **Dev match** (dev builds): Quick match → Dev match…: personality (with its description and focus types), turret stage (with a list and a small map of its turrets), enemy level, difficulty and seed, each fixed or random. The seed (8 characters, e.g. `a9b3c1f2`) shows on the intel and the result screen; "Same match" plays the same setup again. The same seed and fields give the same opponent and map; the battle repeats exactly only if you play the same way.
+
 ## [0.7.0]: 2026-11-20
 
 ### Play-test notes

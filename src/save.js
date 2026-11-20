@@ -7,6 +7,7 @@ export function defaultSave() {
     stars: [],                  // best stars per stage
     endlessBest: 0,             // highest endless stage reached
     loadout: ['scout', 'gunner'],
+    quick: {},                  // quick match: { easy|medium|hard: { wins, played } }
     seen: null,                 // enemy mech types fought at least once (enemy intel shows '?' for the rest); null = not set up yet
     settings: { sound: true, speed: 1, graphics: 'voxel', aegis: 'hit', stats: true, name: '', dev: {} },
   };

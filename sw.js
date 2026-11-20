@@ -1,9 +1,9 @@
 // Network-first service worker: always fresh when online, works offline.
 // When adding files, update SHELL and bump CACHE.
-const CACHE = 'iron-defense-v6';
+const CACHE = 'iron-defense-v7';
 const SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'manifest-dev.webmanifest',
-  'src/main.js', 'src/world.js', 'src/replay.js', 'src/render.js', 'src/render_voxel.js', 'src/data.js', 'src/audio.js', 'src/save.js', 'src/version.js',
+  'src/main.js', 'src/world.js', 'src/replay.js', 'src/quick.js', 'src/render.js', 'src/render_voxel.js', 'src/data.js', 'src/audio.js', 'src/save.js', 'src/version.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', (e) => {
