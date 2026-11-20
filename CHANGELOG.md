@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.8.0-dev
 
+### Battle view
+- **Scrimmage line in the minimap** (0.8.0-dev.3, user idea, 2026-11-20): each lane of the minimap is tinted blue up to where you hold the field and orange beyond, with a light step line where the two sides meet. Per lane it's the midpoint between both sides' fronts; a side's front is its second most advanced Brawler, Gunner, Seeker, Mortar or Lancer in that lane (a lone runner ahead of the fight doesn't move it), never behind its frontmost turret there or its base. Scouts, Breachers and Aegis don't count. Eased over about 3 s. Display only for now (later the last tiebreak at the match limit); replays stay exact.
+
 ### Quick match
 - **Copy the seed** (0.8.0-dev.2, user idea): a Copy button next to the seed on the quick match result screen (dev builds; if the browser blocks the clipboard, a box to copy from opens); the replay list shows the seed of quick matches.
 - **Quick match** (0.8.0-dev.1, decided with the user 2026-11-20): menu → Quick match → Easy / Medium / Hard (each with "wins 3 / 5") → your loadout with the enemy intel → battle. The enemy: the strength of your highest cleared stage, the turrets of a random cleared stage, a random personality with its loadout from your unlocked unit types, the surprise slot from stage 7; the difficulty is its income ramp over 7 minutes (×1.5 / ×2 / ×2.5; Medium = the campaign). Result: win or loss, the counter, Again (a new match) or Quick match. Notes and replays work as in any battle; the stats mark it `mode: quick` with difficulty, seed and turret stage.

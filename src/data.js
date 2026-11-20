@@ -8,6 +8,8 @@ export const laneX = (lane) => LANE_W / 2 + lane * LANE_W;
 export const laneOf = (x) => Math.max(0, Math.min(LANES - 1, Math.floor(x / LANE_W)));
 export const FWD = [1, -1];                 // forward direction (world y) per team
 export const BASE_FACE = [100, 2300];       // y of each base's front face
+// scrimmage line (world.updateFront): recomputed every `every` steps, eased over `smooth` s; roles that don't count
+export const FRONT = { every: 15, smooth: 3, skip: ['charger', 'support'] };
 export const ROWS = 7;
 export const ROW_H = 100;
 // Build-cell centers: world y 270 … 870 for the player, mirrored for the enemy.

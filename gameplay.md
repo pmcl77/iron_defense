@@ -450,6 +450,8 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 | Upgrades panel (pauses the game) | Wrench button | U |
 | Pause | ❚❚ | Space, Esc |
 
+**Scrimmage line (minimap):** each lane of the minimap is tinted blue up to where you hold the field and orange beyond, with a light line where the sides meet. Per lane: the midpoint between both sides' fronts; a side's front is its second most advanced Tank, Line or Artillery mech in that lane, never behind its frontmost turret there or its base face (Chargers and Support don't count), eased over about 3 s (`FRONT` in data.js). Display only; planned as the last tiebreak at a match limit.
+
 ## 13. Visual style
 
 **Chosen final style: medium-resolution voxel art, angled (sample 7 in `art_samples/`).** It's a grounded, realistic military look, inspired by the Ebbtide reference screenshots, without copying any of their assets.

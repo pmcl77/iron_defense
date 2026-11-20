@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, FRONT, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
   ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, PERSONALITIES, levelMult, upgradeCost, MAX_UNIT_LEVEL, sellRefund,
 } from './data.js';
 
@@ -69,6 +69,7 @@ export class World {
     this.overtime = false;
     this.activeLane = 2;
     this.fwd = Array(LANES).fill(false); // per lane: deploy forward at the frontmost own turret
+    this.front = Array(LANES).fill(null); // scrimmage line: y per lane (updateFront), smoothed
 
     // unit levels per team: the player starts every type at 0 (in-battle upgrades), the enemy at the stage level
     this.lvl = [{}, {}];
@@ -402,6 +403,7 @@ export class World {
       this.updateConstructor(dt);
       if (this.time >= this.nextSample) { this.sample(); this.nextSample += 30; }
     }
+    if (!this.result && this.step % FRONT.every === 0) this.updateFront();
     for (const e of this.entities) {
       if (e.dead) continue;
       e.recoil = Math.max(0, e.recoil - dt * 6);
@@ -416,6 +418,34 @@ export class World {
     this.updateBombs(dt);
     this.entities = this.entities.filter((e) => !e.dead || e.kind === 'base');
     if (this.fx.length > 4000) this.fx.splice(0, this.fx.length - 4000);
+  }
+
+  // Scrimmage line (ISSUES.md "Battles are too long"): per lane, the midpoint between both sides' fronts, smoothed
+  // over a few seconds. A side's front in a lane is its second most advanced Tank/Line/Artillery mech there (a lone
+  // runner ahead of the fight doesn't move it; a lane with one mech counts that one), but never behind its frontmost
+  // turret in that lane or its base face. Chargers (Scout, Breacher) and Support (Aegis) don't count.
+  // Only reads the state (no random numbers): it doesn't change the battle, so replays stay exact.
+  updateFront() {
+    const fronts = [[], []]; // per team, per lane: advances of counting mechs (distance from own base face)
+    const hold = [Array(LANES).fill(0), Array(LANES).fill(0)]; // per team, per lane: frontmost turret advance
+    for (const t of [0, 1]) for (let l = 0; l < LANES; l++) fronts[t][l] = [];
+    for (const e of this.entities) {
+      if (e.dead || e.lane == null || e.lane < 0 || e.lane >= LANES) continue;
+      const adv = e.team === 0 ? e.y - BASE_FACE[0] : BASE_FACE[1] - e.y;
+      if (e.kind === 'turret') hold[e.team][e.lane] = Math.max(hold[e.team][e.lane], adv);
+      else if (e.kind === 'mech' && !FRONT.skip.includes(e.def.role)) fronts[e.team][e.lane].push(adv);
+    }
+    const span = BASE_FACE[1] - BASE_FACE[0], k = Math.min(1, FRONT.every / 60 / FRONT.smooth);
+    for (let l = 0; l < LANES; l++) {
+      const f = [0, 1].map((t) => {
+        const a = fronts[t][l].sort((x, y) => y - x);
+        return Math.max(a.length > 1 ? a[1] : a.length ? a[0] : 0, hold[t][l]);
+      });
+      const y = (BASE_FACE[0] + f[0] + BASE_FACE[1] - f[1]) / 2;
+      const target = Math.min(BASE_FACE[1], Math.max(BASE_FACE[0], y));
+      this.front[l] = this.front[l] == null ? target : this.front[l] + (target - this.front[l]) * k;
+    }
+    this.frontShare = this.front.reduce((s, y) => s + (y - BASE_FACE[0]) / span, 0) / LANES; // 0.5 = even, > 0.5 = the player is ahead
   }
 
   // target choice: ahead first (mechs only), then preferred type, then nearest

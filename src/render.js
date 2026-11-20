@@ -594,6 +594,22 @@ export class Renderer {
     m.fillStyle = 'rgba(255,255,255,0.10)'; for (let l = 1; l < LANES; l++) m.fillRect(Math.round(sx(l * LANE_W)), 0, Math.max(1, k * 0.6), mh);
     m.fillStyle = YOU; m.fillRect(0, sy(BASE_FACE[0]), mw, mh - sy(BASE_FACE[0]));
     m.fillStyle = FOE; m.fillRect(0, 0, mw, sy(BASE_FACE[1]));
+    // Scrimmage line (world.front): each lane's part of the field tinted by who holds it, a light step line on top
+    if (w.front && w.front[0] != null) {
+      const lw = (mw - 2 * pad) / LANES, x0 = (l) => (l ? pad + l * lw : 0), x1 = (l) => (l === LANES - 1 ? mw : pad + (l + 1) * lw);
+      for (let l = 0; l < LANES; l++) {
+        const y = sy(w.front[l]);
+        m.fillStyle = 'rgba(90,176,255,0.2)'; m.fillRect(x0(l), y, x1(l) - x0(l), sy(BASE_FACE[0]) - y);
+        m.fillStyle = 'rgba(255,122,74,0.2)'; m.fillRect(x0(l), sy(BASE_FACE[1]), x1(l) - x0(l), y - sy(BASE_FACE[1]));
+      }
+      m.beginPath();
+      for (let l = 0; l < LANES; l++) {
+        const y = sy(w.front[l]);
+        if (l) m.lineTo(x0(l), y); else m.moveTo(x0(l), y);
+        m.lineTo(x1(l), y);
+      }
+      m.strokeStyle = 'rgba(255,240,190,0.95)'; m.lineWidth = 1.5 * k; m.stroke();
+    }
     m.lineWidth = k; m.strokeStyle = '#000'; m.lineJoin = 'round';
     // Turrets: upright rectangles, narrower than a lane (only ~3 px wide here), so turrets in
     // neighboring lanes stay separate with a small gap between their outlines.

@@ -1067,5 +1067,23 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('defend: deploys in the lane pushed hardest', !shelled.wrongLane && !pushed.wrongLane);
 }
 
+// scrimmage line (world.updateFront)
+{
+  const w = mk();
+  w.updateFront();
+  const mid = (BASE_FACE[0] + BASE_FACE[1]) / 2;
+  check('front: empty field → the middle of every lane, even share', w.front.every((y) => Math.abs(y - mid) < 1) && Math.abs(w.frontShare - 0.5) < 1e-9, w.front.join());
+  const v = mk();
+  mech(v, 'gunner', 0, 1, 1500); mech(v, 'gunner', 0, 1, 900); // a runner at 1500, the second mech at 900
+  mech(v, 'scout', 0, 3, 2000); mech(v, 'aegis', 0, 3, 1900);  // Charger and Support don't count
+  for (let i = 0; i < 40; i++) v.updateFront();               // eased in
+  check('front: the second most advanced mech sets a side\'s front (a lone runner doesn\'t)', Math.abs(v.front[1] - (900 + BASE_FACE[1]) / 2) < 2, v.front[1].toFixed(1));
+  check('front: Scouts and Aegis don\'t move it', Math.abs(v.front[3] - mid) < 2, v.front[3].toFixed(1));
+  check('front: the player ahead in a lane → share above 0.5', v.frontShare > 0.5);
+  const t = mk([['sentry', 4, 3]]);
+  for (let i = 0; i < 40; i++) t.updateFront();
+  check('front: an enemy turret holds its side\'s front in its lane', t.front[4] < mid - 50 && Math.abs(t.front[0] - mid) < 2, t.front[4].toFixed(1));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
