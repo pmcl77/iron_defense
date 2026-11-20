@@ -339,7 +339,8 @@ const clockOf = (s) => { const t = Math.floor(s * STEP); return `${Math.floor(t 
 function updateReplayBar() {
   if (!rp.rep) return;
   const w = game.world;
-  setText($('#rp-time'), 'rpt', rp.seeking ? `seeking… ${clockOf(rp.seeking.at)}` : `${clockOf(w.step)} / ${clockOf(rp.rep.steps)}`);
+  const sliding = rp.dragging && !rp.seeking ? `→ ${clockOf(+$('#rp-seek').value / 1000 * rp.rep.steps)} / ${clockOf(rp.rep.steps)}` : null; // dragging: where it will jump
+  setText($('#rp-time'), 'rpt', rp.seeking ? `seeking… ${clockOf(rp.seeking.at)}` : sliding || `${clockOf(w.step)} / ${clockOf(rp.rep.steps)}`);
   setText($('#rp-play'), 'rpp', game.paused ? '▶' : '❚❚');
   setText($('#rp-speed'), 'rps', rp.speed + '×');
   setText($('#btn-speed'), 'rps2', rp.speed + '×');
@@ -417,12 +418,18 @@ function showNote(ctx, done) {
   // a compact panel at the top; the field stays visible below it and can be panned (drag or minimap) while typing
   screen.className = 'note-mode';
   screen.innerHTML = `
-    <div class="panel note-panel"><p class="sub"><b>Note</b> · ${ctx.title} · at ${clock}</p>
+    <div class="panel note-panel"><p class="sub note-head"><span><b>✎ Note</b><span class="note-where"> · ${ctx.title} · at ${clock}</span></span><button class="btn small note-hide" data-a="hide">Hide</button></p>
       <textarea id="note-text" class="note-text" maxlength="1000" rows="3" placeholder="What do you see? e.g. why do the Seekers queue here? (drag the field to look around)"></textarea>
       <div class="btn-row"><button class="btn small primary" data-a="save">Save</button><button class="btn small" data-a="cancel">Cancel</button></div></div>`;
-  const ta = $('#note-text');
+  const ta = $('#note-text'), panel = screen.querySelector('.note-panel');
   setTimeout(() => ta.focus(), 50);
   bind({
+    // Hide: the panel shrinks to its title line (keyboard closes, the whole field is visible); Show brings the text back
+    hide: (el) => {
+      const hidden = panel.classList.toggle('collapsed');
+      el.textContent = hidden ? 'Show' : 'Hide';
+      if (hidden) ta.blur(); else ta.focus();
+    },
     save: () => {
       const text = ta.value.trim();
       if (text) {

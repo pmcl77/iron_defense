@@ -304,3 +304,9 @@ select.name-input { width: 12em; padding-right: 4px; }
 #screen.note-mode .note-panel .sub { margin: 0 0 6px; }
 #screen.note-mode .note-panel .note-text { margin-bottom: 8px; }
 #screen.note-mode .btn-row { margin-top: 0; }
+#screen.note-mode .note-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#screen.note-mode .note-head .btn.small { min-height: 30px; padding: 0 10px; }
+#screen.note-mode .note-panel.collapsed { width: auto; padding: 4px 4px 4px 10px; }
+#screen.note-mode .note-panel.collapsed .note-head { margin: 0; }
+#screen.note-mode .note-panel.collapsed .note-text, #screen.note-mode .note-panel.collapsed .btn-row { display: none; }
+#screen.note-mode .note-panel.collapsed .note-where { display: none; }
