@@ -720,14 +720,14 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
     - Kill bounty per Scout from a third of the squad cost. One queue slot, one card cooldown. Same for the enemy (its "cheap pack" groups would use the squad).
     - Open question: keep the Charger behaviour (run past mechs to turrets and chip them), or make the squad a distraction swarm that attacks the mechs it meets (soaks hits from heavy single-target units)? The second is closer to the inspiration, but it means a role change or a new trait.
 
+- **[balance] Energy Surge: more effect?** (user, 2026-11-20). Today +100 energy every 50 s, about 2 energy/s on average, against an income of about 8–12/s (more with Reactor and overtime): a small share that gets smaller as the battle goes on, and capped by max energy (300). Options: **(a)** a bigger amount (e.g. 150–200); **(b)** a share of max energy (e.g. 50%, grows with the Reactor); **(c)** a timed boost instead (income ×2 for 10–15 s: grows with your income, not capped at once); **(d)** a shorter cooldown. Proposal: (c) or (b), so it keeps its worth late in the battle; tune with the shorter field.
+
 ### Planned features (agreed)
 - **[feature] Sapper:** a mine-laying mech, the 9th mech. Designed in gameplay.md §5.4. Stats and unlock stage still to decide.
 - **[feature] Enemy AI that counters your army,** e.g. flanking massed artillery with fast units. Agreed for later.
 - *(The per-type Hold/Advance switch idea is obsolete: the switch is replaced by roles, see Gameplay / movement.)*
 - **[idea] "Charge" special** (2026-11-15): for a few seconds every mech pushes forward and fires on the move. Parked; only if the decision the old Advance mode gave is missed in play-testing. The space of the old Hold/Advance button could hold it, or another special.
 - **[feature] Loadout of all 8 (or 9) mechs instead of 5:** maybe, decide after play-testing.
-
-- **[balance] Energy Surge: more effect?** (user, 2026-11-20). Today +100 energy every 50 s, about 2 energy/s on average, against an income of about 8–12/s (more with Reactor and overtime): a small share that gets smaller as the battle goes on, and capped by max energy (300). Options: **(a)** a bigger amount (e.g. 150–200); **(b)** a share of max energy (e.g. 50%, grows with the Reactor); **(c)** a timed boost instead (income ×2 for 10–15 s: grows with your income, not capped at once); **(d)** a shorter cooldown. Proposal: (c) or (b), so it keeps its worth late in the battle; tune with the shorter field.
 
 ### Sound / polish
 - **[feature] Sound: synthesized round 1 + 1b done in 0.2.0-dev** (see CHANGELOG). The user liked the reworked impacts, explosions and metal sounds (2026-11-14) and is judging the rest in longer play sessions.
