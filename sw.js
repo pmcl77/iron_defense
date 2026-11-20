@@ -1,6 +1,6 @@
 // Network-first service worker: always fresh when online, works offline.
 // When adding files, update SHELL and bump CACHE.
-const CACHE = 'iron-defense-v8';
+const CACHE = 'iron-defense-v9';
 const SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'manifest-dev.webmanifest',
   'src/main.js', 'src/world.js', 'src/replay.js', 'src/quick.js', 'src/render.js', 'src/render_voxel.js', 'src/data.js', 'src/audio.js', 'src/save.js', 'src/version.js',

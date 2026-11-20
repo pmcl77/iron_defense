@@ -10,6 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.8.0-dev
 
 ### Battle view
+- **Scrimmage line: one straight line** (0.8.0-dev.4, user: "not a line"): the per-lane step line looked like a box and blended with the camera frame. Now one yellow line across the minimap at the average of the five lanes, blue below (yours), orange above (theirs).
 - **Scrimmage line in the minimap** (0.8.0-dev.3, user idea, 2026-11-20): each lane of the minimap is tinted blue up to where you hold the field and orange beyond, with a light step line where the two sides meet. Per lane it's the midpoint between both sides' fronts; a side's front is its second most advanced Brawler, Gunner, Seeker, Mortar or Lancer in that lane (a lone runner ahead of the fight doesn't move it), never behind its frontmost turret there or its base. Scouts, Breachers and Aegis don't count. Eased over about 3 s. Display only for now (later the last tiebreak at the match limit); replays stay exact.
 
 ### Quick match
