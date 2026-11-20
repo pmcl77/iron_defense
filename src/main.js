@@ -1030,6 +1030,14 @@ $('#sell-pop').addEventListener('click', () => {
   if (t && !t.dead) { game.world.sell(t.lane, t.row); renderer.consume(game.world.fx, sfx); }
   hideSell();
 });
+// dev builds: the Note button pauses the battle and opens the note panel; Save or Cancel goes straight back to the battle
+function quickNote() {
+  const w = game.world;
+  if (!IS_DEV || game.mode !== 'play' || !w || w.result || game.paused) return;
+  game.paused = true;
+  showNote({ battle: w.battleId, step: w.step, time: w.time, mode: 'battle', title: battleTitle(w) }, resume);
+}
+if (IS_DEV) { $('#btn-note').hidden = false; $('#btn-note').addEventListener('click', quickNote); }
 $('#btn-pause').addEventListener('click', () => { if (game.mode === 'replay') { $('#rp-play').click(); return; } if (!game.world.result) showPause(); });
 $('#btn-upg').addEventListener('click', () => { initAudio(); playSfx('click'); showUpgrades(); });
 $('#btn-speed').addEventListener('click', () => {
@@ -1124,6 +1132,7 @@ window.addEventListener('keydown', (e) => {
   if (sp && w.unlocked.specials.includes(sp)) useSpecial(sp);
   if (k === 'backspace' && w.queue.length) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
   if (k === 'u') showUpgrades();
+  if (k === 'n') { e.preventDefault(); quickNote(); }
   if (k === 't' || k === 'tab') { e.preventDefault(); setTab(game.ui.tab === 'mechs' ? 'turrets' : 'mechs'); }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));

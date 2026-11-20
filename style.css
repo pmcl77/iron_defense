@@ -59,6 +59,9 @@ canvas#game { position: absolute; inset: 0; display: block; }
 #hp0 { background: linear-gradient(180deg, #8cc4ff, var(--you) 45%); }
 #hp1 { background: linear-gradient(180deg, #ff9a88, var(--foe) 45%); left: auto; right: 1px; }
 
+/* dev builds: a note at this moment (pauses the battle), below the pause button */
+#btn-note { position: absolute; top: calc(50px + var(--safe-t)); left: 4px; height: 40px; }
+#hud.replay #btn-note { display: none; }
 #minimap { position: absolute; top: calc(50px + var(--safe-t)); right: 4px; width: 22px; height: min(180px, 26vh); border: 1px solid var(--edge); touch-action: none; }
 
 .bottom {
@@ -278,7 +281,7 @@ select.name-input { width: 12em; padding-right: 4px; }
 
 /* marks development builds */
 #dev-tag {
-  position: absolute; z-index: 50; left: 6px; top: calc(50px + var(--safe-t)); pointer-events: none;
+  position: absolute; z-index: 50; left: 50px; top: calc(50px + var(--safe-t)); pointer-events: none;
   padding: 1px 6px; font: 800 9px/1.4 var(--mono); letter-spacing: 0.15em; color: #08121e; background: var(--amber); opacity: 0.85;
 }
 .version { margin: 10px 0 0; font-family: var(--mono); font-size: 11px; color: var(--dim); }

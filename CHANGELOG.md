@@ -14,6 +14,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 - **Scrimmage line: one straight line** (0.8.0-dev.4, user: "not a line"): the per-lane step line looked like a box and blended with the camera frame. Now one yellow line across the minimap at the average of the five lanes, blue below (yours), orange above (theirs).
 - **Scrimmage line in the minimap** (0.8.0-dev.3, user idea, 2026-11-20): each lane of the minimap is tinted blue up to where you hold the field and orange beyond, with a light step line where the two sides meet. Per lane it's the midpoint between both sides' fronts; a side's front is its second most advanced Brawler, Gunner, Seeker, Mortar or Lancer in that lane (a lone runner ahead of the fight doesn't move it), never behind its frontmost turret there or its base. Scouts, Breachers and Aegis don't count. Eased over about 3 s. Display only for now (later the last tiebreak at the match limit); replays stay exact.
 
+### Play-test notes
+- **Note button in the battle** (0.8.0-dev.8, user idea): a ✎ button below the pause button (dev builds; key N) pauses the battle and opens the note panel at once; Save or Cancel goes straight back into the battle. Before, a note took pause → Note….
+
 ### Quick match
 - **Dev match remembers the last settings** (0.8.0-dev.7, user idea): the dialog opens with the difficulty, personality, turret stage, enemy level and seed you used last (kept in the save, so also after a reload). An empty seed stays random. **Last seed** fills in the seed of the last dev match, typed or drawn; **Reset** sets everything back to random.
 - **Menu button on the result screen** (0.8.0-dev.5, user report): quick match and campaign results now have a Menu button; before, the main menu was only reachable through Quick match / Stages → Back.
