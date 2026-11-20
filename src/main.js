@@ -299,7 +299,7 @@ function showReplays() {
     <div class="panel">
       <div class="head"><div><h2>Replays</h2><p class="sub">Your last ${REPLAY_KEEP} battles on this device (since v0.7.0-dev.4), or a replay file.</p></div>
         <button class="btn small" data-a="back">Back</button></div>
-      <div class="replay-list">${list.length ? list.map((e, n) => `<button class="btn" data-a="rp" data-n="${n}">${e.title}<small>${when(e.at)}</small></button>`).join('') : '<p class="sub">No replays yet.</p>'}</div>
+      <div class="replay-list">${list.length ? list.map((e, n) => { const qs = e.replay?.stage?.quick; return `<button class="btn" data-a="rp" data-n="${n}">${e.title}<small>${when(e.at)}${qs ? ` · seed ${seedHex(qs.seed)}` : ''}</small></button>`; }).join('') : '<p class="sub">No replays yet.</p>'}</div>
       <div class="btn-row"><button class="btn" data-a="file">Open file…</button></div>
       <input id="rp-file" type="file" accept=".json,application/json" hidden>
     </div>`;
@@ -673,6 +673,12 @@ function showDevMatch(fixed = {}) {
     },
   });
 }
+// copy to the clipboard (needs https or localhost); falls back to a prompt the user can copy from
+function copyText(text, done) {
+  const fallback = () => { try { window.prompt('Copy:', text); } catch { /* ignore */ } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast(done), fallback);
+  else fallback();
+}
 function finishQuick() {
   const w = game.world, win = w.result === 'win', q = game.match;
   const c = ((save.quick ||= {})[q.difficulty] ||= { wins: 0, played: 0 });
@@ -687,7 +693,7 @@ function finishQuick() {
       <p class="result-title ${win ? 'win' : 'lose'}">${win ? 'VICTORY' : 'DEFEAT'}</p>
       <p class="result-stats">${quickTitle(q)} · ${w.stats.kills} kills · ${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}</p>
       <p class="result-stats">${QUICK.names[q.difficulty]}: ${quickScore(q.difficulty)}</p>
-      ${IS_DEV ? `<p class="result-stats">${PERSONALITIES[w.stage.personality]?.name || ''} · turrets of stage ${q.st.quick.turretStage + 1} · seed <span class="num">${seedHex(q.seed)}</span></p>` : ''}
+      ${IS_DEV ? `<p class="result-stats">${PERSONALITIES[w.stage.personality]?.name || ''} · turrets of stage ${q.st.quick.turretStage + 1} · seed <span class="num">${seedHex(q.seed)}</span> <button class="btn small copy-btn" data-a="copyseed">Copy</button></p>` : ''}
       <div class="btn-row">
         <button class="btn primary" data-a="again">Again</button>
         ${IS_DEV ? '<button class="btn" data-a="same">Same match</button>' : ''}
@@ -699,6 +705,7 @@ function finishQuick() {
     // Again: a new match with the same difficulty (dev match: the same fixed fields; a fixed seed stays fixed)
     again: () => showLoadout(top, q.dev ? Object.assign(quickMatch(q.difficulty, q.form?.seed ? q.seed : randomSeed(), q.fixed, true), { form: q.form }) : quickMatch(q.difficulty, randomSeed())),
     same: () => showLoadout(top, sameMatch(q)),
+    copyseed: () => copyText(seedHex(q.seed), 'Seed copied'),
     quick: () => quitToMenu('quick'),
   });
 }
