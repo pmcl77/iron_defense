@@ -497,12 +497,14 @@ function finishStage() {
         ${win ? '<button class="btn primary" data-a="next">Next</button>' : ''}
         <button class="btn" data-a="retry">Retry</button>
         <button class="btn" data-a="stages">Stages</button>
+        <button class="btn" data-a="menu">Menu</button>
       </div>
     </div>`;
   bind({
     next: () => startStage(i + 1),
     retry: () => startStage(i),
     stages: () => quitToMenu('stages'),
+    menu: () => quitToMenu('menu'),
   });
 }
 
@@ -698,6 +700,7 @@ function finishQuick() {
         <button class="btn primary" data-a="again">Again</button>
         ${IS_DEV ? '<button class="btn" data-a="same">Same match</button>' : ''}
         <button class="btn" data-a="quick">Quick match</button>
+        <button class="btn" data-a="menu">Menu</button>
       </div>
     </div>`;
   const top = game.stageIndex;
@@ -707,6 +710,7 @@ function finishQuick() {
     same: () => showLoadout(top, sameMatch(q)),
     copyseed: () => copyText(seedHex(q.seed), 'Seed copied'),
     quick: () => quitToMenu('quick'),
+    menu: () => quitToMenu('menu'),
   });
 }
 function showHelp() {
