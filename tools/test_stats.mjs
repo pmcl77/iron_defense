@@ -61,9 +61,9 @@ await post({ ...battle, stage: 5, id: 'ffffffffffffffff', device: DEV, result: '
 ok((await rows()).filter((r) => r.stage === 5).length === 2, 'other battle id is a new row');
 ok((await post({ ...battle, id: 'XYZ' })).status === 400 && (await post({ ...battle, device: 12 })).status === 400, 'bad id or device rejected');
 ok((await post({ ...battle, name: 5 })).status === 400, 'non-string name rejected');
-await post({ ...battle, stage: 7, name: '  Phil\u0007ippe the very long name  ' });
+await post({ ...battle, stage: 7, name: '  Tes\u0007ter the very long name  ' });
 const n7 = (await rows()).find((r) => r.stage === 7);
-ok(n7 && n7.name === 'Philippe the very lo', 'name cleaned and cut to 20', n7 && n7.name);
+ok(n7 && n7.name === 'Tester the very long', 'name cleaned and cut to 20', n7 && n7.name);
 await post({ ...battle, stage: 8, name: '   ' });
 ok(!('name' in (await rows()).find((r) => r.stage === 8)), 'empty name dropped');
 const sum = (await (await get('?key=secret-key')).json()).summary.find((s) => s.stage === 5 && s.result === 'win');
