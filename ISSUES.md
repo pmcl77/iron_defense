@@ -42,6 +42,31 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
 - **One- and two-lane sets** (incl. split ones like L1/L3, L1/L5) for siege or rush variants; the swarm keeps three-lane sets.
 - **Artillery line, step two:** more groups with artillery, if artillery line (×1.0 today) or long guns don't feel like themselves.
 - **Swarm leftovers:** (b) make the 1-3-5 split set rarer; (d) under long pressure, keep saving part of the income for a wave (row 50: 25 single Gunners in 90 s, no waves).
+- **feature/balance: the personality shapes the whole loadout (LO), not just the focus types** (play-test 0.8.0-dev.6, rows 76/79, user 2026-11-20). Today only the focus types (FT) are fixed; the other slots are drawn at random from the unlocked types (rules: at least one Line, one Tank or Artillery, at most one Charger). So the same personality can be a different opponent:
+  - **Row 76 (Wall Breakers, level 0):** BE + GU, BW, **AE, LA**. An anti-turret, tanky mix; its Lancers and the map's Howitzers did the most damage.
+  - **Row 79 (Wall Breakers, level 1):** BE + GU, BW, **SE, MO**. 39 Mortars shredded the user's Seekers (51 of 60 lost); it felt like a different, much harder enemy.
+  - **The focus type was the weakest part both times:** 45 and 68 Breachers did under 2,000 and about 4,000 damage, almost nothing to structures. They died in the mech fights, with nothing to escort them.
+
+  User: "the personality should somewhat define the LO, with more UTs maybe just the Roles or actual UTs. There could still be 1-2 random ones." Options:
+  - (a) **Fixed companion types** per personality: a fixed theme, but the same opponent every time.
+  - (b) **Companion roles** per personality, e.g. "a Tank and an Artillery". Some variety within the theme, but the theme may miss its point: Elite's "backed by Brawlers and Aegis" needs those exact types.
+  - (c) **Mix:** each personality has FT, plus 1–2 companions (an exact type where the theme needs one, a role otherwise), plus 1–2 random slots under today's rules.
+
+  **Proposal: (c).** Draft companions, with a five-slot loadout (to be tuned in play):
+
+  | Personality | FT | Companions | Random |
+  |---|---|---|---|
+  | Armored | AE, BW | a Line | 2 |
+  | Long guns | LA | BW (tank screen), a Line | 2 |
+  | Wall breakers | BE | BW (escort), an Artillery | 2 |
+  | Swarm | SC, GU | a Line (no tanks, as today) | 2 |
+  | Siege | BE, LA | BW (escort) | 2 |
+  | Iron wall | BW, AE | a Line | 2 |
+  | Artillery line | LA, MO | BW (screen), a Line | 1 |
+  | Rush | SC, BE | GU | 2 |
+  | Elite | SE, LA | BW, AE (as its description says) | 1 |
+
+  With fewer unlocked types, a missing companion falls back to a random slot. The intel shows the drawn loadout as today. Fits the bot work: the bot can then learn one answer per personality. Related: the Breacher's own weakness (it dies in mech fights before it reaches structures) may need its own fix after this, once it has an escort.
 
 ### UI / readability
 - **[visual, fixed in 0.7.0-dev.2] Enemy Lancer hidden at the enemy base** (user, 2026-11-19, while attacking the enemy base: an enemy Lancer was deployed but not visible, "hidden beneath the graphics of the enemy base"; only its shots gave it away). Checked in the browser (voxel graphics, stage 8): enemy mechs appear 24 units in front of the base face, so their body overlaps the bottom of the base wall, and they are drawn on top of the base. On an empty field they are visible, but small and dark against the dark wall and its gun towers. A Lancer facing your attackers within its range 540 never walks away from there. Likely causes, not confirmed: (1) camouflage against the wall; (2) your own attacking mechs stand at the same spot (in front of the face) and are drawn over it (mechs further south are drawn later). Options: (a) enemy mechs within about 80 of their base face are drawn above all other mechs; (b) a clearer deploy marker for enemy deploys (the red ring, longer and brighter); (c) a team-coloured ring or outline under every mech; (d) move the enemy deploy point a bit further out (changes gameplay a little: closer to your attackers). **Proposal:** (a) + (b), cheap and visual only; first ask the user which case it was.
