@@ -9,6 +9,9 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.9.0-dev
 
+### Replays
+- **The replay list shows the personality and enemy level** (0.9.0-dev.1, user idea): e.g. "Iron wall · L0 · Nov 20, 23:34 · seed b920d985" under each entry; also for replays stored before.
+
 ## [0.8.0]: 2026-11-20
 
 ### Battle view

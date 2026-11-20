@@ -301,7 +301,11 @@ function showReplays() {
     <div class="panel">
       <div class="head"><div><h2>Replays</h2><p class="sub">Your last ${REPLAY_KEEP} battles on this device (since v0.7.0-dev.4), or a replay file.</p></div>
         <button class="btn small" data-a="back">Back</button></div>
-      <div class="replay-list">${list.length ? list.map((e, n) => { const qs = e.replay?.stage?.quick; return `<button class="btn" data-a="rp" data-n="${n}">${e.title}<small>${when(e.at)}${qs ? ` · seed ${seedHex(qs.seed)}` : ''}</small></button>`; }).join('') : '<p class="sub">No replays yet.</p>'}</div>
+      <div class="replay-list">${list.length ? list.map((e, n) => {
+        // personality and enemy level from the stored setup (also for replays stored before this line existed)
+        const st = e.replay?.stage, qs = st?.quick, pe = PERSONALITIES[st?.personality];
+        const who = [pe?.name, Number.isFinite(st?.lvl) ? `L${st.lvl}` : ''].filter(Boolean).join(' · ');
+        return `<button class="btn" data-a="rp" data-n="${n}">${e.title}<small>${who ? who + ' · ' : ''}${when(e.at)}${qs ? ` · seed ${seedHex(qs.seed)}` : ''}</small></button>`; }).join('') : '<p class="sub">No replays yet.</p>'}</div>
       <div class="btn-row"><button class="btn" data-a="file">Open file…</button></div>
       <input id="rp-file" type="file" accept=".json,application/json" hidden>
     </div>`;
