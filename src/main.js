@@ -166,6 +166,7 @@ function launch(i, q = null) {
   game.stageIndex = i;
   game.mode = 'play';
   game.match = q;
+  if (q?.dev) { save.devMatch = { ...(save.devMatch || {}), last: seedHex(q.seed) }; writeSave(save); } // "Last seed" in the dev match dialog
   const st = q ? q.st : nextStage(i); game.next = null;
   // replays: a seed per battle, and the exact setup (stage as played, units, dev switches), sent with the stats.
   // A quick match uses its own seed (it also drew the setup), so the same seed gives the same match.
@@ -610,7 +611,7 @@ function showQuick() {
         ${IS_DEV ? '<button class="btn" data-a="dev">Dev match…</button>' : ''}
       </div>
     </div>`;
-  bind({ back: showMenu, go: (el) => { initAudio(); showLoadout(top, quickMatch(el.dataset.d, randomSeed())); }, dev: () => showDevMatch() });
+  bind({ back: showMenu, go: (el) => { initAudio(); showLoadout(top, quickMatch(el.dataset.d, randomSeed())); }, dev: () => showDevMatch(save.devMatch?.form) });
 }
 // the enemy turret layout of a stage as a small map: 5 lanes, rows counted from the enemy base (top)
 function turretMap(turrets) {
@@ -632,9 +633,11 @@ function personalityInfo(p, types) {
   return `<b>${pe.name}</b>: ${pe.desc} <span class="k">Focus</span> ${focus}`;
 }
 // dev match (dev builds): the quick match setup with each field fixed or random
+// fixed: the form to show (the last used one, kept in save.devMatch.form); a stage or personality no longer
+// available falls back to random in the selects. save.devMatch.last: the seed of the last dev match, typed or drawn.
 function showDevMatch(fixed = {}) {
   screen.className = '';
-  const top = topStage(), types = unlocked().mechs, base = stageDef(top);
+  const top = topStage(), types = unlocked().mechs, base = stageDef(top), last = save.devMatch?.last;
   const f = { difficulty: 'medium', seed: '', ...fixed };
   const opt = (v, label, cur) => `<option value="${v}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${label}</option>`;
   const pers = personalitiesFor(types);
@@ -651,7 +654,10 @@ function showDevMatch(fixed = {}) {
         <label>Enemy level <select id="dm-lvl">${opt('', `Stage ${top + 1} (${base.lvl})`, f.level)}${[0, 1, 2, 3, 4, 5].map((n) => opt(n, String(n), f.level)).join('')}</select></label>
         <label>Seed <input id="dm-seed" type="text" maxlength="8" placeholder="random" value="${f.seed}" autocomplete="off" spellcheck="false"></label>
       </div>
-      <div class="btn-row"><button class="btn primary" data-a="go">Continue</button></div>
+      <div class="btn-row">
+        ${last ? `<button class="btn small" data-a="lastseed">Last seed <span class="num">${last}</span></button>` : ''}
+        <button class="btn small" data-a="reset">Reset</button>
+        <button class="btn primary" data-a="go">Continue</button></div>
     </div>`;
   const info = () => {
     const p = $('#dm-pers').value, t = $('#dm-tur').value;
@@ -662,6 +668,11 @@ function showDevMatch(fixed = {}) {
   info();
   bind({
     back: showQuick,
+    lastseed: () => { $('#dm-seed').value = last; },
+    reset: () => {
+      $('#dm-diff').value = 'medium'; for (const id of ['#dm-pers', '#dm-tur', '#dm-lvl']) $(id).value = '';
+      $('#dm-seed').value = ''; info();
+    },
     go: () => {
       const fx = {};
       if ($('#dm-pers').value) fx.personality = $('#dm-pers').value;
@@ -671,7 +682,8 @@ function showDevMatch(fixed = {}) {
       if (sv && !/^[0-9a-f]{1,8}$/.test(sv)) { toast('Seed: up to 8 characters 0–9, a–f'); return; }
       const seed = sv ? parseInt(sv, 16) >>> 0 : randomSeed(), diff = $('#dm-diff').value;
       const q = quickMatch(diff, seed, fx, true);
-      q.form = { ...fx, difficulty: diff, seed: sv }; // what to show again on Back
+      q.form = { ...fx, difficulty: diff, seed: sv }; // what to show again on Back, and next time the dialog opens
+      save.devMatch = { ...(save.devMatch || {}), form: q.form }; writeSave(save);
       showLoadout(top, q);
     },
   });

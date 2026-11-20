@@ -322,3 +322,4 @@ select.name-input { width: 12em; padding-right: 4px; }
 .tmap i { height: 16px; background: rgba(255,255,255,0.05); font-style: normal; font-size: 10px; text-align: center; line-height: 16px; color: #111; font-weight: 700; }
 .tmap i.t-sentry { background: #c8b878; } .tmap i.t-howitzer { background: #e08a5a; } .tmap i.t-arc { background: #7fb8e8; }
 .result-stats .copy-btn { min-height: 26px; padding: 0 8px; font-size: 11px; margin-left: 4px; vertical-align: middle; }
+.btn .num { text-transform: none; }
