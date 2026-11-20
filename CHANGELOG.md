@@ -10,6 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.7.0-dev
 
 ### Play-test notes
+- **Notes, round 2** (0.7.0-dev.8, user ideas): the note dialog is a compact panel at the top (3 lines), the field stays visible below it and can be panned (drag or minimap) while you type, also during a battle; replay steps ±10 s instead of ±30 s; while dragging the replay slider, the time shows where it will jump (→ m:ss).
 - **Notes** (0.7.0-dev.7, dev builds, user: "build it please"): **Note…** in the pause menu during a battle, and **Note** in the replay bar, open a text field; the note is stored with that battle and moment (step and time) in the stats database (new table `notes`, created on first use; same database and key, nothing to set up). Kept on the device until the server has it. `node tools/notes.mjs <notes.json> <stats.json>` lists them with their battle; `tools/replay.mjs … --at m:ss` shows that moment. Replay files now carry the battle id, so notes work on the Mac too. The replay bar: the time moved next to the slider.
 
 ### Fixes

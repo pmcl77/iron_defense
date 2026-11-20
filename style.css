@@ -297,4 +297,10 @@ select.name-input { width: 12em; padding-right: 4px; }
 .replay-list small { display: block; opacity: 0.7; font-size: 11px; }
 
 /* play-test note (dev builds) */
-.note-text { width: 100%; box-sizing: border-box; min-height: 110px; resize: vertical; padding: 10px; margin-bottom: 12px; background: rgba(0, 0, 0, 0.35); color: var(--ink); border: 1px solid var(--edge); border-radius: 4px; font: inherit; font-size: 15px; }
+.note-text { width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical; padding: 10px; margin-bottom: 12px; background: rgba(0, 0, 0, 0.35); color: var(--ink); border: 1px solid var(--edge); border-radius: 4px; font: inherit; font-size: 15px; }
+/* the note dialog leaves the field visible and pannable: no dim layer, the panel at the top, taps pass through */
+#screen.note-mode { background: none; pointer-events: none; place-items: start center; }
+#screen.note-mode .note-panel { pointer-events: auto; padding: 10px 12px; margin-top: 54px; width: calc(100% - 30px); justify-self: start; } /* leaves the minimap free */
+#screen.note-mode .note-panel .sub { margin: 0 0 6px; }
+#screen.note-mode .note-panel .note-text { margin-bottom: 8px; }
+#screen.note-mode .btn-row { margin-top: 0; }

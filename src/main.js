@@ -366,8 +366,8 @@ function seekTo(target) {
   slice();
 }
 $('#rp-play').addEventListener('click', () => { if (rp.rep && game.world.step >= rp.rep.steps) seekTo(0); game.paused = !game.paused; updateReplayBar(); });
-$('#rp-back').addEventListener('click', () => seekTo(game.world.step - 30 / STEP));
-$('#rp-fwd').addEventListener('click', () => seekTo(game.world.step + 30 / STEP));
+$('#rp-back').addEventListener('click', () => seekTo(game.world.step - 10 / STEP));
+$('#rp-fwd').addEventListener('click', () => seekTo(game.world.step + 10 / STEP));
 $('#rp-speed').addEventListener('click', () => { rp.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[rp.speed]; updateReplayBar(); });
 $('#rp-exit').addEventListener('click', exitReplay);
 $('#rp-note').addEventListener('click', () => {
@@ -376,7 +376,10 @@ $('#rp-note').addEventListener('click', () => {
   const w = game.world;
   showNote({ battle: rp.id, step: w.step, time: w.time, mode: 'replay', title: rp.title }, () => { screen.innerHTML = ''; });
 });
-$('#rp-seek').addEventListener('input', () => { rp.dragging = true; });
+$('#rp-seek').addEventListener('input', (e) => { // while dragging: show where it will jump to
+  rp.dragging = true;
+  if (rp.rep) setText($('#rp-time'), 'rpt', `→ ${clockOf(+e.target.value / 1000 * rp.rep.steps)} / ${clockOf(rp.rep.steps)}`);
+});
 $('#rp-seek').addEventListener('change', (e) => { rp.dragging = false; if (rp.rep) seekTo(+e.target.value / 1000 * rp.rep.steps); });
 function checkpoint() {
   const w = game.world;
@@ -411,11 +414,12 @@ async function flushNotes() {
 function showNote(ctx, done) {
   if (!ctx.battle) { toast('This replay has no battle id: notes need one'); done(); return; }
   const t = Math.floor(ctx.time), clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-  screen.className = '';
+  // a compact panel at the top; the field stays visible below it and can be panned (drag or minimap) while typing
+  screen.className = 'note-mode';
   screen.innerHTML = `
-    <div class="panel"><h2>Note</h2><p class="sub">${ctx.title} · at ${clock} · stored with this moment</p>
-      <textarea id="note-text" class="note-text" maxlength="1000" rows="5" placeholder="What do you see? e.g. why do the Seekers queue here?"></textarea>
-      <div class="btn-row"><button class="btn primary" data-a="save">Save</button><button class="btn" data-a="cancel">Cancel</button></div></div>`;
+    <div class="panel note-panel"><p class="sub"><b>Note</b> · ${ctx.title} · at ${clock}</p>
+      <textarea id="note-text" class="note-text" maxlength="1000" rows="3" placeholder="What do you see? e.g. why do the Seekers queue here? (drag the field to look around)"></textarea>
+      <div class="btn-row"><button class="btn small primary" data-a="save">Save</button><button class="btn small" data-a="cancel">Cancel</button></div></div>`;
   const ta = $('#note-text');
   setTimeout(() => ta.focus(), 50);
   bind({
@@ -427,9 +431,9 @@ function showNote(ctx, done) {
         flushNotes();
         toast('Note saved');
       }
-      done();
+      screen.className = ''; done();
     },
-    cancel: done,
+    cancel: () => { screen.className = ''; done(); },
   });
 }
 function battleTitle(w, i = game.stageIndex) {
