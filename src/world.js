@@ -59,9 +59,10 @@ export class World {
     // life[team][type] = [deaths, combat seconds of those, survivors, combat seconds of those so far]: combat time runs
     // from a mech's first encounter (it has a target or was hit) to its death; survivors are added by lifeLog()
     this.log = { mechs: [{}, {}], turrets: [{}, {}], lost: [{}, {}], specials: {}, upgrades: [], timeline: [], events: [],
-      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]], wait: [{}, {}], life: [{}, {}] };
+      dmg: [{}, {}], taken: [{}, {}], shield: [0, 0], strip: [[0, 0], [0, 0]], wait: [{}, {}], life: [{}, {}], front: [] };
     this.aiOrders = 0;
     this.nextSample = 0;
+    this.nextFront = 0;
     this.march = opts.march ?? MARCH.pace;
     // dev switches (DEV_SWITCHES): opts.dev overrides the defaults; live ones can change during the battle (setDev)
     this.dev = Object.fromEntries(Object.entries(DEV_SWITCHES).map(([k, d]) => [k, opts.dev?.[k] ?? d.def]));
@@ -159,6 +160,17 @@ export class World {
     const pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
     const s = [Math.round(this.time), Math.round(this.energy), pct(this.bases[0]), pct(this.bases[1]), n[0], n[1]];
     if (push) this.log.timeline.push(s);
+    return s;
+  }
+
+  // scrimmage line entry (stats list `front`, every FRONT.sample s): [time s, average %, lane 1 % … lane 5 %];
+  // % = how far up the field the line stands, from the player's base face (0) to the enemy's (100): above 50 = the
+  // player is ahead. A separate list, so the timeline (the replay drift check) keeps its format.
+  frontSample(push = true) {
+    if (this.front[0] == null) this.updateFront();
+    const span = BASE_FACE[1] - BASE_FACE[0], pc = (y) => Math.round(100 * (y - BASE_FACE[0]) / span);
+    const s = [Math.round(this.time), Math.round(100 * this.frontShare), ...this.front.map(pc)];
+    if (push) this.log.front.push(s);
     return s;
   }
 
@@ -404,6 +416,7 @@ export class World {
       if (this.time >= this.nextSample) { this.sample(); this.nextSample += 30; }
     }
     if (!this.result && this.step % FRONT.every === 0) this.updateFront();
+    if (!this.result && this.time >= this.nextFront) { this.frontSample(); this.nextFront += FRONT.sample; }
     for (const e of this.entities) {
       if (e.dead) continue;
       e.recoil = Math.max(0, e.recoil - dt * 6);

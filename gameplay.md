@@ -450,7 +450,7 @@ One new mech type per stage, so the full arsenal is available from stage 7. The 
 | Upgrades panel (pauses the game) | Wrench button | U |
 | Pause | ❚❚ | Space, Esc |
 
-**Scrimmage line (minimap):** one yellow line across the minimap, blue below it (yours), orange above (theirs). It's the average over the five lanes of each lane's front line. Per lane: the midpoint between both sides' fronts; a side's front is its second most advanced Tank, Line or Artillery mech in that lane, never behind its frontmost turret there or its base face (Chargers and Support don't count), eased over about 3 s (`FRONT` in data.js). Display only; planned as the last tiebreak at a match limit.
+**Scrimmage line (minimap):** one yellow line across the minimap, blue below it (yours), orange above (theirs). It's the average over the five lanes of each lane's front line. Per lane: the midpoint between both sides' fronts; a side's front is its second most advanced Tank, Line or Artillery mech in that lane, never behind its frontmost turret there or its base face (Chargers and Support don't count), eased over about 3 s (`FRONT` in data.js). Display only (recorded in the stats every 5 s); planned as the last tiebreak at a match limit.
 
 ## 13. Visual style
 

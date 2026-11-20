@@ -1083,6 +1083,8 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const t = mk([['sentry', 4, 3]]);
   for (let i = 0; i < 40; i++) t.updateFront();
   check('front: an enemy turret holds its side\'s front in its lane', t.front[4] < mid - 50 && Math.abs(t.front[0] - mid) < 2, t.front[4].toFixed(1));
+  const r = mk(); mech(r, 'gunner', 0, 2, 1400); mech(r, 'gunner', 0, 2, 1300); run(r, 11);
+  check('front: sampled every 5 s as [t, average %, lane 1–5 %]', r.log.front.length === 3 && r.log.front.map((e) => e[0]).join() === '0,5,10' && r.log.front[2].length === 7 && r.log.front[2][4] > 50, JSON.stringify(r.log.front));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

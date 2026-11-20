@@ -24,6 +24,10 @@ export function checkReplay(row, w) {
   for (let i = 0; i < Math.min(rec.length - 1, got.length); i++) {
     if (JSON.stringify(rec[i]) !== JSON.stringify(got[i])) return { at: rec[i][0], recorded: rec[i], replay: got[i] };
   }
+  const rf = row.front || [], gf = w.log.front; // scrimmage line samples (since 0.8.0-dev.6)
+  for (let i = 0; i < Math.min(rf.length - 1, gf.length); i++) {
+    if (JSON.stringify(rf[i]) !== JSON.stringify(gf[i])) return { at: rf[i][0], front: rf[i], replay: gf[i] };
+  }
   const re = row.events || [], ge = w.log.events;
   for (let i = 0; i < Math.min(re.length, ge.length); i++) {
     if (JSON.stringify(re[i]) !== JSON.stringify(ge[i])) return { at: re[i][0], event: i, recorded: re[i], replay: ge[i] };

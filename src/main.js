@@ -206,6 +206,7 @@ const duo = (a) => ({ player: a[0], enemy: a[1] });
 // whole numbers for the damage stats (objects of numbers or of [mechs, turrets, base, Constructor] arrays)
 const rounded = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Array.isArray(v) ? v.map(Math.round) : Math.round(v)]));
 // timeline entries: [time s, energy, player base HP %, enemy base HP %, player mechs, enemy mechs]
+// front entries (since 0.8.0-dev.6), every 5 s and at the end: [time s, scrimmage line average %, lane 1 % … lane 5 %]
 function summary(result, stars = 0) {
   const w = game.world, i = game.stageIndex, st = w.stage, pct = (b) => Math.round(100 * Math.max(0, b.hp) / b.maxHp);
   const body = {
@@ -222,7 +223,7 @@ function summary(result, stars = 0) {
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
     mechs: duo(w.log.mechs), turrets: duo(w.log.turrets), lost: duo(w.log.lost), specials: w.log.specials,
     dmg: duo(w.log.dmg.map(rounded)), taken: duo(w.log.taken.map(rounded)), shield: duo(w.log.shield.map(Math.round)), strip: duo(w.log.strip.map((a) => a.map(Math.round))), wait: duo(w.log.wait.map(rounded)), life: duo(w.lifeLog().map(rounded)),
-    upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], events: w.log.events,
+    upgrades: w.log.upgrades, timeline: [...w.log.timeline, w.sample(false)], front: [...w.log.front, w.frontSample(false)], events: w.log.events,
     replay: { ...w.setup, steps: w.step, inputs: w.inputs }, // tools/replay.mjs
   };
   return body;
