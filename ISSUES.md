@@ -312,6 +312,15 @@ Labels: **bug**, **ui**, **balance**, **feature**, **tech**. Where an issue came
   - Optional surprise: a type never fought before shows as "?" until first met (discovery once per new enemy type in the campaign).
   - **Decided and built (user, 2026-11-16):** intel on the loadout screen (now shown before every battle), '?' for types never fought, "L N" next to the enemy HP bar.
 - **[gameplay/balance] Battles are too long** (user, 2026-11-16: "battles are too long … that is what I like about Clash Royale, as a battle is capped to 5 min maximum"; not to copy it)
+  - **Back on the table (user, 2026-11-20):** "a match should fit a quick break"; Clash Royale's 5 minutes can be planned in, a 20-minute battle often can't. New unit types bring variety but can make battles longer as well as shorter, so the user suggests **the fundamental changes first**: shorter field, adapted ranges (range ladder), etc.
+    - **Data since:** overtime ×1.5 from 9 min is a rule; still wins of 13–17 min (rows 55, 57, 58), a 9½-minute Easy stalemate with neither base hit (row 67). The stalemates come from even trades in the midfield, not from walking: a shorter field shortens the walk (and puts more of the battle on screen), but alone it doesn't guarantee a length.
+    - **Proposal (not decided): one package, built as a dev experiment and played before anything else:**
+      - **Target:** a typical match 4–6 min, a hard maximum of about 8.
+      - **Shorter field:** bases about 1400 apart (today 2200), 4 build rows per side (today 7), about half the field on screen at once (today a quarter to a third).
+      - **Range ladder compressed** to fit (roughly ×0.7, the order kept: Lancer > Howitzer > Mortar > Seeker > Base > Sentry > Gunner > Arc Coil > Aegis > Scout > melee), checked so that front-row turrets don't duel across the midfield.
+      - **Match clock** (the only real guarantee): e.g. 5 min, then overtime (the existing income ×1.5, maybe bases take more damage) up to about 8 min; then the side with more base HP left wins (a draw = sudden death or a loss, to decide).
+      - Base HP and stage turret layouts re-fitted to the new rows; the campaign roughly tuned, the careful re-tune later.
+    - **Order (proposal):** this package first; bot step 1 (patterns from the user's replays) can run alongside, since it is analysis; the bot calibration after the new field (a bot calibrated on the old field would have to be redone); new unit types after that, tuned once on the final field.
   - **Data:** recorded wins 9:10, 12:33 and 22:13; the lost stage 12 win was long too. No time limit exists (only the bot stops at 10 min).
   - **Where the time goes:** the midfield stalemate, not the base. In Breakwater the enemy base stayed at 100% for about 20 minutes, then fell in about 100 s. Two rules stretch the stalemate: the enemy's income doubles over the first 7 minutes, and rises by up to 40% when the player's mechs are near its base (the harder you push, the more it deploys).
   - **Options:**
