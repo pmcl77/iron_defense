@@ -7,7 +7,7 @@ All notable changes to Iron Defense. The newest version is at the top.
 
 Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in the game (menu and settings). Dev builds carry a `-dev.N` suffix with a build number that goes up with every dev build (e.g. `0.5.0-dev.3`); PATCH is for bug-fix releases only.
 
-## [Unreleased]: 0.8.0-dev
+## [0.8.0]: 2026-11-20
 
 ### Battle view
 - **Scrimmage line in the stats** (0.8.0-dev.6, user idea): a new list `front`, a sample every 5 s and one at the end: [time, average %, lane 1–5 %] (0 = your base face, 100 = the enemy's, above 50 = you're ahead). Separate from the timeline, so older replays still check as exact; the replay check compares it too.
