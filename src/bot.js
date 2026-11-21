@@ -15,7 +15,7 @@ export const THINK = 0.5; // s between decisions
 const YOU = {
   name: 'You (base style)',
   reactorOpen: 2,            // Reactor levels in the opening (first 30 s)
-  reactor3: { energy: 320, eta: 35, early: 90 }, // Reactor 3: when this rich and the nearest enemy this far (s); against a defensive enemy from `early` s
+  reactor3: { energy: 400, eta: 35, early: 90 }, // Reactor 3: when this rich and the nearest enemy this far (s); against a defensive enemy from `early` s
   calmEta: 30,               // s until the nearest enemy arrives: calm (opening and quiet phases)
   windowEta: 15,             // middle phase: an upgrade window right after a fight, enemy at least this far (s)
   reserve: 120,              // energy left after an upgrade in a window (data: p10 180, median 330; with the cap at 420 and
@@ -205,7 +205,7 @@ export class Bot {
     // Reactor 3: rich and calm, or early against a defensive enemy (row 82)
     if (w.baseLvl.reactor < 3 && w.baseUpgradeCost('reactor') != null) {
       const defensive = (this.mix.tanky > 0.4 || p.reactor3.always) && w.time > p.reactor3.early;
-      if ((w.energy >= p.reactor3.energy && this.eta > p.reactor3.eta) || (defensive && calm && w.energy >= w.baseUpgradeCost('reactor') + 100)) {
+      if ((w.energy >= p.reactor3.energy && this.eta > p.reactor3.eta) || (defensive && calm && w.energy >= Math.min(w.maxEnergy, w.baseUpgradeCost('reactor') + 100))) {
         if (w.upgradeBase('reactor')) { this.say(`${this.phase}: Reactor 3${defensive ? ' (a long battle ahead)' : ''}`); return true; }
       }
     }

@@ -82,8 +82,8 @@ The rules are the same as Ironline:
 | Property | Value |
 |---|---|
 | Starting energy | 100 |
-| Regeneration | 8 per second, +2 per Reactor upgrade (in battle) |
-| Energy cap | 300, +60 per Reactor upgrade (in battle) |
+| Regeneration | 12 per second (the battle starts at Reactor 2), 14 with Reactor 3 *(0.9.0-dev.7; before: 8, +2 per level)* |
+| Energy cap | 420 (Reactor 2), 480 with Reactor 3 *(before: 300, +60 per level)* |
 | Kill bounty | 25% of the destroyed unit's cost |
 | Overtime *(0.4.0-dev)* | from minute 9, both sides' current income ×1.5 (the player's regeneration after Reactor upgrades; the enemy's after its ramp and pressure bonus). Kill bounty and Energy Surge unchanged. Announced by a pulsing OVERTIME banner; the clock and the income display turn yellow. |
 | Turret sell refund | 25% (nearly dead) to 50% (full HP) of build cost |
@@ -333,7 +333,7 @@ The two bases work alike: each has an HP bar and is destroyed at 0 HP. Your base
 | Upgrade | Effect per level | Costs |
 |---|---|---|
 | Bastion Gun | +50% base gun damage | 120 / 220 / 350 |
-| Reactor | +2 energy/s, +60 energy cap | 100 / 200 / 320 |
+| Reactor | +2 energy/s, +60 energy cap | starts at level 2; level 3: 400 *(0.9.0-dev.7, was 100 / 200 / 320 from level 0)* |
 
 The player's in-battle Armor upgrade was removed in 0.7.0-dev.1 (it was rarely worth it; an emergency QRF may replace it). The **enemy base** has a fixed set of upgrade levels per stage (Armor: +20% base HP per level, Gun, Reactor). They're applied when the stage starts and never change during the battle. Here the enemy Reactor raises the AI's income by 15% per level *(tune)*.
 

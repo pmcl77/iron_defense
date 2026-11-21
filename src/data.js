@@ -215,8 +215,13 @@ export const BASE = { name: 'Base', hp: 3000, dmg: 12, reload: 0.5, range: 340, 
 // emergency QRF may replace it). The enemy base keeps `armor` in its stage data as a base HP knob (+20% per level).
 export const BASE_UPGRADES = {
   gun: { name: 'Bastion Gun', desc: '+50% base gun damage', costs: [120, 220, 350] },
-  reactor: { name: 'Reactor', desc: '+2 energy/s, +60 max energy', costs: [100, 200, 320] },
+  reactor: { name: 'Reactor', desc: '+2 energy/s, +60 max energy', costs: [100, 200, 400] },
 };
+// economy rules (0.9.0-dev.7, ISSUES.md "Is the Reactor a real choice?"): the battle starts at Reactor 2 (income 12/s,
+// max energy 420); Reactor 3 is the only Reactor upgrade, 400. A replay carries the rules it was played with; replays
+// without them (before 0.9.0-dev.7) use LEGACY_RULES (Reactor 0, levels at 100 / 200 / 320), so they stay exact.
+export const RULES = { reactorStart: 2, reactorCosts: [100, 200, 400] };
+export const LEGACY_RULES = { reactorStart: 0, reactorCosts: [100, 200, 320] };
 
 export const SPECIALS = {
   bomb: { name: 'Bombing', short: 'BOMBING', key: 'Q', cd: 40, targeted: true, desc: 'Tap the field: 7 bombs around that point.' },

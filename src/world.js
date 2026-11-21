@@ -1,5 +1,5 @@
 import {
-  FIELD, LANES, ROWS, FWD, FRONT, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, SPECIALS,
+  FIELD, LANES, ROWS, FWD, FRONT, BASE_FACE, laneX, laneOf, cellY, LANE_CHANGE, DEV_SWITCHES, STRIP, MARCH, DETOUR, MECHS, TURRETS, CONSTRUCTOR, BASE, BASE_UPGRADES, RULES, SPECIALS,
   ENERGY, OVERTIME, QUEUE, ROLES, STOP_AT, AI_GROUPS, AI, PERSONALITIES, levelMult, upgradeCost, MAX_UNIT_LEVEL, sellRefund,
 } from './data.js';
 
@@ -87,6 +87,9 @@ export class World {
     this.maxEnergy = ENERGY.cap;
     this.energy = ENERGY.start;
     this.regen = ENERGY.regen;
+    this.rules = { ...RULES, ...(opts.rules || {}) }; // economy rules (data.js RULES; a replay brings its own)
+    this.baseLvl.reactor = this.rules.reactorStart;
+    this.regen += 2 * this.rules.reactorStart; this.maxEnergy += 60 * this.rules.reactorStart;
     this.deployCd = {};
     this.queue = []; // [{ type, lane }], strict first in, first out
     this.queueWait = 0;
@@ -358,7 +361,7 @@ export class World {
     this.fx.push({ t: 'upgrade' });
     return true;
   }
-  baseUpgradeCost(k) { return BASE_UPGRADES[k].costs[this.baseLvl[k]] ?? null; }
+  baseUpgradeCost(k) { return (k === 'reactor' ? this.rules.reactorCosts : BASE_UPGRADES[k].costs)[this.baseLvl[k]] ?? null; }
   upgradeBase(k) {
     const c = this.baseUpgradeCost(k);
     if (c == null || this.energy < c || this.result) return false;

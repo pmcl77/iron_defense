@@ -180,6 +180,7 @@ function launch(i, q = null) {
   const bot = botP;
   const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev, ...(bot ? { bot } : {}) })); // before the battle can touch st
   game.world = new World(st, save, unl, { dev, seed });
+  setup.rules = { ...game.world.rules }; // replays: the economy rules it was played with
   game.world.setup = setup;
   game.bot = bot ? new Bot(game.world, bot, seed ^ 0x5bd1e995) : null;
   $('#bot-line').hidden = !game.bot; $('#bot-line').textContent = '';

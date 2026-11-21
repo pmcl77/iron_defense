@@ -2,12 +2,13 @@
 // since 0.7.0-dev.4) re-run it exactly. Shared by the in-game viewer (main.js) and tools/replay.mjs.
 import { World } from './world.js';
 import { defaultSave } from './save.js';
+import { LEGACY_RULES } from './data.js';
 
 export const STEP = 1 / 60;
 
 // a World for this replay, at step 0 (inputs are not logged again)
 export function replayWorld(rep) {
-  const w = new World(JSON.parse(JSON.stringify(rep.stage)), defaultSave(), rep.unlocked, { seed: rep.seed, dev: rep.dev });
+  const w = new World(JSON.parse(JSON.stringify(rep.stage)), defaultSave(), rep.unlocked, { seed: rep.seed, dev: rep.dev, rules: rep.rules || LEGACY_RULES });
   w.replaying = true;
   return w;
 }

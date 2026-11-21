@@ -1,6 +1,6 @@
 // Headless rule tests for the simulation. Run: node tools/test.mjs
 import { World } from '../src/world.js';
-import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI, BASE_UPGRADES } from '../src/data.js';
+import { OVERTIME, ENERGY, TRAITS, LEVEL_STEP, levelMult, MARCH, stageDef, QUEUE, MECHS, MECH_TYPES, TURRET_TYPES, TURRETS, CONSTRUCTOR, laneX, laneOf, cellY, unlockedSet, sellRefund, BASE_FACE, STAGES, UNLOCKS, LOADOUT_SIZE, randomLoadout, PERSONALITIES, RANDOM_PERSONALITIES, AI, BASE_UPGRADES, RULES } from '../src/data.js';
 import { focusFactor } from './focus.mjs';
 import { runReplay, checkReplay } from './replay.mjs';
 import { quickMatch } from '../src/quick.js';
@@ -193,13 +193,16 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const old = { ...defaultSave(), credits: 900, tech: { gunner: 3 }, perks: { energy: 3, armor: 3, charge: 3, regen: 3 } };
   const st = { name: 'Test', index: 0, baseHp: 1e6, lvl: 0, regen: 0, roster: ['scout'], turrets: [], base: { armor: 1 } };
   const w = new World(st, old, ALL, { seed: 1 });
-  check('fresh start: energy 100 of 300, income 8/s', w.energy === 100 && w.maxEnergy === 300 && w.regen === 8, `${w.energy}/${w.maxEnergy}, ${w.regen}/s`);
+  check('fresh start: energy 100 of 420, income 12/s (Reactor 2 from the start)', w.energy === 100 && w.maxEnergy === 420 && w.regen === 12 && w.baseLvl.reactor === 2, `${w.energy}/${w.maxEnergy}, ${w.regen}/s`);
+  check('Reactor 3 is the only Reactor upgrade, 400', w.baseUpgradeCost('reactor') === 400);
   check('fresh start: base HP 3000, specials at half cooldown', w.bases[0].maxHp === 3000 && Math.abs(w.specialCd.bomb - 20) < 1e-9);
   const m = w.spawn({ kind: 'mech', type: 'gunner', team: 0, lane: 2, x: 300, y: 500 });
   check('fresh start: units at level 0 (old Workshop tech ignored)', w.lvl[0].gunner === 0 && m.maxHp === 230, `hp ${m.maxHp}`);
   w.energy = 1000;
-  check('in-battle upgrades: unit level, Reactor, Bastion Gun; no base Armor', w.upgradeUnit('gunner') && w.lvl[0].gunner === 1 && w.upgradeBase('reactor') && w.regen === 10 && w.upgradeBase('gun') && !BASE_UPGRADES.armor);
+  check('in-battle upgrades: unit level, Reactor, Bastion Gun; no base Armor', w.upgradeUnit('gunner') && w.lvl[0].gunner === 1 && w.upgradeBase('reactor') && w.regen === 14 && w.maxEnergy === 480 && w.baseUpgradeCost('reactor') == null && w.upgradeBase('gun') && !BASE_UPGRADES.armor);
   check('enemy base keeps its stage Armor (+20% HP)', w.bases[1].maxHp === 1.2e6);
+  const lw = (await import('../src/replay.js')).replayWorld({ stage: st, unlocked: ALL, seed: 1, dev: {}, inputs: [], steps: 0 }); // a replay from before 0.9.0-dev.7
+  check('old replays keep the old Reactor rules (start 0, 100 / 200 / 320)', lw.baseLvl.reactor === 0 && lw.regen === 8 && lw.maxEnergy === 300 && lw.baseUpgradeCost('reactor') === 100);
 }
 
 // 16. lane reach: own lane ± 1 (Seeker exempt)
@@ -1011,7 +1014,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
 {
   const st = { ...stageDef(8) };
   const unl = { mechs: ['brawler', 'gunner', 'seeker', 'aegis', 'mortar'], turrets: TURRET_TYPES, specials: ['bomb', 'emp', 'surge'] };
-  const setup = JSON.parse(JSON.stringify({ seed: 12345, stage: st, unlocked: unl, dev: {} }));
+  const setup = JSON.parse(JSON.stringify({ seed: 12345, stage: st, unlocked: unl, dev: {}, rules: RULES }));
   const w = new World(st, defaultSave(), unl, { seed: 12345, dev: {} });
   let r = 7; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
   for (let i = 0; i < 60 * 200; i++) {
@@ -1094,7 +1097,7 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   const { replayWorld, replayStep } = await import('../src/replay.js');
   const q = quickMatch('medium', 0x389a0f7c, { level: 0, personality: 'swarm' }, true, 12, ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher']);
   const unl = { mechs: ['brawler', 'gunner', 'seeker', 'mortar', 'aegis'], turrets: ['sentry', 'howitzer', 'arc'], specials: ['bomb', 'emp', 'surge'] };
-  const setup = JSON.parse(JSON.stringify({ seed: q.st.quick.seed, stage: q.st, unlocked: unl, dev: {} }));
+  const setup = JSON.parse(JSON.stringify({ seed: q.st.quick.seed, stage: q.st, unlocked: unl, dev: {}, rules: RULES }));
   const w = new World(JSON.parse(JSON.stringify(setup.stage)), defaultSave(), unl, { seed: setup.seed });
   const bot = new Bot(w, botProfile('you'), 7);
   for (let i = 0; i < 60 * 240 && !w.result; i++) { w.update(1 / 60); bot.tick(w); }

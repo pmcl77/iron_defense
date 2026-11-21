@@ -9,6 +9,10 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 
 ## [Unreleased]: 0.9.0-dev
 
+### Economy
+- **Battles start at Reactor 2; Reactor 3 is the only Reactor upgrade, 400** (0.9.0-dev.7, user: "I literally *always* go directly to level 2 … like saying no to a raise"): income 12/s and max energy 420 from the first second, Reactor 3 +2/s and +60 for 400 (pays back in 3:20; 450 would be above the 420 cap). Starting energy stays 100, so the opening is a little faster. Replays carry the rules they were played with; older replays keep the old Reactor (from 0, 100 / 200 / 320) and stay exact.
+  Bot styles, 20 setups × 2, old → new: You 39 → 40/40 (8.6 → 8.4 min), Gunners 39 → 39 (7.8 → 7.1), Lancers 38 → 38 (7.9 → 7.3), Horde 40 → 40 (8.3 → 7.8), Spread 39 → 40, Economist 40 → 40, No Seekers 37 → 39, Turtle 39 → 40, Artillery 28 → 33 (L1 4 → 6/12), Rusher 18 → 22 (L1 1 → 3/12, its wins 12.1 → 8.9 min). Reactor 3 is now bought in 7 (You) to 24 (Economist) of 40 matches, median 2:31–5:04.
+
 ### Player bot 2.0 (first version)
 - **More bot play styles** (0.9.0-dev.6, user: "running other playstyles is equally important"): Turtle (turrets early, push late), Rusher (never saves, few upgrades), Artillery (Mortars and Lancers behind a Brawler wall, its own loadout), No Seekers (its own loadout), Economist (Reactor 3 and upgrades first), Horde (a unit in every lane at once, e.g. GU-SE-SE-SE-GU); "You, Lancers for Mortars" now brings Lancers in its loadout. All in Dev match → Player. A profile with its own loadout plays it instead of yours.
 - **Bot: Breachers in lane 1 or 5 get a direct answer** (0.9.0-dev.5, row 87): answering them from lane 2/4 let them reach the base (×4 against structures; the row 87 setup dropped from 100% to 69% base HP). Other outer threats are still answered from lanes 2/4.
