@@ -143,8 +143,9 @@ export class Bot {
     const first = this.threats.reduce((a, b) => (a.y < b.y ? a : b));
     let lane = Math.max(0, first.lane), fromInside = false;
     if (lane === 0 || lane === LANES - 1) {
-      const heavy = this.threats.filter((e) => e.lane === lane).reduce((a, e) => a + MECHS[e.type].cost, 0);
-      if (heavy < p.outerHeavy) { lane = lane === 0 ? 1 : LANES - 2; fromInside = true; }
+      const there = this.threats.filter((e) => e.lane === lane), heavy = there.reduce((a, e) => a + MECHS[e.type].cost, 0);
+      // Breachers go for structures (×4): they get a direct answer in their lane (row 87: the base lost 31% without)
+      if (heavy < p.outerHeavy && !there.some((e) => e.type === 'breacher')) { lane = lane === 0 ? 1 : LANES - 2; fromInside = true; }
     }
     // how much is already answering: own mechs near the threat in lanes ±1
     const val = (list) => list.reduce((a, e) => a + MECHS[e.type].cost * (e.hp / e.maxHp), 0);

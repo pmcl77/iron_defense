@@ -10,6 +10,7 @@ Version numbers are `MAJOR.MINOR.PATCH`, kept in `src/version.js` and shown in t
 ## [Unreleased]: 0.9.0-dev
 
 ### Player bot 2.0 (first version)
+- **Bot: Breachers in lane 1 or 5 get a direct answer** (0.9.0-dev.5, row 87): answering them from lane 2/4 let them reach the base (×4 against structures; the row 87 setup dropped from 100% to 69% base HP). Other outer threats are still answered from lanes 2/4.
 - **Bot match: the upgrades panel is view only** (0.9.0-dev.4, user): the wrench (or U) opens the panel with the bot's levels so far; the buttons are off.
 - **Bot defends like you on the outer lanes** (0.9.0-dev.4, row 86 note): threats in lane 1 or 5 are answered from lane 2 or 4 with Seekers or Gunners (they reach over); the outer lane itself only when a lot pushes there (enemy value 450+). Before, it sent a single unit into the lane of every enemy and split its army (row 86, Iron wall L1: lost in 6:03; the same setup now 5/5 wins in 12–19 min). Calibration rows 68–85: 53/54 wins (1 timeout), 8:17 on average, Seekers 37% of its units (before 28%).
 - **Bot matches: your game controls are off, speed up to 8×** (0.9.0-dev.3, user): while the bot plays, cards, lanes, turrets, specials, upgrades and field taps do nothing (dimmed; "The bot is playing"); pause, speed, notes, quit and looking around work as usual. The speed button cycles 1× / 2× / 4× / 8× in bot matches (remembered separately from your own 1×/2×).
