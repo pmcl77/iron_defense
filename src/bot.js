@@ -24,6 +24,9 @@ const YOU = {
   thirdTo: 3,                // then the third type (Mortar) up to this level
   pressure: 700,             // an enemy this close to the base face (or 350 to a turret) = under pressure
   ignoreScouts: 2,           // up to this many Scouts alone are no threat ("I don't care about a single SC")
+  outerHeavy: 450,           // threats in lane 1 or 5 are answered from lane 2 or 4 (ranged units reach over); the outer
+                             // lane itself only when this much enemy value pushes there (row 86 note: "I never use 1 and 5
+                             // but only 2 and 4, also in these cases; only when a lot of enemies pressure L1/2")
   save: 'surge',             // formations: 'whole' (tap when all is affordable), 'surge' (affordable with the Surge), 'queue' (tap at once)
   formations: [              // [units, weight]; the counter table below shifts the weights
     [['brawler', 'seeker', 'mortar'], 4], [['brawler', 'gunner', 'seeker'], 2], [['brawler', 'seeker'], 2],
@@ -138,7 +141,11 @@ export class Bot {
   defend(w) {
     const p = this.p;
     const first = this.threats.reduce((a, b) => (a.y < b.y ? a : b));
-    const lane = Math.max(0, first.lane);
+    let lane = Math.max(0, first.lane), fromInside = false;
+    if (lane === 0 || lane === LANES - 1) {
+      const heavy = this.threats.filter((e) => e.lane === lane).reduce((a, e) => a + MECHS[e.type].cost, 0);
+      if (heavy < p.outerHeavy) { lane = lane === 0 ? 1 : LANES - 2; fromInside = true; }
+    }
     // how much is already answering: own mechs near the threat in lanes ±1
     const val = (list) => list.reduce((a, e) => a + MECHS[e.type].cost * (e.hp / e.maxHp), 0);
     const foes = this.threats.filter((e) => Math.abs(e.lane - lane) <= 1), mine = this.own.filter((e) => Math.abs(e.lane - lane) <= 1 && e.y < first.y + 500);
@@ -147,13 +154,14 @@ export class Bot {
     // the answer by what's coming (rule 3 and rows 81/84): swarms → Gunners, Breachers/tanks → Brawler + Seekers
     const cheap = foes.filter((e) => e.type === 'scout' || e.type === 'gunner').length / (foes.length || 1);
     const hasTank = this.own.some((e) => e.lane === lane && e.type === 'brawler' && e.y < first.y);
-    const want = cheap > 0.6 ? ['gunner', 'gunner', 'brawler'] : !hasTank ? ['brawler', 'seeker', 'gunner'] : ['seeker', 'gunner', 'brawler'];
+    const want = fromInside ? (cheap > 0.6 ? ['gunner', 'seeker'] : ['seeker', 'gunner']) // reaching over into the outer lane: ranged only
+      : cheap > 0.6 ? ['gunner', 'gunner', 'brawler'] : !hasTank ? ['brawler', 'seeker', 'gunner'] : ['seeker', 'gunner', 'brawler'];
     const type = want.find((t) => this.avail.has(t) && w.canDeploy(t)) || want.find((t) => this.avail.has(t));
     if (!type || w.queue.length >= 3) { this.say(`pressure L${lane + 1}: waiting for energy`); return; }
     const turret = w.forwardTurret(lane), fwd = !!turret && first.y > turret.y && w.laneFwd(lane);
     w.request(type, lane, fwd);
     if (w.energy < 60 && w.canSpecial('surge')) w.special('surge');
-    this.say(`pressure L${lane + 1}: ${short[type]} against ${foes.length} (${foes.map((e) => short[e.type]).slice(0, 4).join(' ')})`);
+    this.say(`pressure L${first.lane + 1}: ${short[type]}${fromInside ? ` from L${lane + 1}` : ''} against ${foes.length} (${foes.map((e) => short[e.type]).slice(0, 4).join(' ')})`);
   }
 
   // ---------- upgrades ----------

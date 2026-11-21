@@ -868,16 +868,17 @@ function showUpgrades() {
   game.ui.targeting = false;
   screen.className = '';
   const types = [...w.unlocked.mechs.map((t) => ['mech', t, MECHS[t]]), ...w.unlocked.turrets.map((t) => ['turret', t, TURRETS[t]])];
+  const look = !!game.bot; // a bot match: see what the bot upgraded, buy nothing
   screen.innerHTML = `
     <div class="panel">
-      <div class="head"><div><h2>Upgrades</h2><p class="sub">Paid with energy. They apply to units already on the field too.</p></div>
+      <div class="head"><div><h2>Upgrades</h2><p class="sub">${look ? 'The bot\'s upgrades so far (view only: the bot is playing).' : 'Paid with energy. They apply to units already on the field too.'}</p></div>
         <div><span class="en">⚡${Math.floor(w.energy)}</span> <button class="btn small primary" data-a="close">Resume</button></div></div>
       <div class="list">
         ${types.map(([k, t, def]) => {
           const lv = w.lvl[0][t], c = w.unitUpgradeCost(t);
           return `<div class="item"><canvas width="92" height="92" data-icon="${k}:${t}"></canvas>
             <div class="info"><b>${def.name}${pips(lv, MAX_UNIT_LEVEL)}</b><small>+${Math.round(LEVEL_STEP * 100)}% damage &amp; HP</small></div>
-            <button class="btn small" data-a="unit" data-t="${t}" ${c == null || w.energy < c ? 'disabled' : ''}>${c == null ? 'MAX' : '⚡' + c}</button></div>`;
+            <button class="btn small" data-a="unit" data-t="${t}" ${look || c == null || w.energy < c ? 'disabled' : ''}>${c == null ? 'MAX' : '⚡' + c}</button></div>`;
         }).join('')}
       </div>
       <div class="section-t">BASE</div>
@@ -885,15 +886,15 @@ function showUpgrades() {
         ${Object.entries(BASE_UPGRADES).map(([k, b]) => {
           const lv = w.baseLvl[k], c = w.baseUpgradeCost(k);
           return `<div class="item"><div class="info"><b>${b.name}${pips(lv, b.costs.length)}</b><small>${b.desc}</small></div>
-            <button class="btn small" data-a="base" data-k="${k}" ${c == null || w.energy < c ? 'disabled' : ''}>${c == null ? 'MAX' : '⚡' + c}</button></div>`;
+            <button class="btn small" data-a="base" data-k="${k}" ${look || c == null || w.energy < c ? 'disabled' : ''}>${c == null ? 'MAX' : '⚡' + c}</button></div>`;
         }).join('')}
       </div>
     </div>`;
   drawIcons(screen);
   bind({
     close: resume,
-    unit: (el) => { w.upgradeUnit(el.dataset.t); renderer.consume(w.fx, sfx); showUpgrades(); refreshCards(); },
-    base: (el) => { w.upgradeBase(el.dataset.k); renderer.consume(w.fx, sfx); showUpgrades(); },
+    unit: (el) => { if (look) return; w.upgradeUnit(el.dataset.t); renderer.consume(w.fx, sfx); showUpgrades(); refreshCards(); },
+    base: (el) => { if (look) return; w.upgradeBase(el.dataset.k); renderer.consume(w.fx, sfx); showUpgrades(); },
   });
 }
 
@@ -1092,7 +1093,7 @@ function quickNote() {
 }
 if (IS_DEV) { $('#btn-note').hidden = false; $('#btn-note').addEventListener('click', quickNote); }
 $('#btn-pause').addEventListener('click', () => { if (game.mode === 'replay') { $('#rp-play').click(); return; } if (!game.world.result) showPause(); });
-$('#btn-upg').addEventListener('click', () => { initAudio(); if (botBlocks()) return; playSfx('click'); showUpgrades(); });
+$('#btn-upg').addEventListener('click', () => { initAudio(); playSfx('click'); showUpgrades(); }); // bot match: view only
 $('#btn-speed').addEventListener('click', () => {
   if (game.mode === 'replay') { $('#rp-speed').click(); return; }
   if (game.bot) { game.speed = { 1: 2, 2: 4, 4: 8 }[game.speed] || 1; save.settings.botSpeed = game.speed; } // watching the bot: up to 8×
@@ -1185,7 +1186,7 @@ window.addEventListener('keydown', (e) => {
   const sp = { q: 'bomb', e: 'emp', r: 'surge' }[k];
   if (sp && w.unlocked.specials.includes(sp)) useSpecial(sp);
   if (k === 'backspace' && w.queue.length && !botBlocks()) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
-  if (k === 'u' && !botBlocks()) showUpgrades();
+  if (k === 'u') showUpgrades();
   if (k === 'n') { e.preventDefault(); quickNote(); }
   if (k === 't' || k === 'tab') { e.preventDefault(); setTab(game.ui.tab === 'mechs' ? 'turrets' : 'mechs'); }
 });
