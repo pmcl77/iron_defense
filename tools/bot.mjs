@@ -17,6 +17,7 @@ const STEP = 1 / 60;
 
 // one bot match on a setup ({ seed, stage, unlocked, dev }); returns the world and the bot
 export function botMatch(setup, profile, botSeed = 1, onThought = null) {
+  if (profile.loadout) setup = { ...setup, unlocked: { ...setup.unlocked, mechs: profile.loadout } }; // a profile with its own loadout
   const w = new World(JSON.parse(JSON.stringify(setup.stage)), defaultSave(), setup.unlocked, { seed: setup.seed, dev: setup.dev });
   w.setup = JSON.parse(JSON.stringify({ ...setup, bot: profile }));
   const bot = new Bot(w, profile, botSeed);

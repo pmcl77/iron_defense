@@ -49,11 +49,30 @@ const YOU = {
   bomb: 380,                 // Bombing when the target value reaches this (a lone Lancer = 400)
   emp: 3,                    // EMP when this many own mechs are deep in the enemy half with enemies around them, or 4+ enemies close under pressure
 };
+// Optional profile fields: loadout (its own 5 unit types instead of yours), focus (the two upgrade types, else by the
+// enemy's mix), third (the third upgrade type), turrets (an early turret plan [type, lane, row], built in calm moments),
+// line + lineShare (a unit in every lane at once, lanes 1–5), reactor3.always (Reactor 3 as soon as it's calm).
+const R = (t, n) => [t, n];
 export const PROFILES = {
   you: YOU,
-  lancers: { ...YOU, name: 'You, Lancers for Mortars', formations: YOU.formations.map(([f, n]) => [f.map((t) => (t === 'mortar' ? 'lancer' : t)), n]) },
-  gunners: { ...YOU, name: 'Gunner swarms', formations: [[['brawler', 'gunner', 'gunner'], 3], [['brawler', 'gunner', 'gunner', 'seeker'], 2], [['gunner', 'gunner', 'gunner'], 1]] },
+  lancers: { ...YOU, name: 'You, Lancers for Mortars', loadout: ['brawler', 'gunner', 'seeker', 'lancer', 'aegis'],
+    formations: YOU.formations.map(([f, n]) => [f.map((t) => (t === 'mortar' ? 'lancer' : t)), n]) },
+  gunners: { ...YOU, name: 'Gunner swarms', formations: [R(['brawler', 'gunner', 'gunner'], 3), R(['brawler', 'gunner', 'gunner', 'seeker'], 2), R(['gunner', 'gunner', 'gunner'], 1)] },
   spread: { ...YOU, name: 'Spread upgrades', upgradeTo: 3, thirdTo: 3 },
+  // other styles (ISSUES.md "Bot profiles"): do other strategies win too?
+  turtle: { ...YOU, name: 'Turtle (turrets early, push late)', pushLine: 62, pushAfter: 420, pushLevel: 4,
+    turrets: [['sentry', 2, 3], ['sentry', 4, 3], ['howitzer', 3, 2], ['sentry', 3, 3], ['howitzer', 2, 1], ['howitzer', 4, 1]] },
+  rusher: { ...YOU, name: 'Rusher (never saves)', reactorOpen: 1, reactor3: { energy: 99999, eta: 99, early: 99999 }, upgradeTo: 2, thirdTo: 0,
+    save: 'queue', howitzers: false, aegis: false,
+    formations: [R(['brawler', 'gunner'], 3), R(['brawler', 'seeker'], 3), R(['gunner', 'gunner'], 2), R(['brawler', 'gunner', 'seeker'], 2)] },
+  artillery: { ...YOU, name: 'Artillery (MO/LA behind a BW wall)', loadout: ['brawler', 'aegis', 'mortar', 'lancer', 'seeker'],
+    focus: ['brawler', 'mortar'], third: 'lancer', pushLine: 60,
+    formations: [R(['brawler', 'mortar', 'mortar'], 3), R(['brawler', 'aegis', 'mortar', 'lancer'], 2), R(['brawler', 'lancer', 'mortar'], 2), R(['brawler', 'seeker', 'mortar'], 1)] },
+  noSeeker: { ...YOU, name: 'No Seekers', loadout: ['brawler', 'gunner', 'mortar', 'lancer', 'aegis'], focus: ['gunner', 'brawler'], third: 'mortar',
+    formations: [R(['brawler', 'gunner', 'mortar'], 3), R(['brawler', 'gunner', 'gunner'], 3), R(['brawler', 'gunner', 'lancer'], 2), R(['gunner', 'gunner', 'mortar'], 1)] },
+  economist: { ...YOU, name: 'Economist (Reactor and upgrades first)', reactor3: { energy: 0, eta: 20, early: 0, always: true }, reserve: 60,
+    upgradeTo: 5, thirdTo: 5, pushLevel: 5, pushAfter: 360 },
+  horde: { ...YOU, name: 'Horde (a unit in every lane)', save: 'whole', line: ['gunner', 'seeker', 'seeker', 'seeker', 'gunner'], lineShare: 0.6 },
 };
 // the settings shown in the dev match dialog (the rest via profile text, later)
 export const BOT_SETTINGS = {
@@ -133,6 +152,7 @@ export class Bot {
     if (this.threats.length) { this.phase = 'pressure'; this.defend(w); return; }
     this.phase = this.pushed ? 'push' : this.eta > p.calmEta ? 'calm' : 'middle';
     if (this.push(w)) return;
+    if (this.turtle(w)) return;
     if (this.upgrade(w)) return;
     this.formation(w);
   }
@@ -167,10 +187,15 @@ export class Bot {
 
   // ---------- upgrades ----------
   focusTypes() {
-    const m = this.mix, line = m.swarm > 0.55 && this.avail.has('gunner') ? 'gunner' : 'seeker';
+    if (this.p.focus) {
+      const third = this.p.third && this.avail.has(this.p.third) ? [this.p.third] : [];
+      return [...this.p.focus.filter((t) => this.avail.has(t)), ...third];
+    }
+    const m = this.mix, line = m.swarm > 0.55 && this.avail.has('gunner') ? 'gunner' : this.avail.has('seeker') ? 'seeker' : 'gunner';
     // against Lancers the tank first (row 83: "draw LA and SE fire longer"), else the line type first
     const two = m.lancer > 0.15 ? ['brawler', line] : [line, 'brawler'];
-    return [...two.filter((t) => this.avail.has(t)), ...(this.avail.has('mortar') ? ['mortar'] : [])];
+    const third = this.p.third || (this.avail.has('mortar') ? 'mortar' : this.avail.has('lancer') ? 'lancer' : null);
+    return [...two.filter((t) => this.avail.has(t)), ...(third && this.avail.has(third) ? [third] : [])];
   }
   upgrade(w) {
     const p = this.p;
@@ -179,7 +204,7 @@ export class Bot {
     if (!window) return false;
     // Reactor 3: rich and calm, or early against a defensive enemy (row 82)
     if (w.baseLvl.reactor < 3 && w.baseUpgradeCost('reactor') != null) {
-      const defensive = this.mix.tanky > 0.4 && w.time > p.reactor3.early;
+      const defensive = (this.mix.tanky > 0.4 || p.reactor3.always) && w.time > p.reactor3.early;
       if ((w.energy >= p.reactor3.energy && this.eta > p.reactor3.eta) || (defensive && calm && w.energy >= w.baseUpgradeCost('reactor') + 100)) {
         if (w.upgradeBase('reactor')) { this.say(`${this.phase}: Reactor 3${defensive ? ' (a long battle ahead)' : ''}`); return true; }
       }
@@ -225,18 +250,33 @@ export class Bot {
       if (this.pushed && eb * 100 < p.outerAt && this.rnd() < 0.3) lane = this.rnd() < 0.5 ? 0 : 4;
       // an Aegis in lane 3 once a front line forms (rows 76, 82)
       const aegisOut = this.own.some((e) => e.type === 'aegis' && e.lane === p.aegisLane - 1);
+      const line = p.line && p.line.filter((t) => this.avail.has(t)).length === p.line.length ? p.line : null;
       if (p.aegis && this.avail.has('aegis') && !aegisOut && this.own.length >= 6 && this.rnd() < 0.15) { this.plan = { units: ['aegis'], lane: p.aegisLane - 1 }; }
+      else if (line && this.rnd() < (p.lineShare || 0)) this.plan = { units: line, lanes: line.map((_, k) => k), lane: 2 };
       else this.plan = { units, lane };
     }
     const cost = this.plan.units.reduce((a, t) => a + MECHS[t].cost, 0);
     const surge = w.canSpecial('surge') ? SPECIALS.surge.amount : 0;
     const need = p.save === 'queue' ? MECHS[this.plan.units[0]].cost : p.save === 'whole' ? cost : Math.min(cost - surge, cost * 0.8);
     const name = this.plan.units.map((t) => short[t]).join('-');
-    if (w.energy < Math.min(need, w.maxEnergy - 10)) { this.say(`${this.phase}: saving for ${name} in L${this.plan.lane + 1} (${Math.round(w.energy)}/${Math.round(need)})`); return; }
-    for (const t of this.plan.units) w.request(t, this.plan.lane);
-    this.say(`${this.phase}: ${name} in L${this.plan.lane + 1}${w.laneFwd(this.plan.lane) ? ' (forward)' : ''}`);
+    if (w.energy < Math.min(need, w.maxEnergy - 10)) { this.say(`${this.phase}: saving for ${name} ${this.plan.lanes ? 'across all lanes' : `in L${this.plan.lane + 1}`} (${Math.round(w.energy)}/${Math.round(need)})`); return; }
+    this.plan.units.forEach((t, k) => w.request(t, this.plan.lanes ? this.plan.lanes[k] : this.plan.lane));
+    this.say(`${this.phase}: ${name} ${this.plan.lanes ? 'across all lanes' : `in L${this.plan.lane + 1}${w.laneFwd(this.plan.lane) ? ' (forward)' : ''}`}`);
     if (this.plan.units.length > 1 || this.plan.units[0] !== 'aegis') this.pair++;
     this.plan = null;
+  }
+
+  // ---------- an early turret plan (turtle) ----------
+  turtle(w) {
+    const p = this.p;
+    if (!p.turrets || w.time < 40) return false;
+    for (const [type, l, r] of p.turrets) {
+      const lane = l - 1, row = r - 1;
+      if (!w.unlocked.turrets.includes(type) || w.cells[0][lane][row] || w.orderAt(lane, row)) continue;
+      if (w.energy < TURRETS[type].cost + 60) { this.say(`${this.phase}: saving for a ${TURRETS[type].name} in L${l} row ${r}`); return true; }
+      if (w.order(lane, row, type)) { this.say(`${this.phase}: ${TURRETS[type].name} in L${l} row ${r}`); return true; }
+    }
+    return false;
   }
 
   // ---------- the push: Howitzers ----------

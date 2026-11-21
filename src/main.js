@@ -171,11 +171,13 @@ function launch(i, q = null) {
   const st = q ? q.st : nextStage(i); game.next = null;
   // replays: a seed per battle, and the exact setup (stage as played, units, dev switches), sent with the stats.
   // A quick match uses its own seed (it also drew the setup), so the same seed gives the same match.
-  const seed = q ? q.seed : Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, dev = devSettings();
+  const botP = q?.bot ? botProfile(q.bot.profile, q.bot.set) : null;
+  const ownLo = botP?.loadout?.every((t) => u.mechs.includes(t)) ? botP.loadout : currentLoadout(); // a bot profile may bring its own loadout
+  const seed = q ? q.seed : Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: ownLo, turrets: u.turrets, specials: u.specials }, dev = devSettings();
   const { devIntel: _di, ...stCopy } = st;
   // a bot match (dev match, Player: Bot): the profile with all its values goes into the setup, so the stats and the
   // replay say who played and with what; the bot plays through the player's inputs, so the replay needs no bot
-  const bot = q?.bot ? botProfile(q.bot.profile, q.bot.set) : null;
+  const bot = botP;
   const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev, ...(bot ? { bot } : {}) })); // before the battle can touch st
   game.world = new World(st, save, unl, { dev, seed });
   game.world.setup = setup;
