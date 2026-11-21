@@ -334,3 +334,5 @@ select.name-input { width: 12em; padding-right: 4px; }
 .dm-bot { display: flex; flex-direction: column; gap: 8px; }
 /* in a battle the Note button sits at the badge's place: the badge moves beside it */
 #app:has(#hud:not([hidden])) #dev-tag { left: 50px; }
+/* bot match: your game controls are off (dimmed); pause, speed, note and the field stay */
+#hud.bot #cards, #hud.bot #lanes, #hud.bot #specials, #hud.bot #btn-upg, #hud.bot .tabs { opacity: 0.45; }

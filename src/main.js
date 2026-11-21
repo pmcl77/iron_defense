@@ -181,6 +181,8 @@ function launch(i, q = null) {
   game.world.setup = setup;
   game.bot = bot ? new Bot(game.world, bot, seed ^ 0x5bd1e995) : null;
   $('#bot-line').hidden = !game.bot; $('#bot-line').textContent = '';
+  hud.classList.toggle('bot', !!game.bot);
+  game.speed = game.bot ? save.settings.botSpeed || 2 : Math.min(2, save.settings.speed || 1);
   game.world.battleId = randomHex(8);
   game.world.devIntel = !!st.devIntel;
   game.paused = false;
@@ -895,8 +897,16 @@ function showUpgrades() {
   });
 }
 
+// a bot match: the bot plays, your game inputs are off (pause, speed, notes, quit and looking around stay)
+let botToastAt = 0;
+function botBlocks() {
+  if (game.mode !== 'play' || !game.bot) return false;
+  if (performance.now() - botToastAt > 2500) { toast('The bot is playing'); botToastAt = performance.now(); }
+  return true;
+}
 // lane button or Shift+1-5: select a lane; a second tap switches that lane between base and forward deploy
 function pickLane(l) {
+  if (botBlocks()) return;
   const r = game.world.setLane(l);
   if (r === 'noturret') toast(`No turret in L${l + 1} to deploy from`);
   else if (r === 'fwd') toast(`L${l + 1}: deploy forward`);
@@ -945,6 +955,7 @@ function setTab(tab) {
 }
 function onCard(t, mech) {
   initAudio();
+  if (botBlocks()) return;
   const w = game.world;
   if (game.paused || w.result) return;
   hideSell();
@@ -961,6 +972,7 @@ function onCard(t, mech) {
 }
 function useSpecial(k) {
   initAudio();
+  if (botBlocks()) return;
   const w = game.world;
   if (game.paused || w.result) return;
   hideSell();
@@ -1080,11 +1092,12 @@ function quickNote() {
 }
 if (IS_DEV) { $('#btn-note').hidden = false; $('#btn-note').addEventListener('click', quickNote); }
 $('#btn-pause').addEventListener('click', () => { if (game.mode === 'replay') { $('#rp-play').click(); return; } if (!game.world.result) showPause(); });
-$('#btn-upg').addEventListener('click', () => { initAudio(); playSfx('click'); showUpgrades(); });
+$('#btn-upg').addEventListener('click', () => { initAudio(); if (botBlocks()) return; playSfx('click'); showUpgrades(); });
 $('#btn-speed').addEventListener('click', () => {
   if (game.mode === 'replay') { $('#rp-speed').click(); return; }
-  game.speed = game.speed === 1 ? 2 : 1;
-  save.settings.speed = game.speed; writeSave(save);
+  if (game.bot) { game.speed = { 1: 2, 2: 4, 4: 8 }[game.speed] || 1; save.settings.botSpeed = game.speed; } // watching the bot: up to 8×
+  else { game.speed = game.speed === 1 ? 2 : 1; save.settings.speed = game.speed; }
+  writeSave(save);
   $('#btn-speed').textContent = game.speed + '×';
 });
 hud.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { initAudio(); setTab(b.dataset.tab); }));
@@ -1119,7 +1132,7 @@ canvas.addEventListener('wheel', (e) => {
 
 function onTap(px, py) {
   const w = game.world, ui = game.ui;
-  if (game.paused || w.result) return;
+  if (game.paused || w.result || botBlocks()) return;
   const p = renderer.screenToWorld(px, py);
   if (ui.targeting) {
     if (w.special('bomb', p.x, p.y)) renderer.consume(w.fx, sfx);
@@ -1171,8 +1184,8 @@ window.addEventListener('keydown', (e) => {
   }
   const sp = { q: 'bomb', e: 'emp', r: 'surge' }[k];
   if (sp && w.unlocked.specials.includes(sp)) useSpecial(sp);
-  if (k === 'backspace' && w.queue.length) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
-  if (k === 'u') showUpgrades();
+  if (k === 'backspace' && w.queue.length && !botBlocks()) { e.preventDefault(); w.cancelQueued(w.queue.length - 1); renderer.consume(w.fx, sfx); }
+  if (k === 'u' && !botBlocks()) showUpgrades();
   if (k === 'n') { e.preventDefault(); quickNote(); }
   if (k === 't' || k === 'tab') { e.preventDefault(); setTab(game.ui.tab === 'mechs' ? 'turrets' : 'mechs'); }
 });
@@ -1237,13 +1250,14 @@ function frame(now) {
   } else if (w && !game.paused) {
     acc += dtReal * (game.mode === 'play' ? game.speed : 1);
     let steps = 0;
-    while (acc >= STEP && steps < 12) {
+    const cap = game.mode === 'play' && game.bot ? 24 : 12; // a bot match up to 8×, also at 30 frames/s
+    while (acc >= STEP && steps < cap) {
       if (game.mode === 'menu') demoTick(STEP);
       w.update(STEP);
       if (game.mode === 'play' && game.bot) game.bot.tick(w); // between steps, like a tap
       acc -= STEP; steps++; simDt += STEP;
     }
-    if (steps >= 12) acc = 0;
+    if (steps >= cap) acc = 0;
   }
   if ((game.mode === 'play' && !game.paused) || game.mode === 'replay') keyPan(dtReal);
   if (w) { renderer.consume(w.fx, game.mode === 'replay' && rp.speed > 2 ? () => {} : sfx); renderer.draw(w, simDt, game.ui); }
