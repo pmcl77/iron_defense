@@ -10,6 +10,7 @@ import { VoxelRenderer } from './render_voxel.js';
 import { initAudio, sfx as playSfx, setSound } from './audio.js';
 import { loadSave, writeSave, resetSave, defaultSave, deviceId, randomHex } from './save.js';
 import { VERSION } from './version.js';
+import { Bot, PROFILES, BOT_SETTINGS, botProfile } from './bot.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app'), canvas = $('#game'), hud = $('#hud'), screen = $('#screen'), minimap = $('#minimap');
@@ -172,9 +173,14 @@ function launch(i, q = null) {
   // A quick match uses its own seed (it also drew the setup), so the same seed gives the same match.
   const seed = q ? q.seed : Math.floor(Math.random() * 2 ** 32) >>> 0, unl = { mechs: currentLoadout(), turrets: u.turrets, specials: u.specials }, dev = devSettings();
   const { devIntel: _di, ...stCopy } = st;
-  const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev })); // before the battle can touch st
+  // a bot match (dev match, Player: Bot): the profile with all its values goes into the setup, so the stats and the
+  // replay say who played and with what; the bot plays through the player's inputs, so the replay needs no bot
+  const bot = q?.bot ? botProfile(q.bot.profile, q.bot.set) : null;
+  const setup = JSON.parse(JSON.stringify({ seed, stage: stCopy, unlocked: unl, dev, ...(bot ? { bot } : {}) })); // before the battle can touch st
   game.world = new World(st, save, unl, { dev, seed });
   game.world.setup = setup;
+  game.bot = bot ? new Bot(game.world, bot, seed ^ 0x5bd1e995) : null;
+  $('#bot-line').hidden = !game.bot; $('#bot-line').textContent = '';
   game.world.battleId = randomHex(8);
   game.world.devIntel = !!st.devIntel;
   game.paused = false;
@@ -219,6 +225,7 @@ function summary(result, stars = 0) {
     baseHp: { player: pct(w.bases[0]), enemy: pct(w.bases[1]) }, energyLeft: Math.round(w.energy),
     loadout: w.unlocked.mechs, baseLvl: { ...w.baseLvl },
     mode: st.quick ? 'quick' : st.endless ? 'endless' : 'campaign',
+    pilot: w.setup?.bot ? 'bot' : 'you', ...(w.setup?.bot ? { bot: w.setup.bot } : {}), // who played (bot matches: the profile values)
     ...(st.quick ? { quick: { difficulty: st.quick.difficulty, seed: seedHex(st.quick.seed), turretStage: st.quick.turretStage + 1, dev: !!st.quick.dev, fixed: st.quick.fixed } } : {}), enemyLoadout: st.roster, ...(st.surprise ? { surprise: st.surprise } : {}),
     personality: st.personality, focusX: w.focusX, ...(IS_DEV ? { devIntel: !!w.devIntel } : {}),
     enemyStage: { lvl: st.lvl, regen: st.regen, base: st.base || {} },
@@ -456,7 +463,7 @@ function showNote(ctx, done) {
 }
 function battleTitle(w, i = game.stageIndex) {
   const st = w.stage;
-  if (st.quick) return `Quick match ${QUICK.names[st.quick.difficulty]}${st.quick.dev ? ' (dev)' : ''}`;
+  if (st.quick) return `${w.setup?.bot ? 'Bot · ' : ''}Quick match ${QUICK.names[st.quick.difficulty]}${st.quick.dev ? ' (dev)' : ''}`;
   return st.endless ? `Endless ${i - STAGES.length + 1}` : `Stage ${i + 1} ${st.name}`;
 }
 function flushCheckpoints() {
@@ -600,7 +607,7 @@ function showLoadout(i, q = null) {
 const randomSeed = () => Math.floor(Math.random() * 2 ** 32) >>> 0;
 const topStage = () => topStageOf(save.cleared);
 const quickMatch = (difficulty, seed, fixed = {}, dev = false) => buildQuick(difficulty, seed, fixed, dev, save.cleared, unlocked().mechs);
-const sameMatch = (q) => Object.assign(quickMatch(q.difficulty, q.seed, q.fixed, q.dev), { form: q.form });
+const sameMatch = (q) => Object.assign(quickMatch(q.difficulty, q.seed, q.fixed, q.dev), { form: q.form, ...(q.bot ? { bot: q.bot } : {}) });
 const quickTitle = (q) => `Quick match ${QUICK.names[q.difficulty]}${q.dev ? ' (dev)' : ''}`;
 const quickScore = (d) => { const c = (save.quick || {})[d] || { wins: 0, played: 0 }; return `wins ${c.wins} / ${c.played}`; };
 function showQuick() {
@@ -657,6 +664,8 @@ function showDevMatch(fixed = {}) {
         <div id="dm-tur-info" class="dm-info"></div>
         <label>Enemy level <select id="dm-lvl">${opt('', `Stage ${top + 1} (${base.lvl})`, f.level)}${[0, 1, 2, 3, 4, 5].map((n) => opt(n, String(n), f.level)).join('')}</select></label>
         <label>Seed <input id="dm-seed" type="text" maxlength="8" placeholder="random" value="${f.seed}" autocomplete="off" spellcheck="false"></label>
+        <label>Player <select id="dm-pilot">${opt('', 'You', f.bot?.profile || '')}${Object.entries(PROFILES).map(([k, pr]) => opt(k, `Bot: ${pr.name}`, f.bot?.profile || '')).join('')}</select></label>
+        <div id="dm-bot" class="dm-bot"></div>
       </div>
       <div class="btn-row">
         ${last ? `<button class="btn small" data-a="lastseed">Last seed <span class="num">${last}</span></button>` : ''}
@@ -670,12 +679,38 @@ function showDevMatch(fixed = {}) {
   };
   $('#dm-pers').addEventListener('change', info); $('#dm-tur').addEventListener('change', info);
   info();
+  // bot settings (src/bot.js BOT_SETTINGS): prefilled from the profile, changes kept with the form
+  const botForm = (set = {}) => {
+    const k = $('#dm-pilot').value, box = $('#dm-bot');
+    if (!k) { box.innerHTML = ''; return; }
+    const pr = { ...PROFILES[k], ...set };
+    box.innerHTML = `<p class="dm-info">The bot plays your loadout through the same taps as you; the battle shows what it thinks. Bot matches don't count for your score and are marked in the stats.</p>` +
+      Object.entries(BOT_SETTINGS).map(([key, d]) => {
+        const v = pr[key], id = `dm-b-${key}`;
+        const input = d.type === 'bool' ? `<select id="${id}">${opt('1', 'On', v ? '1' : '0')}${opt('0', 'Off', v ? '1' : '0')}</select>`
+          : d.type === 'select' ? `<select id="${id}">${Object.entries(d.options).map(([o, l]) => opt(o, l, v)).join('')}</select>`
+          : `<input id="${id}" type="number" min="${d.min}" max="${d.max}" value="${v}">`;
+        return `<label>${d.label} ${input}</label>`;
+      }).join('');
+  };
+  const botValues = () => {
+    const k = $('#dm-pilot').value; if (!k) return null;
+    const set = {};
+    for (const [key, d] of Object.entries(BOT_SETTINGS)) {
+      const el = $(`#dm-b-${key}`); if (!el) continue;
+      let v = d.type === 'bool' ? el.value === '1' : d.type === 'number' ? Math.max(d.min, Math.min(d.max, +el.value || PROFILES[k][key])) : el.value;
+      if (v !== PROFILES[k][key]) set[key] = v;
+    }
+    return { profile: k, set };
+  };
+  $('#dm-pilot').addEventListener('change', () => botForm());
+  botForm(f.bot?.set);
   bind({
     back: showQuick,
     lastseed: () => { $('#dm-seed').value = last; },
     reset: () => {
       $('#dm-diff').value = 'medium'; for (const id of ['#dm-pers', '#dm-tur', '#dm-lvl']) $(id).value = '';
-      $('#dm-seed').value = ''; info();
+      $('#dm-seed').value = ''; $('#dm-pilot').value = ''; info(); botForm();
     },
     go: () => {
       const fx = {};
@@ -685,8 +720,9 @@ function showDevMatch(fixed = {}) {
       const sv = $('#dm-seed').value.trim().toLowerCase();
       if (sv && !/^[0-9a-f]{1,8}$/.test(sv)) { toast('Seed: up to 8 characters 0–9, a–f'); return; }
       const seed = sv ? parseInt(sv, 16) >>> 0 : randomSeed(), diff = $('#dm-diff').value;
-      const q = quickMatch(diff, seed, fx, true);
-      q.form = { ...fx, difficulty: diff, seed: sv }; // what to show again on Back, and next time the dialog opens
+      const q = quickMatch(diff, seed, fx, true), bot = botValues();
+      if (bot) q.bot = bot;
+      q.form = { ...fx, difficulty: diff, seed: sv, ...(bot ? { bot } : {}) }; // what to show again on Back, and next time the dialog opens
       save.devMatch = { ...(save.devMatch || {}), form: q.form }; writeSave(save);
       showLoadout(top, q);
     },
@@ -701,7 +737,7 @@ function copyText(text, done) {
 function finishQuick() {
   const w = game.world, win = w.result === 'win', q = game.match;
   const c = ((save.quick ||= {})[q.difficulty] ||= { wins: 0, played: 0 });
-  c.played++; if (win) c.wins++;
+  if (!game.bot) { c.played++; if (win) c.wins++; } // bot matches don't count for your score
   writeSave(save);
   sendStats(win ? 'win' : 'lose', 0);
   playSfx(win ? 'win' : 'lose');
@@ -723,7 +759,7 @@ function finishQuick() {
   const top = game.stageIndex;
   bind({
     // Again: a new match with the same difficulty (dev match: the same fixed fields; a fixed seed stays fixed)
-    again: () => showLoadout(top, q.dev ? Object.assign(quickMatch(q.difficulty, q.form?.seed ? q.seed : randomSeed(), q.fixed, true), { form: q.form }) : quickMatch(q.difficulty, randomSeed())),
+    again: () => showLoadout(top, q.dev ? Object.assign(quickMatch(q.difficulty, q.form?.seed ? q.seed : randomSeed(), q.fixed, true), { form: q.form, ...(q.bot ? { bot: q.bot } : {}) }) : quickMatch(q.difficulty, randomSeed())),
     same: () => showLoadout(top, sameMatch(q)),
     copyseed: () => copyText(seedHex(q.seed), 'Seed copied'),
     quick: () => quitToMenu('quick'),
@@ -939,6 +975,7 @@ function useSpecial(k) {
 const last = {};
 function setText(el, key, v) { if (last[key] !== v) { last[key] = v; el.textContent = v; } }
 function updateHud() {
+  if (game.bot && game.mode === 'play') { const bl = $('#bot-line'); if (bl.textContent !== game.bot.thought) bl.textContent = game.bot.thought; }
   const w = game.world, b0 = w.bases[0], b1 = w.bases[1];
   $('#hp0').style.width = `calc(${(100 * b0.hp / b0.maxHp).toFixed(1)}% - 2px)`;
   $('#hp1').style.width = `calc(${(100 * b1.hp / b1.maxHp).toFixed(1)}% - 2px)`;
@@ -1203,6 +1240,7 @@ function frame(now) {
     while (acc >= STEP && steps < 12) {
       if (game.mode === 'menu') demoTick(STEP);
       w.update(STEP);
+      if (game.mode === 'play' && game.bot) game.bot.tick(w); // between steps, like a tap
       acc -= STEP; steps++; simDt += STEP;
     }
     if (steps >= 12) acc = 0;
@@ -1235,6 +1273,7 @@ window.__step = (seconds) => {
   for (let t = 0; t < seconds; t += STEP) {
     if (game.mode === 'menu') demoTick(STEP);
     w.update(STEP);
+    if (game.mode === 'play' && game.bot) game.bot.tick(w);
     renderer.consume(w.fx, () => {});
     renderer.updateParticles(STEP);
   }

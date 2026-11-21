@@ -1087,5 +1087,25 @@ const tough = (e) => { e.hp = e.maxHp = 1e9; return e; };
   check('front: sampled every 5 s as [t, average %, lane 1–5 %]', r.log.front.length === 3 && r.log.front.map((e) => e[0]).join() === '0,5,10' && r.log.front[2].length === 7 && r.log.front[2][4] > 50, JSON.stringify(r.log.front));
 }
 
+// bot 2.0 (src/bot.js): plays through the player's inputs only, so a bot match replays exactly without the bot
+{
+  const { quickMatch } = await import('../src/quick.js');
+  const { Bot, botProfile } = await import('../src/bot.js');
+  const { replayWorld, replayStep } = await import('../src/replay.js');
+  const q = quickMatch('medium', 0x389a0f7c, { level: 0, personality: 'swarm' }, true, 12, ['scout', 'gunner', 'brawler', 'mortar', 'seeker', 'aegis', 'lancer', 'breacher']);
+  const unl = { mechs: ['brawler', 'gunner', 'seeker', 'mortar', 'aegis'], turrets: ['sentry', 'howitzer', 'arc'], specials: ['bomb', 'emp', 'surge'] };
+  const setup = JSON.parse(JSON.stringify({ seed: q.st.quick.seed, stage: q.st, unlocked: unl, dev: {} }));
+  const w = new World(JSON.parse(JSON.stringify(setup.stage)), defaultSave(), unl, { seed: setup.seed });
+  const bot = new Bot(w, botProfile('you'), 7);
+  for (let i = 0; i < 60 * 240 && !w.result; i++) { w.update(1 / 60); bot.tick(w); }
+  check('bot: plays (Reactor in the opening, units deployed, upgrades)', w.baseLvl.reactor >= 2 && w.stats.deployed >= 8 && w.log.upgrades.length >= 4, `${w.baseLvl.reactor} ${w.stats.deployed} ${w.log.upgrades.length}`);
+  check('bot: says what it thinks', typeof bot.thought === 'string' && bot.thought.length > 5, bot.thought);
+  const rep = { ...setup, steps: w.step, inputs: w.inputs };
+  const r = replayWorld(rep); let k = 0;
+  while (r.step < rep.steps) k = replayStep(r, rep, k);
+  check('bot: its match replays exactly from the inputs alone', JSON.stringify(r.log.events) === JSON.stringify(w.log.events), `${r.log.events.length} vs ${w.log.events.length}`);
+  check('bot: settings override the profile', botProfile('you', { pushLine: 70 }).pushLine === 70 && botProfile('nope').profile === 'you');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
